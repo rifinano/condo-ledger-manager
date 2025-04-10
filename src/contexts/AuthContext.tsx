@@ -1,5 +1,5 @@
 
-import { createContext, useContext, useState, ReactNode } from "react";
+import { createContext, useContext, useState, ReactNode, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/components/ui/use-toast";
 
@@ -23,13 +23,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  // Check if we have admin data in localStorage
-  useState(() => {
+  // Check if we have admin data in localStorage on mount
+  useEffect(() => {
     const storedAdmin = localStorage.getItem("syndicateAdmin");
     if (storedAdmin) {
       setAdmin(JSON.parse(storedAdmin));
     }
-  });
+  }, []);
 
   // In a real app, this would validate against a backend
   const login = async (email: string, password: string) => {
