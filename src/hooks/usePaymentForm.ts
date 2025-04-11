@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useToast } from "@/hooks/use-toast";
 import { addPayment } from "@/services/payments";
 import { PaymentFormData } from "@/services/payments/types";
@@ -34,11 +34,14 @@ export const usePaymentForm = (
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [newPayment, setNewPayment] = useState<PaymentFormState>(initialPayment);
 
-  const resetForm = () => {
+  // Memoize the reset function to prevent unnecessary re-creations
+  const resetForm = useCallback(() => {
     setNewPayment(initialPayment);
-  };
+  }, []);
 
-  const handleSubmit = async () => {
+  // Memoize the submit handler to prevent unnecessary re-creations
+  const handleSubmit = useCallback(async () => {
+    // Validate form data early to prevent unnecessary processing
     if (!newPayment.resident_id || !newPayment.amount || !newPayment.payment_date) {
       toast({
         title: "Missing information",
@@ -89,7 +92,7 @@ export const usePaymentForm = (
     } finally {
       setIsSubmitting(false);
     }
-  };
+  }, [newPayment, toast, onSuccess, refetchPayments, resetForm]);
 
   return {
     newPayment,

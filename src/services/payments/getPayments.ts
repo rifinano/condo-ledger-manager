@@ -4,69 +4,73 @@ import { toast } from "@/hooks/use-toast";
 import { Payment } from "./types";
 
 export const getPayments = async (): Promise<Payment[]> => {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
+  
   try {
-    // First, fetch all payments with proper error handling
-    const { data: payments, error: paymentsError } = await supabase
+    // Use a single query with join to reduce network requests
+    const { data, error } = await supabase
       .from('payments')
-      .select('*')
+      .select(`
+        *,
+        residents:resident_id (
+          full_name,
+          block_number,
+          apartment_number
+        )
+      `)
       .order('payment_date', { ascending: false });
 
-    if (paymentsError) {
-      console.error("Error fetching payments:", paymentsError);
+    clearTimeout(timeoutId);
+
+    if (error) {
+      console.error("Error fetching payments:", error);
       toast({
         title: "Error fetching payments",
-        description: paymentsError.message,
+        description: error.message,
         variant: "destructive",
       });
       return [];
     }
 
-    // Fetch all residents to join manually
-    const { data: residents, error: residentsError } = await supabase
-      .from('residents')
-      .select('*');
-
-    if (residentsError) {
-      console.error("Error fetching residents:", residentsError);
+    // Transform the joined data into the expected format
+    // Using type assertion to avoid TypeScript errors with complex joins
+    return (data || []).map((item: any) => ({
+      id: item.id,
+      resident_id: item.resident_id,
+      amount: item.amount,
+      payment_date: item.payment_date,
+      payment_for_month: item.payment_for_month,
+      payment_for_year: item.payment_for_year,
+      payment_type: item.payment_type,
+      payment_method: item.payment_method,
+      payment_status: item.payment_status || "unpaid",
+      notes: item.notes,
+      created_at: item.created_at,
+      updated_at: item.updated_at,
+      created_by: item.created_by,
+      residentName: item.residents ? item.residents.full_name : "Unknown",
+      block: item.residents ? item.residents.block_number : "Unknown",
+      apartment: item.residents ? item.residents.apartment_number : "Unknown"
+    }));
+  } catch (error: any) {
+    clearTimeout(timeoutId);
+    
+    if (error.name === 'AbortError') {
+      console.error("Request timed out fetching payments");
       toast({
-        title: "Error fetching residents for payment details",
-        description: residentsError.message,
+        title: "Request timed out",
+        description: "The server took too long to respond. Please try again.",
         variant: "destructive",
       });
-      // Return payments without resident info if residents fetch fails
-      return payments.map((payment: any) => ({
-        ...payment,
-        residentName: "Unknown",
-        block: "Unknown",
-        apartment: "Unknown",
-        payment_status: payment.payment_status || "unpaid" // Ensure payment_status is defined
-      }));
+    } else {
+      console.error("Unexpected error fetching payments:", error);
+      toast({
+        title: "Unexpected error",
+        description: "Failed to fetch payments. Please try again.",
+        variant: "destructive",
+      });
     }
-
-    // Create a map of residents for faster lookups
-    const residentsMap = new Map();
-    residents.forEach((resident: any) => {
-      residentsMap.set(resident.id, resident);
-    });
-
-    // Join the payments with residents data manually
-    return payments.map((payment: any) => {
-      const resident = residentsMap.get(payment.resident_id);
-      return {
-        ...payment,
-        residentName: resident ? resident.full_name : "Unknown",
-        block: resident ? resident.block_number : "Unknown",
-        apartment: resident ? resident.apartment_number : "Unknown",
-        payment_status: payment.payment_status || "unpaid" // Ensure payment_status is defined
-      };
-    });
-  } catch (error) {
-    console.error("Unexpected error fetching payments:", error);
-    toast({
-      title: "Unexpected error",
-      description: "Failed to fetch payments. Please try again.",
-      variant: "destructive",
-    });
     return [];
   }
 };

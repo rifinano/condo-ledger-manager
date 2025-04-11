@@ -1,6 +1,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { ServiceResult } from "./types";
+import { Database } from "@/integrations/supabase/types";
 
 /**
  * Adds an apartment assignment to a resident
@@ -11,14 +12,17 @@ export const addResidentApartment = async (
   apartmentNumber: string
 ): Promise<ServiceResult> => {
   try {
+    // Create properly typed apartment data
+    const residentAptData: Database['public']['Tables']['resident_apartments']['Insert'] = {
+      resident_id: residentId,
+      block_number: blockNumber,
+      apartment_number: apartmentNumber
+    };
+    
     // Insert directly into the resident_apartments table
     const { data, error } = await supabase
       .from('resident_apartments')
-      .insert({
-        resident_id: residentId,
-        block_number: blockNumber,
-        apartment_number: apartmentNumber
-      });
+      .insert(residentAptData);
       
     if (error) throw error;
     
@@ -46,9 +50,9 @@ export const removeResidentApartment = async (
       .from('resident_apartments')
       .delete()
       .match({
-        resident_id: residentId,
-        block_number: blockNumber,
-        apartment_number: apartmentNumber
+        resident_id: residentId as any,
+        block_number: blockNumber as any,
+        apartment_number: apartmentNumber as any
       });
       
     if (error) throw error;

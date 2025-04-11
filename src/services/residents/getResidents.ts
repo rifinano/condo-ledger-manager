@@ -1,6 +1,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { Resident, ResidentApartment } from "./types";
+import { Database } from "@/integrations/supabase/types";
 
 /**
  * Fetches all residents with their associated apartments
@@ -16,17 +17,20 @@ export const getResidents = async (): Promise<Resident[]> => {
       try {
         console.log(`Attempt ${attempt + 1} to fetch residents`);
         
-        const { data, error: fetchError } = await supabase
+        const { data: residentData, error: fetchError } = await supabase
           .from('residents')
           .select('*')
           .order('full_name');
           
         if (fetchError) throw fetchError;
         
-        console.log(`Successfully fetched residents: ${data.length}`);
+        // Type assertion for residents
+        const residents = residentData as unknown as Resident[];
+        
+        console.log(`Successfully fetched residents: ${residents.length}`);
         
         // Fetch all resident-apartment assignments
-        const { data: residentApartments, error: apartmentsError } = await supabase
+        const { data: residentApartmentsData, error: apartmentsError } = await supabase
           .from('resident_apartments')
           .select('resident_id, block_number, apartment_number');
           
@@ -34,6 +38,13 @@ export const getResidents = async (): Promise<Resident[]> => {
           console.error("Error fetching resident apartments:", apartmentsError);
           // Continue with just the residents data
         }
+        
+        // Type assertion for apartment data
+        const residentApartments = residentApartmentsData as unknown as {
+          resident_id: string;
+          block_number: string;
+          apartment_number: string;
+        }[];
         
         // Group apartments by resident ID
         const apartmentsByResident: Record<string, ResidentApartment[]> = {};
@@ -51,7 +62,7 @@ export const getResidents = async (): Promise<Resident[]> => {
         }
         
         // Add apartments array to each resident
-        const residentsWithApartments = data.map(resident => ({
+        const residentsWithApartments = residents.map(resident => ({
           ...resident,
           apartments: apartmentsByResident[resident.id] || []
         }));

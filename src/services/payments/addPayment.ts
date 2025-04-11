@@ -1,6 +1,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { AddPaymentResult, PaymentFormData } from "./types";
+import { Database } from "@/integrations/supabase/types";
 
 export const addPayment = async (
   payment: PaymentFormData
@@ -19,20 +20,19 @@ export const addPayment = async (
       throw new Error("You must be logged in to add a payment");
     }
     
-    // Verify resident exists before adding payment
-    const { data: resident, error: residentError } = await supabase
+    // Verify resident exists before adding payment - use simple count query for efficiency
+    const { count, error: countError } = await supabase
       .from('residents')
-      .select('id, full_name')
-      .eq('id', payment.resident_id)
-      .single();
+      .select('id', { count: 'exact', head: true })
+      .eq('id', payment.resident_id);
       
-    if (residentError || !resident) {
-      console.error("Resident verification error:", residentError);
+    if (countError || count === 0) {
+      console.error("Resident verification error:", countError);
       throw new Error("Selected resident does not exist or could not be verified");
     }
     
     // Create a complete payment object with all required fields
-    const paymentWithStatus = {
+    const paymentRecord: Database['public']['Tables']['payments']['Insert'] = {
       resident_id: payment.resident_id,
       amount: payment.amount,
       payment_date: payment.payment_date,
@@ -41,16 +41,16 @@ export const addPayment = async (
       payment_type: payment.payment_type,
       payment_method: payment.payment_method,
       notes: payment.notes,
-      payment_status: "paid" as const,
+      payment_status: "paid",
       created_by: user.id
     };
     
-    console.log("Adding payment with data:", paymentWithStatus);
+    console.log("Adding payment with data:", paymentRecord);
     
     // Insert the complete payment object into the database
     const { data, error } = await supabase
       .from('payments')
-      .insert(paymentWithStatus)
+      .insert(paymentRecord)
       .select();
 
     if (error) {
