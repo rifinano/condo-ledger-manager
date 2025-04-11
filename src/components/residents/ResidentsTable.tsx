@@ -39,8 +39,8 @@ const ResidentsTable = ({
         <TableHeader>
           <TableRow>
             <TableHead className="w-[30%]">Name</TableHead>
-            <TableHead className="w-[15%]">Phone</TableHead>
-            <TableHead className="w-[40%]">Location</TableHead>
+            <TableHead className="w-[25%]">Phone</TableHead>
+            <TableHead className="w-[30%]">Location</TableHead>
             <TableHead className="w-[15%] text-right">Actions</TableHead>
           </TableRow>
         </TableHeader>
@@ -121,8 +121,8 @@ const ResidentsTableSkeleton = () => {
         <TableHeader>
           <TableRow>
             <TableHead className="w-[30%]">Name</TableHead>
-            <TableHead className="w-[15%]">Phone</TableHead>
-            <TableHead className="w-[40%]">Location</TableHead>
+            <TableHead className="w-[25%]">Phone</TableHead>
+            <TableHead className="w-[30%]">Location</TableHead>
             <TableHead className="w-[15%] text-right">Actions</TableHead>
           </TableRow>
         </TableHeader>
