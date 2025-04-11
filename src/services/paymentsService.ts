@@ -31,42 +31,69 @@ export interface Resident {
 
 export const getPayments = async () => {
   try {
-    // Use the generic query approach since TypeScript definitions don't recognize our tables yet
-    const { data: payments, error } = await supabase
+    // First, fetch all payments
+    const { data: payments, error: paymentsError } = await supabase
       .from('payments')
-      .select(`
-        *,
-        residents!inner(id, full_name, block_number, apartment_number)
-      `)
+      .select('*')
       .order('payment_date', { ascending: false });
 
-    if (error) {
-      console.error("Error fetching payments:", error);
+    if (paymentsError) {
+      console.error("Error fetching payments:", paymentsError);
       toast({
         title: "Error fetching payments",
-        description: error.message,
+        description: paymentsError.message,
         variant: "destructive",
       });
       return [];
     }
 
-    // Transform data to match the expected format
-    return payments.map((payment: any) => ({
-      id: payment.id,
-      resident_id: payment.resident_id,
-      amount: payment.amount,
-      payment_date: payment.payment_date,
-      payment_for_month: payment.payment_for_month,
-      payment_for_year: payment.payment_for_year,
-      payment_type: payment.payment_type,
-      payment_method: payment.payment_method,
-      notes: payment.notes,
-      created_at: payment.created_at,
-      updated_at: payment.updated_at,
-      residentName: payment.residents?.full_name || "Unknown",
-      block: payment.residents?.block_number || "Unknown",
-      apartment: payment.residents?.apartment_number || "Unknown"
-    }));
+    // Fetch all residents to join manually
+    const { data: residents, error: residentsError } = await supabase
+      .from('residents')
+      .select('*');
+
+    if (residentsError) {
+      console.error("Error fetching residents:", residentsError);
+      toast({
+        title: "Error fetching residents for payment details",
+        description: residentsError.message,
+        variant: "destructive",
+      });
+      // Return payments without resident info if residents fetch fails
+      return payments.map((payment: any) => ({
+        ...payment,
+        residentName: "Unknown",
+        block: "Unknown",
+        apartment: "Unknown"
+      }));
+    }
+
+    // Create a map of residents for faster lookups
+    const residentsMap = new Map();
+    residents.forEach((resident: any) => {
+      residentsMap.set(resident.id, resident);
+    });
+
+    // Join the payments with residents data manually
+    return payments.map((payment: any) => {
+      const resident = residentsMap.get(payment.resident_id);
+      return {
+        id: payment.id,
+        resident_id: payment.resident_id,
+        amount: payment.amount,
+        payment_date: payment.payment_date,
+        payment_for_month: payment.payment_for_month,
+        payment_for_year: payment.payment_for_year,
+        payment_type: payment.payment_type,
+        payment_method: payment.payment_method,
+        notes: payment.notes,
+        created_at: payment.created_at,
+        updated_at: payment.updated_at,
+        residentName: resident ? resident.full_name : "Unknown",
+        block: resident ? resident.block_number : "Unknown",
+        apartment: resident ? resident.apartment_number : "Unknown"
+      };
+    });
   } catch (error) {
     console.error("Unexpected error fetching payments:", error);
     toast({
