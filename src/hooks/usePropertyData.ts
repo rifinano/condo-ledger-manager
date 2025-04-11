@@ -1,9 +1,21 @@
 
+import { useEffect, useState } from "react";
+import { getBlocks } from "@/services/propertiesService";
+
 /**
  * Hook to provide property data like blocks and apartments
  */
 export const usePropertyData = () => {
-  const blocks = ["Block A", "Block B", "Block C"];
+  const [blocks, setBlocks] = useState<string[]>([]);
+  
+  useEffect(() => {
+    const fetchBlocks = async () => {
+      const blocksData = await getBlocks();
+      setBlocks(blocksData.map(block => block.name));
+    };
+    
+    fetchBlocks();
+  }, []);
   
   const getApartments = (block: string) => {
     switch (block) {
