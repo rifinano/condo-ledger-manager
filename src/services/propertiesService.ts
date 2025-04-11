@@ -88,7 +88,7 @@ export const addBlock = async (name: string, apartmentCount: number): Promise<Bl
 
     // 2. Add the apartments for this block
     const apartments = Array.from({ length: apartmentCount }, (_, i) => {
-      const number = `${name}${i + 1}`.replace(/\s+/g, '');
+      const number = `${name.replace(/\s+/g, '')}${i + 1}`;
       return {
         number,
         floor: Math.floor(i / 4) + 1,
