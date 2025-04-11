@@ -1,19 +1,17 @@
 
+import { useEffect } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Search, Plus } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useResidentsPage } from "@/hooks/useResidentsPage";
-import { useToast } from "@/hooks/use-toast";
 import AddResidentDialog from "@/components/residents/AddResidentDialog";
 import EditResidentDialog from "@/components/residents/EditResidentDialog";
 import DeleteResidentDialog from "@/components/residents/DeleteResidentDialog";
 import ResidentsTable from "@/components/residents/ResidentsTable";
-import { useEffect } from "react";
 
 const ResidentsPage = () => {
-  const { toast } = useToast();
   const {
     filteredResidents,
     isLoading,

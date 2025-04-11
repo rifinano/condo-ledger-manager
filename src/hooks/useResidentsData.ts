@@ -34,7 +34,7 @@ export const useResidentsData = (
     }
   }, [setResidents, setIsLoading]);
 
-  const filterResidents = (residents: Resident[]) => {
+  const filterResidents = useCallback((residents: Resident[]) => {
     if (!searchTerm.trim()) return residents;
     
     const lowerSearchTerm = searchTerm.toLowerCase();
@@ -44,7 +44,7 @@ export const useResidentsData = (
       resident.block_number.toLowerCase().includes(lowerSearchTerm) ||
       resident.apartment_number.toLowerCase().includes(lowerSearchTerm)
     );
-  };
+  }, [searchTerm]);
 
   return {
     fetchResidents,

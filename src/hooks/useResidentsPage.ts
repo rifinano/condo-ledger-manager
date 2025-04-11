@@ -1,4 +1,5 @@
 
+import { useCallback } from "react";
 import { useResidentsState } from "./useResidentsState";
 import { usePropertyData } from "./usePropertyData";
 import { useResidentsData } from "./useResidentsData";
@@ -50,25 +51,38 @@ export const useResidentsPage = () => {
     confirmDeleteResident: confirmDeleteResidentAction
   } = useResidentActions(fetchResidents, resetForm);
 
-  // Wrapper functions to simplify the API
-  const handleAddResident = () => addResident(currentResident, setIsAddingResident);
-  const handleUpdateResident = () => updateResident(selectedResidentId, currentResident, setIsEditingResident);
-  const handleDeleteResident = () => deleteResident(selectedResidentId, setIsDeletingResident);
+  // Define wrapper functions with useCallback to maintain hook order consistency
+  const handleAddResident = useCallback(() => {
+    return addResident(currentResident, setIsAddingResident);
+  }, [addResident, currentResident, setIsAddingResident]);
+
+  const handleUpdateResident = useCallback(() => {
+    return updateResident(selectedResidentId, currentResident, setIsEditingResident);
+  }, [updateResident, selectedResidentId, currentResident, setIsEditingResident]);
+
+  const handleDeleteResident = useCallback(() => {
+    return deleteResident(selectedResidentId, setIsDeletingResident);
+  }, [deleteResident, selectedResidentId, setIsDeletingResident]);
   
-  const editResident = (resident: any) => editResidentAction(
-    resident, 
-    setSelectedResidentId, 
-    setCurrentResident, 
-    setIsEditingResident
-  );
+  const editResident = useCallback((resident: any) => {
+    return editResidentAction(
+      resident, 
+      setSelectedResidentId, 
+      setCurrentResident, 
+      setIsEditingResident
+    );
+  }, [editResidentAction, setSelectedResidentId, setCurrentResident, setIsEditingResident]);
 
-  const confirmDeleteResident = (resident: any) => confirmDeleteResidentAction(
-    resident,
-    setSelectedResidentId,
-    setCurrentResident,
-    setIsDeletingResident
-  );
+  const confirmDeleteResident = useCallback((resident: any) => {
+    return confirmDeleteResidentAction(
+      resident,
+      setSelectedResidentId,
+      setCurrentResident,
+      setIsDeletingResident
+    );
+  }, [confirmDeleteResidentAction, setSelectedResidentId, setCurrentResident, setIsDeletingResident]);
 
+  // Memoize the filtered residents to prevent unnecessary calculations
   const filteredResidents = filterResidents(residents);
 
   return {
