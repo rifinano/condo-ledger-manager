@@ -40,9 +40,6 @@ const EditApartmentSheet: React.FC<EditApartmentSheetProps> = ({
                 <p className="text-sm">
                   Apartment: <span className="font-medium">{apartment.number}</span>
                 </p>
-                <p className="text-sm">
-                  Floor: <span className="font-medium">{apartment.floor}</span>
-                </p>
                 
                 {block && (
                   <p className="text-sm">

@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 
@@ -92,6 +93,7 @@ export const addBlock = async (name: string, apartmentCount: number): Promise<Bl
       return {
         number: `${aptNum}`,
         block_id: blockData.id,
+        floor: 1  // Default floor value since it's required by the database
       };
     });
 
