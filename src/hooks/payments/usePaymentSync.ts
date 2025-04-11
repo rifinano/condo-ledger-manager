@@ -41,17 +41,25 @@ export const usePaymentSync = (
     }
     
     debounceTimeoutRef.current = window.setTimeout(() => {
-      if (document.visibilityState === 'visible' && !hasNetworkIssue) {
-        refetchResidents();
-        refetchPayments();
+      // Skip Firebase-related errors - ignore Firestore requests
+      try {
+        if (document.visibilityState === 'visible' && !hasNetworkIssue) {
+          refetchResidents();
+          refetchPayments();
+        }
+      } catch (e) {
+        console.error("Error during debounced refresh:", e);
       }
     }, 1000) as unknown as number;
   };
   
   // Auto-refresh when the component mounts, but only once
   useEffect(() => {
-    // Only refresh if the component is mounted
-    if (isMountedRef.current) {
+    // Check if there are any network activities in progress
+    const pendingRequests = navigator.onLine && !hasNetworkIssue;
+    
+    // Only refresh if the component is mounted and there are no pending network activities
+    if (isMountedRef.current && pendingRequests) {
       safeRefresh();
     }
     

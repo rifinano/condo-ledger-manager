@@ -1,6 +1,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { ResidentFormData, ServiceResult } from "./types";
+import { Database } from "@/integrations/supabase/types";
 
 /**
  * Adds a new resident to the database
@@ -8,7 +9,7 @@ import { ResidentFormData, ServiceResult } from "./types";
 export const addResident = async (resident: Omit<ResidentFormData, 'id'>): Promise<ServiceResult> => {
   try {
     // Format the data for the API
-    const formattedResident = {
+    const formattedResident: Database['public']['Tables']['residents']['Insert'] = {
       full_name: resident.full_name,
       phone_number: resident.phone_number || null,
       block_number: resident.block_number,
@@ -17,7 +18,7 @@ export const addResident = async (resident: Omit<ResidentFormData, 'id'>): Promi
 
     const { data, error } = await supabase
       .from('residents')
-      .insert([formattedResident])
+      .insert(formattedResident)
       .select();
 
     if (error) throw error;
@@ -26,14 +27,16 @@ export const addResident = async (resident: Omit<ResidentFormData, 'id'>): Promi
     if (data && data.length > 0) {
       const newResidentId = data[0].id;
       
-      // Insert directly into the resident_apartments table
+      // Insert directly into the resident_apartments table with proper typing
+      const residentAptData: Database['public']['Tables']['resident_apartments']['Insert'] = {
+        resident_id: newResidentId,
+        block_number: resident.block_number,
+        apartment_number: resident.apartment_number
+      };
+        
       const { error: aptError } = await supabase
         .from('resident_apartments')
-        .insert({
-          resident_id: newResidentId,
-          block_number: resident.block_number,
-          apartment_number: resident.apartment_number
-        });
+        .insert(residentAptData);
         
       if (aptError) {
         console.error("Error adding resident apartment:", aptError);

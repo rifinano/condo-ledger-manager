@@ -19,8 +19,7 @@ export const getPayments = async (): Promise<Payment[]> => {
           apartment_number
         )
       `)
-      .order('payment_date', { ascending: false })
-      .abortSignal(controller.signal);
+      .order('payment_date', { ascending: false });
 
     clearTimeout(timeoutId);
 
@@ -35,12 +34,24 @@ export const getPayments = async (): Promise<Payment[]> => {
     }
 
     // Transform the joined data into the expected format
-    return data.map((item: any) => ({
-      ...item,
+    // Using type assertion to avoid TypeScript errors with complex joins
+    return (data || []).map((item: any) => ({
+      id: item.id,
+      resident_id: item.resident_id,
+      amount: item.amount,
+      payment_date: item.payment_date,
+      payment_for_month: item.payment_for_month,
+      payment_for_year: item.payment_for_year,
+      payment_type: item.payment_type,
+      payment_method: item.payment_method,
+      payment_status: item.payment_status || "unpaid",
+      notes: item.notes,
+      created_at: item.created_at,
+      updated_at: item.updated_at,
+      created_by: item.created_by,
       residentName: item.residents ? item.residents.full_name : "Unknown",
       block: item.residents ? item.residents.block_number : "Unknown",
-      apartment: item.residents ? item.residents.apartment_number : "Unknown",
-      payment_status: item.payment_status || "unpaid" // Ensure payment_status is defined
+      apartment: item.residents ? item.residents.apartment_number : "Unknown"
     }));
   } catch (error: any) {
     clearTimeout(timeoutId);

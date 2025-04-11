@@ -6,6 +6,15 @@ export const useNetworkErrorHandler = () => {
   const handleNetworkError = useCallback((error: any, fallbackMessage: string) => {
     console.error("Network error:", error);
     
+    // Check if the error is a Firestore error and ignore it
+    if (error?.message?.includes('firestore') || 
+        error?.message?.includes('firebase') || 
+        error?.stack?.includes('firestore') || 
+        error?.stack?.includes('firebase')) {
+      console.log("Ignoring Firestore/Firebase error:", error.message);
+      return null;
+    }
+    
     // Determine if it's a CORS error
     const isCorsError = error instanceof Error && 
       (error.message.includes('CORS') || 

@@ -1,6 +1,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { AddPaymentResult, PaymentFormData } from "./types";
+import { Database } from "@/integrations/supabase/types";
 
 export const addPayment = async (
   payment: PaymentFormData
@@ -31,7 +32,7 @@ export const addPayment = async (
     }
     
     // Create a complete payment object with all required fields
-    const paymentWithStatus = {
+    const paymentRecord: Database['public']['Tables']['payments']['Insert'] = {
       resident_id: payment.resident_id,
       amount: payment.amount,
       payment_date: payment.payment_date,
@@ -40,16 +41,16 @@ export const addPayment = async (
       payment_type: payment.payment_type,
       payment_method: payment.payment_method,
       notes: payment.notes,
-      payment_status: "paid" as const,
+      payment_status: "paid",
       created_by: user.id
     };
     
-    console.log("Adding payment with data:", paymentWithStatus);
+    console.log("Adding payment with data:", paymentRecord);
     
     // Insert the complete payment object into the database
     const { data, error } = await supabase
       .from('payments')
-      .insert(paymentWithStatus)
+      .insert(paymentRecord)
       .select();
 
     if (error) {

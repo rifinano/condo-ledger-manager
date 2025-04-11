@@ -12,7 +12,7 @@ export const usePaymentsFetch = () => {
   const { toast } = useToast();
   const { handleNetworkError } = useNetworkErrorHandler();
 
-  // Fetch payments with React Query
+  // Fetch payments with React Query - removed onError property and using onSettled instead
   const { 
     data: payments = [], 
     isLoading: isLoadingPayments,
@@ -25,10 +25,12 @@ export const usePaymentsFetch = () => {
     refetchOnMount: true,
     refetchOnWindowFocus: true,
     retry: 2,
-    onError: (error) => handleNetworkError(error, "Failed to fetch payments"),
+    meta: {
+      onError: (error: any) => handleNetworkError(error, "Failed to fetch payments")
+    }
   });
 
-  // Fetch residents with React Query
+  // Fetch residents with React Query - removed onError property and using onSettled instead
   const { 
     data: residents = [], 
     isLoading: isLoadingResidents,
@@ -41,7 +43,9 @@ export const usePaymentsFetch = () => {
     refetchOnMount: true,
     refetchOnWindowFocus: true,
     retry: 2,
-    onError: (error) => handleNetworkError(error, "Failed to fetch residents"),
+    meta: {
+      onError: (error: any) => handleNetworkError(error, "Failed to fetch residents")
+    }
   });
 
   // Enhanced refetch function that refreshes all data

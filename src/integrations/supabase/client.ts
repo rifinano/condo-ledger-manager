@@ -28,24 +28,8 @@ export const supabase = createClient<Database>(
     // Add a longer timeout to prevent quick timeouts
     realtime: {
       timeout: 60000
-    },
-    // Better network request handling
-    fetch: (url, options) => {
-      const controller = new AbortController();
-      const signal = controller.signal;
-      
-      // Set timeout to prevent hanging requests
-      const timeoutId = setTimeout(() => controller.abort(), 30000);
-      
-      const fetchOptions = {
-        ...options,
-        signal,
-        keepalive: true
-      };
-      
-      return fetch(url, fetchOptions)
-        .finally(() => clearTimeout(timeoutId));
     }
+    // Removing the custom fetch implementation as it's causing type errors
   }
 );
 
