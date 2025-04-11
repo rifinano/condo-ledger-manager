@@ -153,13 +153,23 @@ export const togglePaymentStatus = async (paymentId: string, isPaid: boolean) =>
 export const addPayment = async (payment: Omit<Payment, 'id' | 'created_at' | 'updated_at' | 'payment_status'>) => {
   try {
     // Get the current authenticated user
-    const { data: { user } } = await supabase.auth.getUser();
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    
+    if (userError) {
+      console.error("Authentication error:", userError);
+      throw new Error("You must be logged in to add a payment");
+    }
+    
+    if (!user) {
+      console.error("No authenticated user found");
+      throw new Error("You must be logged in to add a payment");
+    }
     
     // Add payment_status field with default value "paid" and include created_by field
     const paymentWithStatus = {
       ...payment,
       payment_status: "paid" as const,
-      created_by: user?.id || null // Add the user ID who created this payment
+      created_by: user.id // Use the authenticated user ID
     };
     
     console.log("Adding payment with data:", paymentWithStatus);
