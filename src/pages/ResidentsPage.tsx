@@ -113,6 +113,7 @@ const ResidentsPage = () => {
             title="Connection Error" 
             message={fetchError} 
             onRetry={handleRetry} 
+            isNetworkError={true}
           />
         ) : (
           <ResidentsContent 

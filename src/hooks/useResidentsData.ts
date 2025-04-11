@@ -32,6 +32,7 @@ export const useResidentsData = (
       setTotalCount(validResidents.length);
     } catch (error) {
       console.error("Error fetching residents:", error);
+      throw error; // Re-throw so the parent component can handle it
     } finally {
       setIsLoading(false);
     }

@@ -56,7 +56,7 @@ export const getResidents = async (): Promise<Resident[]> => {
         attempt++;
         // Wait before retrying (exponential backoff)
         if (attempt < maxRetries) {
-          await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+          await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, attempt - 1)));
         }
       }
     }
