@@ -31,16 +31,12 @@ export interface Resident {
 
 export const getPayments = async () => {
   try {
+    // Use the generic query approach since TypeScript definitions don't recognize our tables yet
     const { data: payments, error } = await supabase
       .from('payments')
       .select(`
         *,
-        residents:resident_id (
-          id,
-          full_name,
-          block_number,
-          apartment_number
-        )
+        residents!inner(id, full_name, block_number, apartment_number)
       `)
       .order('payment_date', { ascending: false });
 
@@ -55,7 +51,7 @@ export const getPayments = async () => {
     }
 
     // Transform data to match the expected format
-    return payments.map(payment => ({
+    return payments.map((payment: any) => ({
       id: payment.id,
       resident_id: payment.resident_id,
       amount: payment.amount,
@@ -84,6 +80,7 @@ export const getPayments = async () => {
 
 export const getResidents = async () => {
   try {
+    // Use the generic query approach since TypeScript definitions don't recognize our tables yet
     const { data, error } = await supabase
       .from('residents')
       .select('*')
@@ -117,7 +114,7 @@ export const togglePaymentStatus = async (paymentId: string, status: boolean) =>
       // Create a new payment
       const { error } = await supabase
         .from('payments')
-        .update({ payment_status: 'paid' })
+        .update({ payment_status: 'paid' } as any)
         .eq('id', paymentId);
 
       if (error) throw error;
@@ -127,7 +124,7 @@ export const togglePaymentStatus = async (paymentId: string, status: boolean) =>
       // Mark as unpaid
       const { error } = await supabase
         .from('payments')
-        .update({ payment_status: 'unpaid' })
+        .update({ payment_status: 'unpaid' } as any)
         .eq('id', paymentId);
 
       if (error) throw error;
@@ -147,7 +144,7 @@ export const addPayment = async (payment: Omit<Payment, 'id' | 'created_at' | 'u
   try {
     const { data, error } = await supabase
       .from('payments')
-      .insert([payment])
+      .insert([payment] as any)
       .select();
 
     if (error) throw error;

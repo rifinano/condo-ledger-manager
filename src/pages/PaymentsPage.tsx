@@ -106,7 +106,7 @@ const PaymentsPage = () => {
   });
 
   // Get unique blocks from residents
-  const blocks = ["all", ...Array.from(new Set(residents.map((r: Resident) => r.block_number)))];
+  const blocks = ["all", ...Array.from(new Set(residents.map((r: any) => r.block_number)))];
   
   const years = (() => {
     const currentYear = new Date().getFullYear();
@@ -247,7 +247,7 @@ const PaymentsPage = () => {
                         <SelectValue placeholder="Select a resident" />
                       </SelectTrigger>
                       <SelectContent>
-                        {residents.map((resident: Resident) => (
+                        {residents.map((resident: any) => (
                           <SelectItem key={resident.id} value={resident.id}>
                             {resident.full_name} ({resident.block_number}, Apt {resident.apartment_number})
                           </SelectItem>
