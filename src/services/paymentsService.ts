@@ -78,17 +78,7 @@ export const getPayments = async () => {
     return payments.map((payment: any) => {
       const resident = residentsMap.get(payment.resident_id);
       return {
-        id: payment.id,
-        resident_id: payment.resident_id,
-        amount: payment.amount,
-        payment_date: payment.payment_date,
-        payment_for_month: payment.payment_for_month,
-        payment_for_year: payment.payment_for_year,
-        payment_type: payment.payment_type,
-        payment_method: payment.payment_method,
-        notes: payment.notes,
-        created_at: payment.created_at,
-        updated_at: payment.updated_at,
+        ...payment,
         residentName: resident ? resident.full_name : "Unknown",
         block: resident ? resident.block_number : "Unknown",
         apartment: resident ? resident.apartment_number : "Unknown"

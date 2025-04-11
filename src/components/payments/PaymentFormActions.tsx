@@ -6,20 +6,26 @@ interface PaymentFormActionsProps {
   onCancel: () => void;
   onSubmit: () => void;
   isSubmitting?: boolean;
+  cancelLabel?: string;
+  submitLabel?: string;
+  submitLoadingLabel?: string;
 }
 
 const PaymentFormActions = ({ 
   onCancel, 
   onSubmit,
-  isSubmitting = false 
+  isSubmitting = false,
+  cancelLabel = "Cancel",
+  submitLabel = "Add Payment",
+  submitLoadingLabel = "Adding..."
 }: PaymentFormActionsProps) => {
   return (
     <DialogFooter>
       <Button variant="outline" onClick={onCancel} type="button">
-        Cancel
+        {cancelLabel}
       </Button>
       <Button onClick={onSubmit} disabled={isSubmitting}>
-        {isSubmitting ? 'Adding...' : 'Add Payment'}
+        {isSubmitting ? submitLoadingLabel : submitLabel}
       </Button>
     </DialogFooter>
   );
