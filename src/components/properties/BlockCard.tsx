@@ -1,6 +1,6 @@
 
-import React, { memo } from "react";
-import { Building2, Home, Trash2, User, Edit } from "lucide-react";
+import React, { memo, useState } from "react";
+import { Building2, Home, Trash2, User, Edit, ChevronDown, ChevronUp } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -22,6 +22,8 @@ const BlockCard: React.FC<BlockCardProps> = memo(({
   isApartmentOccupied,
   getResidentName
 }) => {
+  const [showAllApartments, setShowAllApartments] = useState(false);
+
   // Only sort apartments once when the component mounts or when apartments change
   const sortedApartments = React.useMemo(() => {
     return [...block.apartments].sort((a, b) => {
@@ -38,6 +40,15 @@ const BlockCard: React.FC<BlockCardProps> = memo(({
       isApartmentOccupied(block.name, apt.number)
     ).length;
   }, [block.apartments, block.name, isApartmentOccupied]);
+
+  // The apartments to display based on the toggle state
+  const displayedApartments = showAllApartments 
+    ? sortedApartments 
+    : sortedApartments.slice(0, 5);
+
+  const toggleShowAll = () => {
+    setShowAllApartments(!showAllApartments);
+  };
 
   return (
     <Card>
@@ -73,7 +84,7 @@ const BlockCard: React.FC<BlockCardProps> = memo(({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {sortedApartments.slice(0, 5).map((apt) => {
+            {displayedApartments.map((apt) => {
               const occupied = isApartmentOccupied(block.name, apt.number);
               const residentName = occupied ? getResidentName(block.name, apt.number) : null;
               
@@ -116,15 +127,31 @@ const BlockCard: React.FC<BlockCardProps> = memo(({
                 </TableRow>
               );
             })}
-            {block.apartments.length > 5 && (
-              <TableRow>
-                <TableCell colSpan={4} className="text-center text-sm text-gray-500">
-                  + {block.apartments.length - 5} more apartments
-                </TableCell>
-              </TableRow>
-            )}
           </TableBody>
         </Table>
+        
+        {block.apartments.length > 5 && (
+          <div className="mt-4 text-center">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={toggleShowAll}
+              className="text-syndicate-600"
+            >
+              {showAllApartments ? (
+                <>
+                  <ChevronUp className="h-4 w-4 mr-1" /> 
+                  Show Less
+                </>
+              ) : (
+                <>
+                  <ChevronDown className="h-4 w-4 mr-1" /> 
+                  Show All {block.apartments.length} Apartments
+                </>
+              )}
+            </Button>
+          </div>
+        )}
       </CardContent>
     </Card>
   );

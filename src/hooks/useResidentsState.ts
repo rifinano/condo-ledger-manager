@@ -21,6 +21,8 @@ export const useResidentsState = () => {
     move_in_year: new Date().getFullYear().toString()
   });
   const [selectedResidentId, setSelectedResidentId] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10); // Default page size
 
   const resetForm = () => {
     setCurrentResident({
@@ -51,6 +53,10 @@ export const useResidentsState = () => {
     setCurrentResident,
     selectedResidentId,
     setSelectedResidentId,
+    currentPage,
+    setCurrentPage,
+    pageSize,
+    setPageSize,
     resetForm
   };
 };

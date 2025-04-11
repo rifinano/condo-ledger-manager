@@ -10,10 +10,11 @@ import AddResidentDialog from "@/components/residents/AddResidentDialog";
 import EditResidentDialog from "@/components/residents/EditResidentDialog";
 import DeleteResidentDialog from "@/components/residents/DeleteResidentDialog";
 import ResidentsTable from "@/components/residents/ResidentsTable";
+import ResidentsPagination from "@/components/residents/ResidentsPagination";
 
 const ResidentsPage = () => {
   const {
-    filteredResidents,
+    paginatedResidents,
     isLoading,
     searchTerm,
     setSearchTerm,
@@ -35,7 +36,11 @@ const ResidentsPage = () => {
     resetForm,
     months,
     years,
-    fetchResidents
+    fetchResidents,
+    currentPage,
+    totalPages,
+    handlePageChange,
+    totalCount
   } = useResidentsPage();
 
   // Fetch residents data when the component mounts
@@ -63,7 +68,7 @@ const ResidentsPage = () => {
 
         <Card>
           <CardHeader>
-            <CardTitle>All Residents</CardTitle>
+            <CardTitle>All Residents ({totalCount})</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex justify-between mb-4">
@@ -79,11 +84,21 @@ const ResidentsPage = () => {
             </div>
             
             <ResidentsTable 
-              residents={filteredResidents}
+              residents={paginatedResidents}
               isLoading={isLoading}
               onEdit={editResident}
               onDelete={confirmDeleteResident}
             />
+            
+            {totalPages > 1 && (
+              <div className="mt-4">
+                <ResidentsPagination 
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  onPageChange={handlePageChange}
+                />
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>

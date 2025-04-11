@@ -1,5 +1,5 @@
 
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 import { getResidents, Resident } from "@/services/residentsService";
 import { getBlocks } from "@/services/propertiesService";
 
@@ -11,6 +11,8 @@ export const useResidentsData = (
   setIsLoading: (loading: boolean) => void,
   searchTerm: string
 ) => {
+  const [totalCount, setTotalCount] = useState(0);
+  
   const fetchResidents = useCallback(async () => {
     setIsLoading(true);
     try {
@@ -27,6 +29,7 @@ export const useResidentsData = (
       );
       
       setResidents(validResidents || []);
+      setTotalCount(validResidents.length);
     } catch (error) {
       console.error("Error fetching residents:", error);
     } finally {
@@ -48,6 +51,7 @@ export const useResidentsData = (
 
   return {
     fetchResidents,
-    filterResidents
+    filterResidents,
+    totalCount
   };
 };

@@ -1,5 +1,5 @@
 
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 import { useResidentsState } from "./useResidentsState";
 import { usePropertyData } from "./usePropertyData";
 import { useResidentsData } from "./useResidentsData";
@@ -26,6 +26,10 @@ export const useResidentsPage = () => {
     setCurrentResident,
     selectedResidentId,
     setSelectedResidentId,
+    currentPage,
+    setCurrentPage,
+    pageSize,
+    setPageSize,
     resetForm
   } = useResidentsState();
 
@@ -37,7 +41,7 @@ export const useResidentsPage = () => {
     years 
   } = usePropertyData();
 
-  const { fetchResidents, filterResidents } = useResidentsData(
+  const { fetchResidents, filterResidents, totalCount } = useResidentsData(
     setResidents,
     setIsLoading,
     searchTerm
@@ -82,12 +86,30 @@ export const useResidentsPage = () => {
     );
   }, [confirmDeleteResidentAction, setSelectedResidentId, setCurrentResident, setIsDeletingResident]);
 
-  // Memoize the filtered residents to prevent unnecessary calculations
-  const filteredResidents = filterResidents(residents);
+  // Filter residents based on search term
+  const filteredResidents = useMemo(() => filterResidents(residents), [filterResidents, residents]);
+
+  // Apply pagination to filtered residents
+  const paginatedResidents = useMemo(() => {
+    const startIndex = (currentPage - 1) * pageSize;
+    return filteredResidents.slice(startIndex, startIndex + pageSize);
+  }, [filteredResidents, currentPage, pageSize]);
+
+  // Calculate total pages
+  const totalPages = useMemo(() => 
+    Math.max(1, Math.ceil(filteredResidents.length / pageSize)),
+    [filteredResidents.length, pageSize]
+  );
+
+  // Handle page change
+  const handlePageChange = useCallback((page: number) => {
+    setCurrentPage(page);
+  }, [setCurrentPage]);
 
   return {
     residents,
     filteredResidents,
+    paginatedResidents,
     isLoading,
     searchTerm,
     setSearchTerm,
@@ -110,6 +132,12 @@ export const useResidentsPage = () => {
     resetForm,
     months,
     years,
-    fetchResidents
+    fetchResidents,
+    currentPage,
+    totalPages,
+    handlePageChange,
+    pageSize,
+    setPageSize,
+    totalCount
   };
 };
