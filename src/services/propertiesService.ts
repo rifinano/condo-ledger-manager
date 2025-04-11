@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 
@@ -12,7 +11,6 @@ export interface Block {
 export interface Apartment {
   id: string;
   number: string;
-  floor: number;
   block_id: string;
   created_at: string;
   updated_at: string;
@@ -87,11 +85,12 @@ export const addBlock = async (name: string, apartmentCount: number): Promise<Bl
     }
 
     // 2. Add the apartments for this block
+    const blockPrefix = name.replace(/\s+/g, '');
     const apartments = Array.from({ length: apartmentCount }, (_, i) => {
-      const number = `${name.replace(/\s+/g, '')}${i + 1}`;
+      // Ensure apartment numbers are properly zero-padded
+      const aptNum = (i + 1).toString().padStart(2, '0');
       return {
-        number,
-        floor: Math.floor(i / 4) + 1,
+        number: `${aptNum}`,
         block_id: blockData.id,
       };
     });

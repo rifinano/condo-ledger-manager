@@ -64,7 +64,16 @@ export const usePropertyData = () => {
   // Helper function to get apartments for a specific block
   const getApartments = (blockName: string): string[] => {
     const block = blocks.find(b => b.name === blockName);
-    return block ? block.apartments.map(apt => apt.number) : [];
+    if (!block) return [];
+    
+    // Sort apartment numbers numerically
+    return [...block.apartments]
+      .sort((a, b) => {
+        const numA = parseInt(a.number, 10);
+        const numB = parseInt(b.number, 10);
+        return numA - numB;
+      })
+      .map(apt => apt.number);
   };
 
   const isApartmentOccupied = (blockName: string, apartmentNumber: string) => {

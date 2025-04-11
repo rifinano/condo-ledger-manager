@@ -21,6 +21,14 @@ const BlockCard: React.FC<BlockCardProps> = ({
   isApartmentOccupied,
   getResidentName
 }) => {
+  // Sort apartments numerically
+  const sortedApartments = [...block.apartments].sort((a, b) => {
+    // Extract number part from apartment number and convert to integer
+    const numA = parseInt(a.number.replace(/\D/g, ''), 10);
+    const numB = parseInt(b.number.replace(/\D/g, ''), 10);
+    return numA - numB;
+  });
+
   return (
     <Card key={block.id}>
       <CardHeader>
@@ -53,14 +61,13 @@ const BlockCard: React.FC<BlockCardProps> = ({
           <TableHeader>
             <TableRow>
               <TableHead>Apartment</TableHead>
-              <TableHead>Floor</TableHead>
               <TableHead>Resident</TableHead>
               <TableHead>Status</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {block.apartments.slice(0, 5).map((apt) => {
+            {sortedApartments.slice(0, 5).map((apt) => {
               const occupied = isApartmentOccupied(block.name, apt.number);
               const residentName = getResidentName(block.name, apt.number);
               return (
@@ -69,7 +76,6 @@ const BlockCard: React.FC<BlockCardProps> = ({
                     <Home className="h-4 w-4 mr-2 text-gray-500" />
                     {apt.number}
                   </TableCell>
-                  <TableCell>{apt.floor}</TableCell>
                   <TableCell>
                     {residentName ? (
                       <div className="flex items-center">
@@ -105,7 +111,7 @@ const BlockCard: React.FC<BlockCardProps> = ({
             })}
             {block.apartments.length > 5 && (
               <TableRow>
-                <TableCell colSpan={5} className="text-center text-sm text-gray-500">
+                <TableCell colSpan={4} className="text-center text-sm text-gray-500">
                   + {block.apartments.length - 5} more apartments
                 </TableCell>
               </TableRow>

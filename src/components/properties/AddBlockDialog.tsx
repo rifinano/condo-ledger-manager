@@ -5,6 +5,8 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Plus } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 
 interface AddBlockDialogProps {
   isOpen: boolean;
@@ -19,11 +21,19 @@ const AddBlockDialog: React.FC<AddBlockDialogProps> = ({
   onAddBlock, 
   loading 
 }) => {
-  const [newBlockName, setNewBlockName] = useState("");
+  const [blockLetter, setBlockLetter] = useState("");
+  const [blockNumber, setBlockNumber] = useState("");
   const [newBlockApartments, setNewBlockApartments] = useState("10");
+  
+  const blockLetters = Array.from({ length: 26 }, (_, i) => String.fromCharCode(65 + i));
+  const blockNumbers = Array.from({ length: 10 }, (_, i) => `${i + 1}`);
 
   const handleSubmit = () => {
-    onAddBlock(newBlockName, parseInt(newBlockApartments));
+    const blockName = blockNumber 
+      ? `Block ${blockLetter}${blockNumber}` 
+      : `Block ${blockLetter}`;
+      
+    onAddBlock(blockName, parseInt(newBlockApartments));
   };
 
   return (
@@ -41,17 +51,39 @@ const AddBlockDialog: React.FC<AddBlockDialogProps> = ({
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="block-name" className="text-right">
-              Block Name
-            </Label>
-            <Input
-              id="block-name"
-              value={newBlockName}
-              onChange={(e) => setNewBlockName(e.target.value)}
-              className="col-span-3"
-              placeholder="e.g. Block C"
-            />
+          <div className="space-y-4">
+            <Label>Block Identifier</Label>
+            <div className="flex items-center space-x-2">
+              <div className="w-1/2">
+                <Select value={blockLetter} onValueChange={setBlockLetter}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Letter" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {blockLetters.map(letter => (
+                      <SelectItem key={letter} value={letter}>
+                        {letter}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="w-1/2">
+                <Select value={blockNumber} onValueChange={setBlockNumber}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Number (Optional)" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">None</SelectItem>
+                    {blockNumbers.map(number => (
+                      <SelectItem key={number} value={number}>
+                        {number}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="apartment-count" className="text-right">
@@ -72,13 +104,14 @@ const AddBlockDialog: React.FC<AddBlockDialogProps> = ({
             type="button"
             variant="outline"
             onClick={() => onOpenChange(false)}
+            disabled={loading}
           >
             Cancel
           </Button>
           <Button 
             type="button" 
             onClick={handleSubmit}
-            disabled={loading}
+            disabled={loading || !blockLetter}
           >
             Add Block
           </Button>
