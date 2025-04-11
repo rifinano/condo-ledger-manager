@@ -1,7 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { TogglePaymentStatusResult } from "./types";
-import { Database } from "@/integrations/supabase/types";
 
 export const togglePaymentStatus = async (
   paymentId: string, 
@@ -10,15 +9,10 @@ export const togglePaymentStatus = async (
   try {
     const newStatus = isPaid ? "paid" : "unpaid";
     
-    // Create an update object with the proper type
-    const updateData: Database['public']['Tables']['payments']['Update'] = {
-      payment_status: newStatus
-    };
-    
     // Update the payment status in the database
     const { error } = await supabase
       .from('payments')
-      .update(updateData)
+      .update({ payment_status: newStatus })
       .eq('id', paymentId);
 
     if (error) throw error;

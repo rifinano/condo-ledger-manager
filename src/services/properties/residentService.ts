@@ -25,8 +25,8 @@ export const getResidentByApartment = async (blockName: string, apartmentNumber:
       const { data, error } = await supabase
         .from("residents")
         .select("*")
-        .eq("block_number", blockName as any)
-        .eq("apartment_number", apartmentNumber as any)
+        .eq("block_number", blockName)
+        .eq("apartment_number", apartmentNumber)
         .maybeSingle();
 
       if (error) throw error;

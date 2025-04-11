@@ -21,8 +21,7 @@ export const getResidents = async (): Promise<Resident[]> => {
         if (error) throw error;
         
         console.log("Successfully fetched residents:", data?.length || 0);
-        // Type assertion to ensure compatibility
-        return (data || []) as Resident[];
+        return data || [];
       } catch (err) {
         error = err;
         attempt++;

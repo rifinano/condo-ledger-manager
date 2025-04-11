@@ -16,30 +16,16 @@ export const supabase = createClient<Database>(
     auth: {
       persistSession: true,
       autoRefreshToken: true,
-      storage: localStorage,
-      detectSessionInUrl: false
+      storage: localStorage
     },
     global: {
       headers: {
-        "Content-Type": "application/json",
-        "Cache-Control": "no-cache"
+        "Content-Type": "application/json"
       }
     },
     // Add a longer timeout to prevent quick timeouts
     realtime: {
       timeout: 60000
     }
-    // Removing the custom fetch implementation as it's causing type errors
   }
 );
-
-// Export a method to explicitly check connection
-export const checkSupabaseConnection = async () => {
-  try {
-    const { data, error } = await supabase.from('health_check').select('*').limit(1);
-    return !error;
-  } catch (err) {
-    console.error("Supabase connection check failed:", err);
-    return false;
-  }
-};
