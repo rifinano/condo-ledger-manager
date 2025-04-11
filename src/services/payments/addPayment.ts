@@ -42,7 +42,7 @@ export const addPayment = async (
     
     const { data, error } = await supabase
       .from('payments')
-      .insert([paymentWithStatus])
+      .insert(paymentWithStatus)
       .select();
 
     if (error) {
