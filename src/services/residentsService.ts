@@ -47,7 +47,10 @@ export const getResidents = async () => {
     // Fetch all resident-apartment assignments using a separate query
     // Use a raw query to bypass type checking since TypeScript doesn't know about this table yet
     const { data: residentApartments, error: apartmentsError } = await supabase
-      .rpc('get_resident_apartments'); // We'll create this function
+      .rpc('get_resident_apartments') as { 
+        data: { resident_id: string; block_number: string; apartment_number: string }[] | null; 
+        error: any 
+      };
 
     if (apartmentsError) {
       console.error("Error fetching resident apartments:", apartmentsError);
@@ -57,7 +60,7 @@ export const getResidents = async () => {
     const apartmentsByResident: Record<string, ResidentApartment[]> = {};
     
     if (residentApartments) {
-      residentApartments.forEach((apt: any) => {
+      residentApartments.forEach((apt) => {
         if (!apartmentsByResident[apt.resident_id]) {
           apartmentsByResident[apt.resident_id] = [];
         }
@@ -113,7 +116,7 @@ export const addResident = async (resident: Omit<ResidentFormData, 'id'>) => {
           p_resident_id: newResidentId,
           p_block_number: resident.block_number,
           p_apartment_number: resident.apartment_number
-        });
+        }) as { data: null; error: any };
         
       if (aptError) {
         console.error("Error adding resident apartment:", aptError);
@@ -190,7 +193,7 @@ export const addResidentApartment = async (
         p_resident_id: residentId,
         p_block_number: blockNumber,
         p_apartment_number: apartmentNumber
-      });
+      }) as { data: null; error: any };
       
     if (error) throw error;
     
@@ -216,7 +219,7 @@ export const removeResidentApartment = async (
         p_resident_id: residentId,
         p_block_number: blockNumber,
         p_apartment_number: apartmentNumber
-      });
+      }) as { data: null; error: any };
       
     if (error) throw error;
     

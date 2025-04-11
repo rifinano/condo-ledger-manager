@@ -242,7 +242,30 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      add_resident_apartment: {
+        Args: {
+          p_resident_id: string
+          p_block_number: string
+          p_apartment_number: string
+        }
+        Returns: undefined
+      }
+      get_resident_apartments: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          resident_id: string
+          block_number: string
+          apartment_number: string
+        }[]
+      }
+      remove_resident_apartment: {
+        Args: {
+          p_resident_id: string
+          p_block_number: string
+          p_apartment_number: string
+        }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never
