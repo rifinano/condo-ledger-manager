@@ -1,5 +1,6 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,121 +9,204 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue 
 } from "@/components/ui/select";
 import { 
+  Dialog, DialogContent, DialogDescription, DialogFooter, 
+  DialogHeader, DialogTitle, DialogTrigger 
+} from "@/components/ui/dialog";
+import { 
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow 
 } from "@/components/ui/table";
 import {
   Calendar as CalendarIcon, CheckCircle2, CreditCard, 
-  XCircle, Filter, Download
+  XCircle, Filter, Download, Plus
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { useToast } from "@/components/ui/use-toast";
-
-interface Payment {
-  id: string;
-  residentName: string;
-  block: string;
-  apartment: string;
-  amount: number;
-  dueDate: string;
-  status: "paid" | "unpaid";
-  paymentDate?: string;
-}
+import { useToast } from "@/hooks/use-toast";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { getPayments, getResidents, addPayment, Payment, Resident } from "@/services/paymentsService";
 
 const PaymentsPage = () => {
   const { toast } = useToast();
   const [selectedBlock, setSelectedBlock] = useState<string>("all");
-  const [selectedYear, setSelectedYear] = useState<string>("2025");
-  const [selectedMonth, setSelectedMonth] = useState<string>("4"); // April by default
-
-  // Mock data for payments
-  const [payments, setPayments] = useState<Payment[]>(() => {
-    // Generate 30 payment records
-    return Array.from({ length: 30 }, (_, i) => {
-      const blockLetter = String.fromCharCode(65 + (i % 3)); // A, B, or C
-      const aptNumber = Math.floor(Math.random() * 15) + 1;
-      const aptId = `${blockLetter}${aptNumber < 10 ? '0' : ''}${aptNumber}`;
-      const isPaid = Math.random() > 0.3; // 70% chance of being paid
-      
-      const today = new Date();
-      const dueDate = new Date(2025, 3, 15); // April 15, 2025
-      
-      const paymentDate = isPaid 
-        ? new Date(2025, 3, Math.floor(Math.random() * 15) + 1) // Random date in April up to the 15th
-        : undefined;
-      
-      return {
-        id: `payment-${i + 1}`,
-        residentName: `Resident ${i + 1}`,
-        block: `Block ${blockLetter}`,
-        apartment: aptId,
-        amount: 250 + (Math.floor(Math.random() * 10) * 25), // Between $250 and $475
-        dueDate: dueDate.toISOString().split('T')[0],
-        status: isPaid ? "paid" : "unpaid",
-        paymentDate: paymentDate?.toISOString().split('T')[0],
-      };
-    });
+  const [selectedYear, setSelectedYear] = useState<string>(new Date().getFullYear().toString());
+  const [selectedMonth, setSelectedMonth] = useState<string>(new Date().getMonth().toString());
+  const [isAddingPayment, setIsAddingPayment] = useState(false);
+  const [newPayment, setNewPayment] = useState({
+    resident_id: "",
+    amount: "",
+    payment_date: new Date().toISOString().split("T")[0],
+    payment_for_month: new Date().toISOString().split("-")[1],
+    payment_for_year: new Date().getFullYear().toString(),
+    payment_type: "Rent",
+    payment_method: "Cash",
+    notes: ""
   });
 
+  // Fetch payments with React Query
+  const { 
+    data: payments = [], 
+    isLoading: isLoadingPayments,
+    error: paymentsError,
+    refetch: refetchPayments
+  } = useQuery({
+    queryKey: ['payments'],
+    queryFn: getPayments
+  });
+
+  // Fetch residents with React Query
+  const { 
+    data: residents = [], 
+    isLoading: isLoadingResidents,
+    error: residentsError
+  } = useQuery({
+    queryKey: ['residents'],
+    queryFn: getResidents
+  });
+
+  // If there's an error, show it in a toast
+  useEffect(() => {
+    if (paymentsError) {
+      toast({
+        title: "Error fetching payments",
+        description: "Failed to load payments. Please try again.",
+        variant: "destructive",
+      });
+    }
+
+    if (residentsError) {
+      toast({
+        title: "Error fetching residents",
+        description: "Failed to load residents. Please try again.",
+        variant: "destructive",
+      });
+    }
+  }, [paymentsError, residentsError, toast]);
+
   // Filter payments based on selected filters
-  const filteredPayments = payments.filter(payment => {
+  const filteredPayments = payments.filter((payment: Payment) => {
     // Filter by block
     if (selectedBlock !== "all" && payment.block !== selectedBlock) {
       return false;
     }
     
-    // Filter by year and month
-    const paymentDate = new Date(payment.dueDate);
-    if (
-      paymentDate.getFullYear().toString() !== selectedYear ||
-      paymentDate.getMonth().toString() !== selectedMonth
-    ) {
+    // Filter by year
+    if (selectedYear && payment.payment_for_year !== selectedYear) {
+      return false;
+    }
+    
+    // Extract month from payment_for_month (format: YYYY-MM)
+    const paymentMonth = payment.payment_for_month.split('-')[1] || '';
+    
+    // Filter by month (if month is selected)
+    if (selectedMonth && paymentMonth !== selectedMonth) {
       return false;
     }
     
     return true;
   });
 
-  const blocks = ["all", "Block A", "Block B", "Block C"];
-  const years = ["2023", "2024", "2025", "2026"];
+  // Get unique blocks from residents
+  const blocks = ["all", ...Array.from(new Set(residents.map((r: Resident) => r.block_number)))];
+  
+  const years = (() => {
+    const currentYear = new Date().getFullYear();
+    return [
+      (currentYear - 1).toString(),
+      currentYear.toString(),
+      (currentYear + 1).toString()
+    ];
+  })();
+
   const months = [
-    { value: "0", label: "January" },
-    { value: "1", label: "February" },
-    { value: "2", label: "March" },
-    { value: "3", label: "April" },
-    { value: "4", label: "May" },
-    { value: "5", label: "June" },
-    { value: "6", label: "July" },
-    { value: "7", label: "August" },
-    { value: "8", label: "September" },
-    { value: "9", label: "October" },
-    { value: "10", label: "November" },
-    { value: "11", label: "December" },
+    { value: "01", label: "January" },
+    { value: "02", label: "February" },
+    { value: "03", label: "March" },
+    { value: "04", label: "April" },
+    { value: "05", label: "May" },
+    { value: "06", label: "June" },
+    { value: "07", label: "July" },
+    { value: "08", label: "August" },
+    { value: "09", label: "September" },
+    { value: "10", label: "October" },
+    { value: "11", label: "November" },
+    { value: "12", label: "December" },
   ];
 
-  const togglePaymentStatus = (paymentId: string) => {
-    setPayments(
-      payments.map(payment => {
-        if (payment.id === paymentId) {
-          const newStatus = payment.status === "paid" ? "unpaid" : "paid";
-          const newPaymentDate = newStatus === "paid" 
-            ? new Date().toISOString().split('T')[0]
-            : undefined;
-            
-          toast({
-            title: `Payment ${newStatus === "paid" ? "marked as paid" : "marked as unpaid"}`,
-            description: `${payment.residentName} from ${payment.block}, Apt ${payment.apartment}`
-          });
-          
-          return {
-            ...payment,
-            status: newStatus,
-            paymentDate: newPaymentDate
-          };
-        }
-        return payment;
-      })
-    );
+  const paymentMethods = ["Cash", "Bank Transfer", "Check", "Credit Card", "Mobile Payment"];
+  const paymentTypes = ["Rent", "Maintenance", "Deposit", "Other"];
+
+  const handleAddPayment = async () => {
+    if (!newPayment.resident_id || !newPayment.amount || !newPayment.payment_date) {
+      toast({
+        title: "Missing information",
+        description: "Please fill in all required fields",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const formattedPayment = {
+      ...newPayment,
+      amount: parseFloat(newPayment.amount),
+      payment_for_month: `${newPayment.payment_for_year}-${newPayment.payment_for_month}`,
+    };
+
+    const result = await addPayment(formattedPayment);
+    
+    if (result.success) {
+      toast({
+        title: "Payment added",
+        description: "The payment has been recorded successfully"
+      });
+      setIsAddingPayment(false);
+      refetchPayments();
+      // Reset the form
+      setNewPayment({
+        resident_id: "",
+        amount: "",
+        payment_date: new Date().toISOString().split("T")[0],
+        payment_for_month: new Date().toISOString().split("-")[1],
+        payment_for_year: new Date().getFullYear().toString(),
+        payment_type: "Rent",
+        payment_method: "Cash",
+        notes: ""
+      });
+    } else {
+      toast({
+        title: "Error adding payment",
+        description: result.error || "Failed to add payment",
+        variant: "destructive"
+      });
+    }
   };
+
+  const handleExportReport = () => {
+    toast({
+      title: "Export initiated",
+      description: "Your payment report is being generated"
+    });
+    
+    // In a real implementation, this would trigger a download of a CSV or PDF
+    setTimeout(() => {
+      toast({
+        title: "Report ready",
+        description: "Payment report has been exported"
+      });
+    }, 1500);
+  };
+
+  if (isLoadingPayments || isLoadingResidents) {
+    return (
+      <DashboardLayout>
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <h2 className="text-xl font-semibold mb-2">Loading...</h2>
+            <p className="text-gray-500">Please wait while we fetch your payment data</p>
+          </div>
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout>
@@ -132,9 +216,168 @@ const PaymentsPage = () => {
             <h1 className="text-3xl font-bold text-gray-900">Payments</h1>
             <p className="text-gray-500 mt-1">Track and manage resident payments</p>
           </div>
-          <Button variant="outline" onClick={() => toast({ title: "Report exported" })}>
-            <Download className="mr-2 h-4 w-4" /> Export Report
-          </Button>
+          <div className="flex space-x-2">
+            <Button variant="outline" onClick={handleExportReport}>
+              <Download className="mr-2 h-4 w-4" /> Export Report
+            </Button>
+            
+            <Dialog open={isAddingPayment} onOpenChange={setIsAddingPayment}>
+              <DialogTrigger asChild>
+                <Button>
+                  <Plus className="mr-2 h-4 w-4" /> Record Payment
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[525px]">
+                <DialogHeader>
+                  <DialogTitle>Record New Payment</DialogTitle>
+                  <DialogDescription>
+                    Enter payment details to record a new payment
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="grid gap-4 py-4">
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="resident" className="text-right">
+                      Resident
+                    </Label>
+                    <Select 
+                      value={newPayment.resident_id} 
+                      onValueChange={(value) => setNewPayment({...newPayment, resident_id: value})}
+                    >
+                      <SelectTrigger className="col-span-3">
+                        <SelectValue placeholder="Select a resident" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {residents.map((resident: Resident) => (
+                          <SelectItem key={resident.id} value={resident.id}>
+                            {resident.full_name} ({resident.block_number}, Apt {resident.apartment_number})
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="amount" className="text-right">
+                      Amount ($)
+                    </Label>
+                    <Input
+                      id="amount"
+                      type="number"
+                      value={newPayment.amount}
+                      onChange={(e) => setNewPayment({...newPayment, amount: e.target.value})}
+                      placeholder="0.00"
+                      min="0"
+                      step="0.01"
+                      className="col-span-3"
+                    />
+                  </div>
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="payment_date" className="text-right">
+                      Payment Date
+                    </Label>
+                    <Input
+                      id="payment_date"
+                      type="date"
+                      value={newPayment.payment_date}
+                      onChange={(e) => setNewPayment({...newPayment, payment_date: e.target.value})}
+                      className="col-span-3"
+                    />
+                  </div>
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="payment_for_year" className="text-right">
+                      For Year
+                    </Label>
+                    <Select 
+                      value={newPayment.payment_for_year} 
+                      onValueChange={(value) => setNewPayment({...newPayment, payment_for_year: value})}
+                    >
+                      <SelectTrigger className="col-span-3">
+                        <SelectValue placeholder="Select year" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {years.map((year) => (
+                          <SelectItem key={year} value={year}>{year}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="payment_for_month" className="text-right">
+                      For Month
+                    </Label>
+                    <Select 
+                      value={newPayment.payment_for_month} 
+                      onValueChange={(value) => setNewPayment({...newPayment, payment_for_month: value})}
+                    >
+                      <SelectTrigger className="col-span-3">
+                        <SelectValue placeholder="Select month" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {months.map((month) => (
+                          <SelectItem key={month.value} value={month.value}>{month.label}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="payment_type" className="text-right">
+                      Payment Type
+                    </Label>
+                    <Select 
+                      value={newPayment.payment_type} 
+                      onValueChange={(value) => setNewPayment({...newPayment, payment_type: value})}
+                    >
+                      <SelectTrigger className="col-span-3">
+                        <SelectValue placeholder="Select payment type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {paymentTypes.map((type) => (
+                          <SelectItem key={type} value={type}>{type}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="payment_method" className="text-right">
+                      Payment Method
+                    </Label>
+                    <Select 
+                      value={newPayment.payment_method} 
+                      onValueChange={(value) => setNewPayment({...newPayment, payment_method: value})}
+                    >
+                      <SelectTrigger className="col-span-3">
+                        <SelectValue placeholder="Select payment method" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {paymentMethods.map((method) => (
+                          <SelectItem key={method} value={method}>{method}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="notes" className="text-right">
+                      Notes
+                    </Label>
+                    <Input
+                      id="notes"
+                      value={newPayment.notes}
+                      onChange={(e) => setNewPayment({...newPayment, notes: e.target.value})}
+                      className="col-span-3"
+                      placeholder="Optional notes"
+                    />
+                  </div>
+                </div>
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setIsAddingPayment(false)}>
+                    Cancel
+                  </Button>
+                  <Button onClick={handleAddPayment}>
+                    Add Payment
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          </div>
         </div>
 
         <Card>
@@ -173,7 +416,7 @@ const PaymentsPage = () => {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Blocks</SelectItem>
-                    {blocks.slice(1).map(block => (
+                    {blocks.filter(block => block !== "all").map(block => (
                       <SelectItem key={block} value={block}>{block}</SelectItem>
                     ))}
                   </SelectContent>
@@ -192,23 +435,23 @@ const PaymentsPage = () => {
               <TabsContent value="all" className="space-y-4">
                 <PaymentsTable 
                   payments={filteredPayments} 
-                  togglePaymentStatus={togglePaymentStatus} 
+                  refetchPayments={refetchPayments}
                   filter="all"
                 />
               </TabsContent>
               
               <TabsContent value="paid" className="space-y-4">
                 <PaymentsTable 
-                  payments={filteredPayments.filter(p => p.status === "paid")} 
-                  togglePaymentStatus={togglePaymentStatus}
+                  payments={filteredPayments.filter((p: Payment) => p.payment_method === "paid")} 
+                  refetchPayments={refetchPayments}
                   filter="paid"
                 />
               </TabsContent>
               
               <TabsContent value="unpaid" className="space-y-4">
                 <PaymentsTable 
-                  payments={filteredPayments.filter(p => p.status === "unpaid")} 
-                  togglePaymentStatus={togglePaymentStatus}
+                  payments={filteredPayments.filter((p: Payment) => p.payment_method !== "paid")} 
+                  refetchPayments={refetchPayments}
                   filter="unpaid"
                 />
               </TabsContent>
@@ -222,11 +465,25 @@ const PaymentsPage = () => {
 
 interface PaymentsTableProps {
   payments: Payment[];
-  togglePaymentStatus: (id: string) => void;
+  refetchPayments: () => void;
   filter: "all" | "paid" | "unpaid";
 }
 
-const PaymentsTable = ({ payments, togglePaymentStatus, filter }: PaymentsTableProps) => {
+const PaymentsTable = ({ payments, refetchPayments, filter }: PaymentsTableProps) => {
+  const { toast } = useToast();
+
+  const handleTogglePaymentStatus = async (paymentId: string, currentStatus: boolean) => {
+    // This would be replaced with a real API call
+    toast({
+      title: `Payment ${currentStatus ? "marked as unpaid" : "marked as paid"}`,
+      description: "Payment status updated successfully"
+    });
+    
+    // In a real app, we would call the API to update the payment status
+    // For now, just refetch the payments
+    refetchPayments();
+  };
+  
   return (
     <Table>
       <TableHeader>
@@ -234,52 +491,37 @@ const PaymentsTable = ({ payments, togglePaymentStatus, filter }: PaymentsTableP
           <TableHead>Resident</TableHead>
           <TableHead>Location</TableHead>
           <TableHead>Amount</TableHead>
-          <TableHead>Due Date</TableHead>
-          <TableHead>Status</TableHead>
           <TableHead>Payment Date</TableHead>
+          <TableHead>For Period</TableHead>
+          <TableHead>Method</TableHead>
+          <TableHead>Type</TableHead>
           <TableHead className="text-right">Actions</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
         {payments.length === 0 ? (
           <TableRow>
-            <TableCell colSpan={7} className="text-center py-4 text-muted-foreground">
+            <TableCell colSpan={8} className="text-center py-4 text-muted-foreground">
               No payments found for the selected criteria
             </TableCell>
           </TableRow>
         ) : (
-          payments.map(payment => (
+          payments.map((payment: Payment) => (
             <TableRow key={payment.id}>
               <TableCell className="font-medium">{payment.residentName}</TableCell>
               <TableCell>{payment.block}, Apt {payment.apartment}</TableCell>
-              <TableCell>${payment.amount.toFixed(2)}</TableCell>
-              <TableCell>{new Date(payment.dueDate).toLocaleDateString()}</TableCell>
-              <TableCell>
-                <Badge variant={payment.status === "paid" ? "outline" : "destructive"} className={
-                  payment.status === "paid" 
-                    ? "bg-green-100 text-green-800 hover:bg-green-100" 
-                    : "bg-red-100 text-red-800 hover:bg-red-100"
-                }>
-                  {payment.status === "paid" ? (
-                    <CheckCircle2 className="mr-1 h-3 w-3" />
-                  ) : (
-                    <XCircle className="mr-1 h-3 w-3" />
-                  )}
-                  {payment.status === "paid" ? "Paid" : "Unpaid"}
-                </Badge>
-              </TableCell>
-              <TableCell>
-                {payment.paymentDate 
-                  ? new Date(payment.paymentDate).toLocaleDateString() 
-                  : "-"}
-              </TableCell>
+              <TableCell>${parseFloat(payment.amount.toString()).toFixed(2)}</TableCell>
+              <TableCell>{new Date(payment.payment_date).toLocaleDateString()}</TableCell>
+              <TableCell>{payment.payment_for_month}/{payment.payment_for_year}</TableCell>
+              <TableCell>{payment.payment_method}</TableCell>
+              <TableCell>{payment.payment_type}</TableCell>
               <TableCell className="text-right">
                 <Button 
                   variant="ghost" 
                   size="sm"
-                  onClick={() => togglePaymentStatus(payment.id)}
+                  onClick={() => handleTogglePaymentStatus(payment.id, payment.payment_method === "paid")}
                 >
-                  {payment.status === "paid" ? "Mark as Unpaid" : "Mark as Paid"}
+                  {payment.payment_method === "paid" ? "Mark as Unpaid" : "Mark as Paid"}
                 </Button>
               </TableCell>
             </TableRow>

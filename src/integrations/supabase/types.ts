@@ -60,6 +60,84 @@ export type Database = {
         }
         Relationships: []
       }
+      payments: {
+        Row: {
+          amount: number
+          created_at: string
+          created_by: string | null
+          id: string
+          notes: string | null
+          payment_date: string
+          payment_for_month: string
+          payment_for_year: string
+          payment_method: string
+          payment_type: string
+          resident_id: string
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          notes?: string | null
+          payment_date: string
+          payment_for_month: string
+          payment_for_year: string
+          payment_method: string
+          payment_type: string
+          resident_id: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          notes?: string | null
+          payment_date?: string
+          payment_for_month?: string
+          payment_for_year?: string
+          payment_method?: string
+          payment_type?: string
+          resident_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      residents: {
+        Row: {
+          apartment_number: string
+          block_number: string
+          created_at: string
+          created_by: string | null
+          full_name: string
+          id: string
+          phone_number: string | null
+          updated_at: string
+        }
+        Insert: {
+          apartment_number: string
+          block_number: string
+          created_at?: string
+          created_by?: string | null
+          full_name: string
+          id?: string
+          phone_number?: string | null
+          updated_at?: string
+        }
+        Update: {
+          apartment_number?: string
+          block_number?: string
+          created_at?: string
+          created_by?: string | null
+          full_name?: string
+          id?: string
+          phone_number?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
