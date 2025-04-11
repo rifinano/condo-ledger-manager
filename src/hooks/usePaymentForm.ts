@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { useToast } from "@/hooks/use-toast";
-import { addPayment } from "@/services/paymentsService";
+import { addPayment } from "@/services/payments";
 
 export interface PaymentFormState {
   resident_id: string;

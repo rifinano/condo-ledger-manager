@@ -5,7 +5,7 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { Payment, togglePaymentStatus } from "@/services/paymentsService";
+import { Payment, togglePaymentStatus } from "@/services/payments";
 
 interface PaymentsTableProps {
   payments: Payment[];

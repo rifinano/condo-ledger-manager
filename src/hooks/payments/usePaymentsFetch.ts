@@ -1,6 +1,6 @@
 
 import { useQuery } from "@tanstack/react-query";
-import { getPayments, getResidents } from "@/services/paymentsService";
+import { getPayments, getResidents } from "@/services/payments";
 import { useToast } from "@/hooks/use-toast";
 import { useCallback } from "react";
 
