@@ -16,6 +16,7 @@ interface AddResidentDialogProps {
   setCurrentResident: (resident: Partial<ResidentFormData>) => void;
   blocks: string[];
   getApartments: (block: string) => string[];
+  isApartmentOccupied?: (blockNumber: string, apartmentNumber: string, excludeResidentId?: string) => boolean;
   handleAddResident: () => Promise<boolean>;
   resetForm: () => void;
   months: { value: string; label: string }[];
@@ -29,6 +30,7 @@ const AddResidentDialog = ({
   setCurrentResident,
   blocks,
   getApartments,
+  isApartmentOccupied,
   handleAddResident,
   resetForm,
   months,
@@ -38,6 +40,14 @@ const AddResidentDialog = ({
 
   const handleSubmit = async () => {
     if (isSubmitting) return;
+    
+    // Check if the apartment is already occupied before submitting
+    if (isApartmentOccupied && 
+        currentResident.block_number && 
+        currentResident.apartment_number && 
+        isApartmentOccupied(currentResident.block_number, currentResident.apartment_number)) {
+      return; // Don't proceed if apartment is occupied
+    }
     
     setIsSubmitting(true);
     try {
@@ -71,6 +81,7 @@ const AddResidentDialog = ({
           onResidentChange={setCurrentResident}
           blocks={blocks}
           getApartments={getApartments}
+          isApartmentOccupied={isApartmentOccupied}
           months={months}
           years={years}
         />
@@ -85,7 +96,12 @@ const AddResidentDialog = ({
           </Button>
           <Button 
             onClick={handleSubmit}
-            disabled={isSubmitting}
+            disabled={isSubmitting || (
+              isApartmentOccupied && 
+              currentResident.block_number && 
+              currentResident.apartment_number && 
+              isApartmentOccupied(currentResident.block_number, currentResident.apartment_number)
+            )}
             type="button"
           >
             {isSubmitting ? (

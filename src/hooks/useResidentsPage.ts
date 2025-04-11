@@ -1,3 +1,4 @@
+
 import { useCallback, useMemo } from "react";
 import { useResidentsState } from "./useResidentsState";
 import { usePropertyData } from "./usePropertyData";
@@ -41,7 +42,7 @@ export const useResidentsPage = () => {
     years 
   } = usePropertyData();
 
-  const { fetchResidents, filterResidents, totalCount, isFetching } = useResidentsData(
+  const { fetchResidents, filterResidents, totalCount, isFetching, isApartmentOccupied } = useResidentsData(
     setResidents,
     setIsLoading,
     searchTerm
@@ -139,6 +140,7 @@ export const useResidentsPage = () => {
     pageSize,
     setPageSize,
     totalCount,
-    isFetching
+    isFetching,
+    isApartmentOccupied
   };
 };

@@ -45,7 +45,9 @@ const ResidentsPage = () => {
     totalPages,
     handlePageChange,
     totalCount,
-    isFetching
+    isFetching,
+    isApartmentOccupied,
+    selectedResidentId
   } = useResidentsPage();
 
   // Fetch residents data when the component mounts
@@ -146,6 +148,7 @@ const ResidentsPage = () => {
         setCurrentResident={setCurrentResident}
         blocks={blockNames}
         getApartments={getApartments}
+        isApartmentOccupied={isApartmentOccupied}
         handleAddResident={handleAddResidentWithRefresh}
         resetForm={resetForm}
         months={months}
@@ -159,6 +162,8 @@ const ResidentsPage = () => {
         setCurrentResident={setCurrentResident}
         blocks={blockNames}
         getApartments={getApartments}
+        isApartmentOccupied={isApartmentOccupied}
+        currentResidentId={selectedResidentId}
         handleUpdateResident={handleUpdateResidentWithRefresh}
         resetForm={resetForm}
         months={months}

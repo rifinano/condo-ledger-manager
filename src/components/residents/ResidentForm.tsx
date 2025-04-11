@@ -1,14 +1,19 @@
 
+import { useState } from "react";
 import { ResidentFormData } from "@/services/residents/types";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
 
 interface ResidentFormProps {
   resident: Partial<ResidentFormData>;
   onResidentChange: (resident: Partial<ResidentFormData>) => void;
   blocks: string[];
   getApartments: (block: string) => string[];
+  isApartmentOccupied?: (blockNumber: string, apartmentNumber: string, excludeResidentId?: string) => boolean;
+  currentResidentId?: string;
   months: { value: string; label: string }[];
   years: string[];
   isEditing?: boolean;
@@ -19,19 +24,37 @@ const ResidentForm = ({
   onResidentChange,
   blocks,
   getApartments,
+  isApartmentOccupied,
+  currentResidentId,
   months,
   years,
   isEditing = false
 }: ResidentFormProps) => {
+  const [apartmentError, setApartmentError] = useState<string | null>(null);
+
   const handleChange = (field: keyof ResidentFormData, value: string) => {
     const updatedResident = { ...resident, [field]: value };
+    
     // If changing block, reset apartment if not in the new block's apartments
     if (field === 'block_number') {
       const availableApartments = getApartments(value);
       if (!availableApartments.includes(resident.apartment_number || '')) {
         updatedResident.apartment_number = '';
       }
+      // Clear any apartment error when changing block
+      setApartmentError(null);
     }
+    
+    // Check if apartment is already occupied when selecting an apartment
+    if (field === 'apartment_number' && value && resident.block_number && isApartmentOccupied) {
+      const isOccupied = isApartmentOccupied(resident.block_number, value, currentResidentId);
+      if (isOccupied) {
+        setApartmentError(`This apartment is already occupied by another resident.`);
+      } else {
+        setApartmentError(null);
+      }
+    }
+    
     onResidentChange(updatedResident);
   };
 
@@ -83,20 +106,31 @@ const ResidentForm = ({
         <Label htmlFor="apartment" className="text-right">
           Apartment*
         </Label>
-        <Select 
-          value={resident.apartment_number || ''} 
-          onValueChange={(value) => handleChange('apartment_number', value)}
-          disabled={!resident.block_number}
-        >
-          <SelectTrigger className="col-span-3">
-            <SelectValue placeholder="Select an apartment" />
-          </SelectTrigger>
-          <SelectContent>
-            {resident.block_number && getApartments(resident.block_number).map(apt => (
-              <SelectItem key={apt} value={apt}>{apt}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <div className="col-span-3 space-y-2">
+          <Select 
+            value={resident.apartment_number || ''} 
+            onValueChange={(value) => handleChange('apartment_number', value)}
+            disabled={!resident.block_number}
+          >
+            <SelectTrigger className={apartmentError ? "border-red-500" : ""}>
+              <SelectValue placeholder="Select an apartment" />
+            </SelectTrigger>
+            <SelectContent>
+              {resident.block_number && getApartments(resident.block_number).map(apt => (
+                <SelectItem key={apt} value={apt}>{apt}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          
+          {apartmentError && (
+            <Alert variant="destructive" className="py-2">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription className="ml-2 text-xs">
+                {apartmentError}
+              </AlertDescription>
+            </Alert>
+          )}
+        </div>
       </div>
 
       {!isEditing && (

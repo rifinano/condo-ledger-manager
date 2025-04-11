@@ -16,6 +16,8 @@ interface EditResidentDialogProps {
   setCurrentResident: (resident: Partial<ResidentFormData>) => void;
   blocks: string[];
   getApartments: (block: string) => string[];
+  isApartmentOccupied?: (blockNumber: string, apartmentNumber: string, excludeResidentId?: string) => boolean;
+  currentResidentId?: string;
   handleUpdateResident: () => Promise<boolean>;
   resetForm: () => void;
   months: { value: string; label: string }[];
@@ -29,6 +31,8 @@ const EditResidentDialog = ({
   setCurrentResident,
   blocks,
   getApartments,
+  isApartmentOccupied,
+  currentResidentId,
   handleUpdateResident,
   resetForm,
   months,
@@ -38,6 +42,14 @@ const EditResidentDialog = ({
 
   const handleSubmit = async () => {
     if (isSubmitting) return;
+    
+    // Check if the apartment is already occupied by another resident before submitting
+    if (isApartmentOccupied && 
+        currentResident.block_number && 
+        currentResident.apartment_number && 
+        isApartmentOccupied(currentResident.block_number, currentResident.apartment_number, currentResidentId)) {
+      return; // Don't proceed if apartment is occupied by another resident
+    }
     
     setIsSubmitting(true);
     try {
@@ -71,6 +83,8 @@ const EditResidentDialog = ({
           onResidentChange={setCurrentResident}
           blocks={blocks}
           getApartments={getApartments}
+          isApartmentOccupied={isApartmentOccupied}
+          currentResidentId={currentResidentId}
           months={months}
           years={years}
           isEditing={true}
@@ -86,7 +100,12 @@ const EditResidentDialog = ({
           </Button>
           <Button 
             onClick={handleSubmit}
-            disabled={isSubmitting}
+            disabled={isSubmitting || (
+              isApartmentOccupied && 
+              currentResident.block_number && 
+              currentResident.apartment_number && 
+              isApartmentOccupied(currentResident.block_number, currentResident.apartment_number, currentResidentId)
+            )}
             type="button"
           >
             {isSubmitting ? (

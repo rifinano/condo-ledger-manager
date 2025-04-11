@@ -13,6 +13,7 @@ export const useResidentsData = (
 ) => {
   const [totalCount, setTotalCount] = useState(0);
   const [isFetching, setIsFetching] = useState(false);
+  const [allResidents, setAllResidents] = useState<Resident[]>([]);
   
   const fetchResidents = useCallback(async () => {
     // Prevent concurrent fetches
@@ -35,6 +36,7 @@ export const useResidentsData = (
       );
       
       setResidents(validResidents || []);
+      setAllResidents(validResidents || []);
       setTotalCount(validResidents.length);
       return;
     } catch (error) {
@@ -68,9 +70,19 @@ export const useResidentsData = (
     });
   }, [searchTerm]);
 
+  // Check if an apartment is already occupied by another resident
+  const isApartmentOccupied = useCallback((blockNumber: string, apartmentNumber: string, excludeResidentId?: string) => {
+    return allResidents.some(resident => 
+      resident.block_number === blockNumber && 
+      resident.apartment_number === apartmentNumber &&
+      (!excludeResidentId || resident.id !== excludeResidentId)
+    );
+  }, [allResidents]);
+
   return {
     fetchResidents,
     filterResidents,
+    isApartmentOccupied,
     totalCount,
     isFetching
   };
