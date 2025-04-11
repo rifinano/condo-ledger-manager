@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useToast } from "@/hooks/use-toast";
 import { addPayment } from "@/services/payments";
 
@@ -50,10 +50,16 @@ export const usePaymentForm = (
     setIsSubmitting(true);
     
     try {
+      // Format the payment data properly for the Supabase insert
       const formattedPayment = {
-        ...newPayment,
+        resident_id: newPayment.resident_id,
         amount: parseFloat(newPayment.amount),
-        payment_for_month: `${newPayment.payment_for_year}-${newPayment.payment_for_month}`,
+        payment_date: newPayment.payment_date,
+        payment_for_month: newPayment.payment_for_month,
+        payment_for_year: newPayment.payment_for_year,
+        payment_type: newPayment.payment_type,
+        payment_method: newPayment.payment_method,
+        notes: newPayment.notes || null
       };
 
       const result = await addPayment(formattedPayment);

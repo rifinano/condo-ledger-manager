@@ -31,15 +31,17 @@ export const addPayment = async (
       throw new Error("Selected resident does not exist or could not be verified");
     }
     
-    // Add payment_status field with default value "paid" and include created_by field
+    // Create a complete payment object with all required fields
+    // Use the spread operator to merge payment with the default status
     const paymentWithStatus = {
-      ...payment,
+      ...payment, // This includes all the original payment fields
       payment_status: "paid" as const,
       created_by: user.id // Use the authenticated user ID
     };
     
     console.log("Adding payment with data:", paymentWithStatus);
     
+    // Insert the complete payment object into the database
     const { data, error } = await supabase
       .from('payments')
       .insert(paymentWithStatus)
