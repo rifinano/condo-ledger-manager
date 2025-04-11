@@ -15,12 +15,14 @@ interface DeleteBlockAlertProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   onConfirmDelete: () => void;
+  blockName: string | null;
 }
 
 const DeleteBlockAlert: React.FC<DeleteBlockAlertProps> = ({
   isOpen,
   onOpenChange,
   onConfirmDelete,
+  blockName,
 }) => {
   return (
     <AlertDialog open={isOpen} onOpenChange={onOpenChange}>
@@ -28,7 +30,7 @@ const DeleteBlockAlert: React.FC<DeleteBlockAlertProps> = ({
         <AlertDialogHeader>
           <AlertDialogTitle>Are you sure?</AlertDialogTitle>
           <AlertDialogDescription>
-            This action will permanently delete this block and all its apartments. 
+            This action will permanently delete {blockName ? <strong>{blockName}</strong> : "this block"} and all its apartments. 
             This action cannot be undone.
           </AlertDialogDescription>
         </AlertDialogHeader>

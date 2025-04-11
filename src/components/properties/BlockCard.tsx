@@ -1,9 +1,11 @@
+
 import React, { memo, useState } from "react";
 import { Building2, Home, Trash2, User, Edit, ChevronDown, ChevronUp } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Block, Apartment } from "@/services/properties";
+import { useToast } from "@/hooks/use-toast";
 
 interface BlockCardProps {
   block: Block & { apartments: Apartment[] };
@@ -21,6 +23,7 @@ const BlockCard: React.FC<BlockCardProps> = memo(({
   getResidentName
 }) => {
   const [showAllApartments, setShowAllApartments] = useState(false);
+  const { toast } = useToast();
 
   const sortedApartments = React.useMemo(() => {
     return [...block.apartments].sort((a, b) => {
@@ -44,6 +47,24 @@ const BlockCard: React.FC<BlockCardProps> = memo(({
     setShowAllApartments(!showAllApartments);
   };
 
+  const handleDeleteBlock = () => {
+    // Check if any apartments are occupied
+    const hasOccupiedApartments = block.apartments.some(apt => 
+      isApartmentOccupied(block.name, apt.number)
+    );
+
+    if (hasOccupiedApartments) {
+      toast({
+        title: "Cannot delete block",
+        description: "This block has occupied apartments. Please reassign residents before deleting.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    onDeleteBlock(block.id);
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -57,7 +78,7 @@ const BlockCard: React.FC<BlockCardProps> = memo(({
               variant="outline" 
               size="sm" 
               className="text-red-600 hover:text-red-700"
-              onClick={() => onDeleteBlock(block.id)}
+              onClick={handleDeleteBlock}
             >
               <Trash2 className="h-4 w-4 mr-1" /> Delete
             </Button>

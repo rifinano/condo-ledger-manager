@@ -29,6 +29,7 @@ const PropertiesPage = () => {
   const [isAddingBlock, setIsAddingBlock] = useState(false);
   const [isDeletingBlock, setIsDeletingBlock] = useState(false);
   const [currentBlockId, setCurrentBlockId] = useState<string | null>(null);
+  const [currentBlockName, setCurrentBlockName] = useState<string | null>(null);
   const [isEditingApartment, setIsEditingApartment] = useState(false);
   const [currentApartment, setCurrentApartment] = useState<Apartment | null>(null);
 
@@ -59,7 +60,7 @@ const PropertiesPage = () => {
     try {
       const result = await addBlock(name, apartmentCount);
       if (result) {
-        await fetchProperties();
+        await refreshData();
         setIsAddingBlock(false);
         
         toast({
@@ -78,8 +79,12 @@ const PropertiesPage = () => {
   };
 
   const confirmDeleteBlock = (blockId: string) => {
-    setCurrentBlockId(blockId);
-    setIsDeletingBlock(true);
+    const block = blocks.find(b => b.id === blockId);
+    if (block) {
+      setCurrentBlockId(blockId);
+      setCurrentBlockName(block.name);
+      setIsDeletingBlock(true);
+    }
   };
 
   const handleDeleteBlock = async () => {
@@ -92,6 +97,7 @@ const PropertiesPage = () => {
         refreshData();
         setIsDeletingBlock(false);
         setCurrentBlockId(null);
+        setCurrentBlockName(null);
         
         toast({
           title: "Block deleted",
@@ -175,6 +181,7 @@ const PropertiesPage = () => {
         isOpen={isDeletingBlock}
         onOpenChange={setIsDeletingBlock}
         onConfirmDelete={handleDeleteBlock}
+        blockName={currentBlockName}
       />
 
       <EditApartmentSheet 
