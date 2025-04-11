@@ -1,7 +1,6 @@
 
 import { useState, useEffect } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
-import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { 
   Apartment, 
@@ -9,12 +8,10 @@ import {
   deleteBlock
 } from "@/services/properties";
 import { usePropertyData } from "@/hooks/usePropertyData";
-import BlockCard from "@/components/properties/BlockCard";
-import AddBlockDialog from "@/components/properties/AddBlockDialog";
 import DeleteBlockAlert from "@/components/properties/DeleteBlockAlert";
 import EditApartmentSheet from "@/components/properties/EditApartmentSheet";
-import EmptyBlocksState from "@/components/properties/EmptyBlocksState";
-import BlocksLoadingSkeleton from "@/components/properties/BlocksLoadingSkeleton";
+import PropertiesHeader from "@/components/properties/PropertiesHeader";
+import PropertiesContent from "@/components/properties/PropertiesContent";
 
 const PropertiesPage = () => {
   const { toast } = useToast();
@@ -145,46 +142,22 @@ const PropertiesPage = () => {
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        <div className="flex justify-between items-center">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Properties</h1>
-            <p className="text-gray-500 mt-1">Manage your blocks and apartments</p>
-          </div>
-          <div className="flex space-x-2">
-            <Button 
-              variant="outline" 
-              onClick={handleManualRefresh} 
-              className="mr-2"
-            >
-              Refresh
-            </Button>
-            <AddBlockDialog 
-              isOpen={isAddingBlock}
-              onOpenChange={setIsAddingBlock}
-              onAddBlock={handleAddBlock}
-              loading={loading}
-            />
-          </div>
-        </div>
+        <PropertiesHeader 
+          isAddingBlock={isAddingBlock}
+          setIsAddingBlock={setIsAddingBlock}
+          onAddBlock={handleAddBlock}
+          onRefresh={handleManualRefresh}
+          loading={loading}
+        />
 
-        {loading ? (
-          <BlocksLoadingSkeleton />
-        ) : blocks.length === 0 ? (
-          <EmptyBlocksState />
-        ) : (
-          <div className="space-y-6">
-            {blocks.map((block) => (
-              <BlockCard 
-                key={block.id} 
-                block={block} 
-                onDeleteBlock={confirmDeleteBlock}
-                onEditApartment={openEditApartment}
-                isApartmentOccupied={isApartmentOccupied}
-                getResidentName={getResidentName}
-              />
-            ))}
-          </div>
-        )}
+        <PropertiesContent 
+          loading={loading}
+          blocks={blocks}
+          onDeleteBlock={confirmDeleteBlock}
+          onEditApartment={openEditApartment}
+          isApartmentOccupied={isApartmentOccupied}
+          getResidentName={getResidentName}
+        />
       </div>
 
       <DeleteBlockAlert 

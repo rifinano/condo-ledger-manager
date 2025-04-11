@@ -28,7 +28,7 @@ const DeleteBlockAlert: React.FC<DeleteBlockAlertProps> = ({
         <AlertDialogHeader>
           <AlertDialogTitle>Are you sure?</AlertDialogTitle>
           <AlertDialogDescription>
-            This will permanently delete the block and all of its apartments.
+            This action will permanently delete this block and all its apartments. 
             This action cannot be undone.
           </AlertDialogDescription>
         </AlertDialogHeader>

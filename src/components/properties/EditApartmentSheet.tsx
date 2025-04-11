@@ -1,7 +1,8 @@
+
 import React from "react";
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Home, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { User } from "lucide-react";
+import { Sheet, SheetClose, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Apartment, Block } from "@/services/properties";
 
 interface EditApartmentSheetProps {
@@ -10,8 +11,8 @@ interface EditApartmentSheetProps {
   apartment: Apartment | null;
   blocks: (Block & { apartments: Apartment[] })[];
   getResidentName: (blockName: string, apartmentNumber: string) => string | null;
-  onManageResidents: () => void;
   onEditDetails: () => void;
+  onManageResidents: () => void;
 }
 
 const EditApartmentSheet: React.FC<EditApartmentSheetProps> = ({
@@ -20,75 +21,61 @@ const EditApartmentSheet: React.FC<EditApartmentSheetProps> = ({
   apartment,
   blocks,
   getResidentName,
-  onManageResidents,
   onEditDetails,
+  onManageResidents,
 }) => {
   if (!apartment) return null;
 
-  // Find the block this apartment belongs to
-  const block = blocks.find((b) => b.apartments.some((a) => a.id === apartment.id));
-  
+  const block = blocks.find(b => b.id === apartment.block_id);
+  const blockName = block ? block.name : "Unknown Block";
+  const residentName = getResidentName(blockName, apartment.number);
+
   return (
     <Sheet open={isOpen} onOpenChange={onOpenChange}>
       <SheetContent>
         <SheetHeader>
           <SheetTitle>Edit Apartment</SheetTitle>
           <SheetDescription>
-            {apartment && (
-              <div className="mt-2">
-                <p className="text-sm">
-                  Apartment: <span className="font-medium">{apartment.number}</span>
-                </p>
-                
-                {block && (
-                  <p className="text-sm">
-                    Block: <span className="font-medium">{block.name}</span>
-                  </p>
-                )}
-              </div>
-            )}
+            Edit apartment details or manage residents
           </SheetDescription>
         </SheetHeader>
-        <div className="py-6">
-          <Button 
-            variant="outline" 
-            className="w-full"
-            onClick={onEditDetails}
-          >
-            Edit Details
-          </Button>
-          
-          <div className="mt-4">
-            <h4 className="font-medium mb-2">Current Resident</h4>
-            {block && (
+        <div className="py-6 space-y-6">
+          <div className="space-y-2">
+            <h3 className="text-sm font-medium text-gray-500">Apartment Details</h3>
+            <div className="flex items-center">
+              <Home className="mr-2 h-5 w-5 text-gray-500" />
               <div>
-                {(() => {
-                  const resident = getResidentName(block.name, apartment.number);
-                  return resident ? (
-                    <div className="p-3 border rounded-md mb-3">
-                      <div className="flex items-center">
-                        <User className="h-5 w-5 mr-2 text-syndicate-600" />
-                        <p className="font-medium">{resident}</p>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="p-3 border rounded-md mb-3 text-gray-500">
-                      No resident assigned
-                    </div>
-                  );
-                })()}
+                <p className="font-medium">{apartment.number}</p>
+                <p className="text-sm text-gray-500">{blockName}</p>
               </div>
-            )}
-            
-            <Button 
-              className="w-full mt-4"
-              variant="outline"
-              onClick={onManageResidents}
-            >
-              Manage Residents
-            </Button>
+            </div>
+          </div>
+          
+          <div className="space-y-2">
+            <h3 className="text-sm font-medium text-gray-500">Current Resident</h3>
+            <div className="flex items-center">
+              <User className="mr-2 h-5 w-5 text-gray-500" />
+              <div>
+                {residentName ? (
+                  <p className="font-medium">{residentName}</p>
+                ) : (
+                  <p className="text-gray-500">No resident assigned</p>
+                )}
+              </div>
+            </div>
           </div>
         </div>
+        <SheetFooter className="flex flex-col space-y-2 sm:space-y-0">
+          <Button onClick={onEditDetails} className="w-full">
+            Edit Apartment Details
+          </Button>
+          <Button onClick={onManageResidents} variant="outline" className="w-full">
+            Manage Residents
+          </Button>
+          <SheetClose asChild>
+            <Button variant="ghost" className="w-full">Close</Button>
+          </SheetClose>
+        </SheetFooter>
       </SheetContent>
     </Sheet>
   );
