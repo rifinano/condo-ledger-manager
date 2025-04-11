@@ -1,6 +1,6 @@
 
 import { useCallback, useState } from "react";
-import { getResidents, Resident } from "@/services/residentsService";
+import { getResidents, Resident } from "@/services/residents";
 import { getBlocks } from "@/services/propertiesService";
 
 /**

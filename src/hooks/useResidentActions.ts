@@ -7,7 +7,7 @@ import {
   deleteResident, 
   ResidentFormData,
   Resident
-} from "@/services/residentsService";
+} from "@/services/residents";
 
 /**
  * Hook to manage resident CRUD operations
