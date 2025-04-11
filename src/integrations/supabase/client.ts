@@ -16,16 +16,46 @@ export const supabase = createClient<Database>(
     auth: {
       persistSession: true,
       autoRefreshToken: true,
-      storage: localStorage
+      storage: localStorage,
+      detectSessionInUrl: false
     },
     global: {
       headers: {
-        "Content-Type": "application/json"
+        "Content-Type": "application/json",
+        "Cache-Control": "no-cache"
       }
     },
     // Add a longer timeout to prevent quick timeouts
     realtime: {
       timeout: 60000
+    },
+    // Better network request handling
+    fetch: (url, options) => {
+      const controller = new AbortController();
+      const signal = controller.signal;
+      
+      // Set timeout to prevent hanging requests
+      const timeoutId = setTimeout(() => controller.abort(), 30000);
+      
+      const fetchOptions = {
+        ...options,
+        signal,
+        keepalive: true
+      };
+      
+      return fetch(url, fetchOptions)
+        .finally(() => clearTimeout(timeoutId));
     }
   }
 );
+
+// Export a method to explicitly check connection
+export const checkSupabaseConnection = async () => {
+  try {
+    const { data, error } = await supabase.from('health_check').select('*').limit(1);
+    return !error;
+  } catch (err) {
+    console.error("Supabase connection check failed:", err);
+    return false;
+  }
+};

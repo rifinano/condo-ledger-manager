@@ -4,6 +4,9 @@ import { toast } from "@/hooks/use-toast";
 import { Payment } from "./types";
 
 export const getPayments = async (): Promise<Payment[]> => {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
+  
   try {
     // Use a single query with join to reduce network requests
     const { data, error } = await supabase
@@ -16,7 +19,10 @@ export const getPayments = async (): Promise<Payment[]> => {
           apartment_number
         )
       `)
-      .order('payment_date', { ascending: false });
+      .order('payment_date', { ascending: false })
+      .abortSignal(controller.signal);
+
+    clearTimeout(timeoutId);
 
     if (error) {
       console.error("Error fetching payments:", error);
@@ -36,13 +42,24 @@ export const getPayments = async (): Promise<Payment[]> => {
       apartment: item.residents ? item.residents.apartment_number : "Unknown",
       payment_status: item.payment_status || "unpaid" // Ensure payment_status is defined
     }));
-  } catch (error) {
-    console.error("Unexpected error fetching payments:", error);
-    toast({
-      title: "Unexpected error",
-      description: "Failed to fetch payments. Please try again.",
-      variant: "destructive",
-    });
+  } catch (error: any) {
+    clearTimeout(timeoutId);
+    
+    if (error.name === 'AbortError') {
+      console.error("Request timed out fetching payments");
+      toast({
+        title: "Request timed out",
+        description: "The server took too long to respond. Please try again.",
+        variant: "destructive",
+      });
+    } else {
+      console.error("Unexpected error fetching payments:", error);
+      toast({
+        title: "Unexpected error",
+        description: "Failed to fetch payments. Please try again.",
+        variant: "destructive",
+      });
+    }
     return [];
   }
 };

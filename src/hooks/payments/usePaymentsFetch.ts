@@ -3,12 +3,14 @@ import { useQuery } from "@tanstack/react-query";
 import { getPayments, getResidents } from "@/services/payments";
 import { useToast } from "@/hooks/use-toast";
 import { useCallback } from "react";
+import { useNetworkErrorHandler } from "@/hooks/useNetworkErrorHandler";
 
 /**
  * Hook to fetch payments and residents data
  */
 export const usePaymentsFetch = () => {
   const { toast } = useToast();
+  const { handleNetworkError } = useNetworkErrorHandler();
 
   // Fetch payments with React Query
   const { 
@@ -22,6 +24,8 @@ export const usePaymentsFetch = () => {
     staleTime: 1000 * 60 * 2, // Reduce stale time to 2 minutes for fresher data
     refetchOnMount: true,
     refetchOnWindowFocus: true,
+    retry: 2,
+    onError: (error) => handleNetworkError(error, "Failed to fetch payments"),
   });
 
   // Fetch residents with React Query
@@ -36,6 +40,8 @@ export const usePaymentsFetch = () => {
     staleTime: 1000 * 60 * 2, // Reduce stale time to 2 minutes for fresher data
     refetchOnMount: true,
     refetchOnWindowFocus: true,
+    retry: 2,
+    onError: (error) => handleNetworkError(error, "Failed to fetch residents"),
   });
 
   // Enhanced refetch function that refreshes all data
@@ -51,14 +57,9 @@ export const usePaymentsFetch = () => {
         description: "All payment and resident data has been refreshed",
       });
     } catch (error) {
-      console.error("Error refreshing data:", error);
-      toast({
-        title: "Error refreshing data",
-        description: "Failed to refresh some data. Please try again.",
-        variant: "destructive",
-      });
+      handleNetworkError(error, "Failed to refresh data. Please try again.");
     }
-  }, [refetchPayments, refetchResidents, toast]);
+  }, [refetchPayments, refetchResidents, toast, handleNetworkError]);
 
   return {
     payments,
