@@ -1,5 +1,4 @@
-
-import { Building2, Users, CreditCard, LayoutDashboard, LogOut, Settings } from "lucide-react";
+import { Building2, Users, CreditCard, LayoutDashboard, LogOut, Settings, Receipt } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
@@ -17,6 +16,7 @@ const AdminSidebar = () => {
     { name: "Properties", icon: Building2, path: "/properties" },
     { name: "Residents", icon: Users, path: "/residents" },
     { name: "Payments", icon: CreditCard, path: "/payments" },
+    { name: "Charges", icon: Receipt, path: "/charges" },
     { name: "Settings", icon: Settings, path: "/settings" },
   ];
 

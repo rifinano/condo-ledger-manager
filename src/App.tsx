@@ -9,6 +9,7 @@ import DashboardPage from "./pages/DashboardPage";
 import PropertiesPage from "./pages/PropertiesPage";
 import ResidentsPage from "./pages/ResidentsPage";
 import PaymentsPage from "./pages/PaymentsPage";
+import ChargesPage from "./pages/ChargesPage";
 import SettingsPage from "./pages/SettingsPage";
 import NotFound from "./pages/NotFound";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -54,6 +55,14 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <PaymentsPage />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/charges" 
+              element={
+                <ProtectedRoute>
+                  <ChargesPage />
                 </ProtectedRoute>
               } 
             />
