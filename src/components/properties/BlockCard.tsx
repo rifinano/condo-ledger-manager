@@ -1,10 +1,9 @@
-
 import React, { memo, useState } from "react";
 import { Building2, Home, Trash2, User, Edit, ChevronDown, ChevronUp } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Block, Apartment } from "@/services/propertiesService";
+import { Block, Apartment } from "@/services/properties";
 
 interface BlockCardProps {
   block: Block & { apartments: Apartment[] };
@@ -14,7 +13,6 @@ interface BlockCardProps {
   getResidentName: (blockName: string, apartmentNumber: string) => string | null;
 }
 
-// Using memo to prevent unnecessary re-renders
 const BlockCard: React.FC<BlockCardProps> = memo(({
   block,
   onDeleteBlock,
@@ -24,24 +22,20 @@ const BlockCard: React.FC<BlockCardProps> = memo(({
 }) => {
   const [showAllApartments, setShowAllApartments] = useState(false);
 
-  // Only sort apartments once when the component mounts or when apartments change
   const sortedApartments = React.useMemo(() => {
     return [...block.apartments].sort((a, b) => {
-      // Extract number part from apartment number and convert to integer
       const numA = parseInt(a.number.replace(/\D/g, ''), 10);
       const numB = parseInt(b.number.replace(/\D/g, ''), 10);
       return numA - numB;
     });
   }, [block.apartments]);
 
-  // Calculate occupied count once
   const occupiedCount = React.useMemo(() => {
     return block.apartments.filter(apt => 
       isApartmentOccupied(block.name, apt.number)
     ).length;
   }, [block.apartments, block.name, isApartmentOccupied]);
 
-  // The apartments to display based on the toggle state
   const displayedApartments = showAllApartments 
     ? sortedApartments 
     : sortedApartments.slice(0, 5);
@@ -157,7 +151,6 @@ const BlockCard: React.FC<BlockCardProps> = memo(({
   );
 });
 
-// Display name for React DevTools
 BlockCard.displayName = "BlockCard";
 
 export default BlockCard;

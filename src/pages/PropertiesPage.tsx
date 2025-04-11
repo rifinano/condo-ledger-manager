@@ -7,7 +7,7 @@ import {
   Apartment, 
   addBlock, 
   deleteBlock
-} from "@/services/propertiesService";
+} from "@/services/properties";
 import { usePropertyData } from "@/hooks/usePropertyData";
 import BlockCard from "@/components/properties/BlockCard";
 import AddBlockDialog from "@/components/properties/AddBlockDialog";

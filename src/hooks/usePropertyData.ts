@@ -5,8 +5,9 @@ import {
   Apartment, 
   getBlocks, 
   getApartmentsByBlockId,
-  getResidentByApartment 
-} from "@/services/propertiesService";
+  getResidentByApartment,
+  clearCache 
+} from "@/services/properties";
 
 /**
  * Hook to manage property data including blocks, apartments, and residents
@@ -59,24 +60,8 @@ export const usePropertyData = () => {
 
   // Force a refresh of data by completely clearing the cache
   const refreshData = useCallback(() => {
-    // Access and reset the cache completely
-    if (typeof window !== 'undefined') {
-      const propertiesServiceCache = (window as any).__propertiesCache;
-      if (propertiesServiceCache) {
-        // Reset all cache properties
-        Object.keys(propertiesServiceCache).forEach(key => {
-          if (typeof propertiesServiceCache[key] === 'object' && propertiesServiceCache[key] !== null) {
-            if (Array.isArray(propertiesServiceCache[key])) {
-              propertiesServiceCache[key] = [];
-            } else {
-              propertiesServiceCache[key] = {};
-            }
-          } else {
-            propertiesServiceCache[key] = null;
-          }
-        });
-      }
-    }
+    // Clear the cache using our new utility function
+    clearCache();
     
     // Trigger a refresh by updating the timestamp
     setLastRefresh(Date.now());

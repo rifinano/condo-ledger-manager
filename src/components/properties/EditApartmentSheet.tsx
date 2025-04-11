@@ -1,9 +1,8 @@
-
 import React from "react";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { User } from "lucide-react";
-import { Apartment, Block } from "@/services/propertiesService";
+import { Apartment, Block } from "@/services/properties";
 
 interface EditApartmentSheetProps {
   isOpen: boolean;
