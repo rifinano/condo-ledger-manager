@@ -1,3 +1,4 @@
+
 import { useEffect, useState, useCallback } from "react";
 import { 
   Block, 
@@ -58,6 +59,13 @@ export const usePropertyData = () => {
 
   // Force a refresh of data
   const refreshData = useCallback(() => {
+    // Clear caches in propertiesService
+    // This is important to ensure we get fresh data after resident updates
+    for (const key in window) {
+      if (key.startsWith('_cache_')) {
+        delete (window as any)[key];
+      }
+    }
     setLastRefresh(Date.now());
   }, []);
 

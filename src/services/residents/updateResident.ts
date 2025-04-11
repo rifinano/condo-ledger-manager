@@ -7,7 +7,7 @@ import { ResidentFormData, ServiceResult } from "./types";
  */
 export const updateResident = async (id: string, resident: Omit<ResidentFormData, 'id'>): Promise<ServiceResult> => {
   try {
-    // Instead of using the RPC function, we'll update the resident directly and handle the apartment update separately
+    // Step 1: Update the resident record
     const { data, error } = await supabase
       .from('residents')
       .update({
@@ -23,9 +23,9 @@ export const updateResident = async (id: string, resident: Omit<ResidentFormData
 
     if (error) throw error;
     
-    // If the resident was updated successfully, update or create the resident_apartment record
+    // Step 2: Handle resident_apartments table
     if (data) {
-      // First check if there's an existing entry for this resident that needs to be updated
+      // First, get all existing apartments for this resident
       const { data: existingApartments, error: fetchError } = await supabase
         .from('resident_apartments')
         .select('*')
@@ -34,29 +34,25 @@ export const updateResident = async (id: string, resident: Omit<ResidentFormData
       if (fetchError) throw fetchError;
       
       if (existingApartments && existingApartments.length > 0) {
-        // Update existing apartment record
-        const { error: updateError } = await supabase
+        // Delete all existing apartment records for this resident
+        const { error: deleteError } = await supabase
           .from('resident_apartments')
-          .update({
-            block_number: resident.block_number,
-            apartment_number: resident.apartment_number,
-            updated_at: new Date().toISOString()
-          })
+          .delete()
           .eq('resident_id', id);
         
-        if (updateError) throw updateError;
-      } else {
-        // Create new apartment record
-        const { error: insertError } = await supabase
-          .from('resident_apartments')
-          .insert({
-            resident_id: id,
-            block_number: resident.block_number,
-            apartment_number: resident.apartment_number
-          });
-        
-        if (insertError) throw insertError;
+        if (deleteError) throw deleteError;
       }
+      
+      // Create a new apartment record with the updated information
+      const { error: insertError } = await supabase
+        .from('resident_apartments')
+        .insert({
+          resident_id: id,
+          block_number: resident.block_number,
+          apartment_number: resident.apartment_number
+        });
+      
+      if (insertError) throw insertError;
     }
     
     return { success: true, data };
