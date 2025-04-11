@@ -1,3 +1,4 @@
+
 import { useEffect } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Button } from "@/components/ui/button";
@@ -22,8 +23,6 @@ const ResidentsPage = () => {
     blockNames,
     getApartments,
     handleAddResident,
-    editResident,
-    confirmDeleteResident,
     resetForm,
     months,
     years,
@@ -77,8 +76,6 @@ const ResidentsPage = () => {
             <ResidentsTable 
               residents={paginatedResidents}
               isLoading={isLoading}
-              onEdit={editResident}
-              onDelete={confirmDeleteResident}
             />
             
             {totalPages > 1 && (

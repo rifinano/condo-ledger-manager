@@ -1,13 +1,18 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+
+export interface ResidentApartment {
+  block_number: string;
+  apartment_number: string;
+}
 
 export interface Resident {
   id: string;
   full_name: string;
   phone_number?: string;
-  block_number: string;
-  apartment_number: string;
+  block_number: string;  // Primary apartment block
+  apartment_number: string;  // Primary apartment number
+  apartments?: ResidentApartment[];  // All apartments
   created_at: string;
   updated_at: string;
 }
@@ -38,7 +43,36 @@ export const getResidents = async () => {
       return [];
     }
 
-    return data;
+    // Fetch all resident-apartment assignments
+    const { data: residentApartments, error: apartmentsError } = await supabase
+      .from('resident_apartments')
+      .select('resident_id, block_number, apartment_number');
+
+    if (apartmentsError) {
+      console.error("Error fetching resident apartments:", apartmentsError);
+    }
+
+    // Group apartments by resident ID
+    const apartmentsByResident = {};
+    if (residentApartments) {
+      residentApartments.forEach(apt => {
+        if (!apartmentsByResident[apt.resident_id]) {
+          apartmentsByResident[apt.resident_id] = [];
+        }
+        apartmentsByResident[apt.resident_id].push({
+          block_number: apt.block_number,
+          apartment_number: apt.apartment_number
+        });
+      });
+    }
+
+    // Add apartments array to each resident
+    const residentsWithApartments = data.map(resident => ({
+      ...resident,
+      apartments: apartmentsByResident[resident.id] || []
+    }));
+
+    return residentsWithApartments;
   } catch (error: any) {
     console.error("Unexpected error fetching residents:", error);
     toast({

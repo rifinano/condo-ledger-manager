@@ -9,15 +9,11 @@ import { User, Phone, Building2, Home } from "lucide-react";
 interface ResidentsTableProps {
   residents: Resident[];
   isLoading: boolean;
-  onEdit: (resident: Resident) => void;
-  onDelete: (resident: Resident) => void;
 }
 
 const ResidentsTable = ({ 
   residents, 
-  isLoading,
-  onEdit, 
-  onDelete 
+  isLoading
 }: ResidentsTableProps) => {
   if (isLoading) {
     return <ResidentsTableSkeleton />;
@@ -36,9 +32,9 @@ const ResidentsTable = ({
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead className="w-[40%]">Name</TableHead>
-            <TableHead className="w-[25%]">Phone</TableHead>
-            <TableHead className="w-[35%]">Location</TableHead>
+            <TableHead className="w-[35%]">Name</TableHead>
+            <TableHead className="w-[20%]">Phone</TableHead>
+            <TableHead className="w-[45%]">Location</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -57,12 +53,26 @@ const ResidentsTable = ({
                 </div>
               </TableCell>
               <TableCell>
-                <div className="flex items-center">
-                  <Building2 className="h-4 w-4 mr-1 text-gray-500 flex-shrink-0" />
-                  <span>{resident.block_number}</span>
-                  <span className="mx-1">/</span>
-                  <Home className="h-4 w-4 mr-1 text-gray-500 flex-shrink-0" />
-                  <span>{resident.apartment_number}</span>
+                <div className="flex flex-wrap items-center gap-2">
+                  {Array.isArray(resident.apartments) && resident.apartments.length > 0 ? (
+                    resident.apartments.map((apt, index) => (
+                      <div key={index} className="flex items-center bg-gray-100 rounded-md px-2 py-1">
+                        <Building2 className="h-4 w-4 mr-1 text-gray-500 flex-shrink-0" />
+                        <span>{apt.block_number}</span>
+                        <span className="mx-1">/</span>
+                        <Home className="h-4 w-4 mr-1 text-gray-500 flex-shrink-0" />
+                        <span>{apt.apartment_number}</span>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="flex items-center">
+                      <Building2 className="h-4 w-4 mr-1 text-gray-500 flex-shrink-0" />
+                      <span>{resident.block_number}</span>
+                      <span className="mx-1">/</span>
+                      <Home className="h-4 w-4 mr-1 text-gray-500 flex-shrink-0" />
+                      <span>{resident.apartment_number}</span>
+                    </div>
+                  )}
                 </div>
               </TableCell>
             </TableRow>
@@ -79,9 +89,9 @@ const ResidentsTableSkeleton = () => {
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead className="w-[40%]">Name</TableHead>
-            <TableHead className="w-[25%]">Phone</TableHead>
-            <TableHead className="w-[35%]">Location</TableHead>
+            <TableHead className="w-[35%]">Name</TableHead>
+            <TableHead className="w-[20%]">Phone</TableHead>
+            <TableHead className="w-[45%]">Location</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
