@@ -44,10 +44,10 @@ export const getResidents = async () => {
       return [];
     }
 
-    // Fetch all resident-apartment assignments using a separate query
-    // Use a raw query to bypass type checking since TypeScript doesn't know about this table yet
+    // Fetch all resident-apartment assignments using a custom RPC function
     const { data: residentApartments, error: apartmentsError } = await supabase
-      .rpc('get_resident_apartments') as { 
+      .from('resident_apartments')
+      .select('resident_id, block_number, apartment_number') as { 
         data: { resident_id: string; block_number: string; apartment_number: string }[] | null; 
         error: any 
       };
@@ -110,13 +110,14 @@ export const addResident = async (resident: Omit<ResidentFormData, 'id'>) => {
     if (data && data.length > 0) {
       const newResidentId = data[0].id;
       
-      // Call our custom function to add an apartment for a resident
+      // Insert directly into the resident_apartments table
       const { error: aptError } = await supabase
-        .rpc('add_resident_apartment', {
-          p_resident_id: newResidentId,
-          p_block_number: resident.block_number,
-          p_apartment_number: resident.apartment_number
-        }) as { data: null; error: any };
+        .from('resident_apartments')
+        .insert({
+          resident_id: newResidentId,
+          block_number: resident.block_number,
+          apartment_number: resident.apartment_number
+        });
         
       if (aptError) {
         console.error("Error adding resident apartment:", aptError);
@@ -187,13 +188,14 @@ export const addResidentApartment = async (
   apartmentNumber: string
 ) => {
   try {
-    // Call our custom function to add an apartment for a resident
+    // Insert directly into the resident_apartments table
     const { data, error } = await supabase
-      .rpc('add_resident_apartment', {
-        p_resident_id: residentId,
-        p_block_number: blockNumber,
-        p_apartment_number: apartmentNumber
-      }) as { data: null; error: any };
+      .from('resident_apartments')
+      .insert({
+        resident_id: residentId,
+        block_number: blockNumber,
+        apartment_number: apartmentNumber
+      });
       
     if (error) throw error;
     
@@ -213,13 +215,15 @@ export const removeResidentApartment = async (
   apartmentNumber: string
 ) => {
   try {
-    // Call our custom function to remove an apartment from a resident
+    // Delete directly from the resident_apartments table
     const { error } = await supabase
-      .rpc('remove_resident_apartment', {
-        p_resident_id: residentId,
-        p_block_number: blockNumber,
-        p_apartment_number: apartmentNumber
-      }) as { data: null; error: any };
+      .from('resident_apartments')
+      .delete()
+      .match({
+        resident_id: residentId,
+        block_number: blockNumber,
+        apartment_number: apartmentNumber
+      });
       
     if (error) throw error;
     
