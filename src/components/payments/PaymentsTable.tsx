@@ -5,7 +5,7 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { Payment } from "@/services/paymentsService";
+import { Payment, togglePaymentStatus } from "@/services/paymentsService";
 
 interface PaymentsTableProps {
   payments: Payment[];
@@ -15,17 +15,40 @@ interface PaymentsTableProps {
 
 const PaymentsTable = ({ payments, refetchPayments, filter }: PaymentsTableProps) => {
   const { toast } = useToast();
+  const [updatingPaymentId, setUpdatingPaymentId] = useState<string | null>(null);
 
   const handleTogglePaymentStatus = async (paymentId: string, currentStatus: boolean) => {
-    // This would be replaced with a real API call
-    toast({
-      title: `Payment ${currentStatus ? "marked as unpaid" : "marked as paid"}`,
-      description: "Payment status updated successfully"
-    });
-    
-    // In a real app, we would call the API to update the payment status
-    // For now, just refetch the payments
-    refetchPayments();
+    try {
+      setUpdatingPaymentId(paymentId);
+      
+      // Call the API to update the payment status
+      const result = await togglePaymentStatus(paymentId, !currentStatus);
+      
+      if (result.success) {
+        toast({
+          title: `Payment ${currentStatus ? "marked as unpaid" : "marked as paid"}`,
+          description: "Payment status updated successfully"
+        });
+        
+        // Refetch the payments to update the UI
+        refetchPayments();
+      } else {
+        toast({
+          title: "Failed to update payment status",
+          description: result.error || "An error occurred while updating payment status",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      console.error("Error toggling payment status:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update payment status",
+        variant: "destructive"
+      });
+    } finally {
+      setUpdatingPaymentId(null);
+    }
   };
   
   return (
@@ -63,9 +86,10 @@ const PaymentsTable = ({ payments, refetchPayments, filter }: PaymentsTableProps
                 <Button 
                   variant="ghost" 
                   size="sm"
-                  onClick={() => handleTogglePaymentStatus(payment.id, payment.payment_method === "paid")}
+                  onClick={() => handleTogglePaymentStatus(payment.id, payment.payment_status === "paid")}
+                  disabled={updatingPaymentId === payment.id}
                 >
-                  {payment.payment_method === "paid" ? "Mark as Unpaid" : "Mark as Paid"}
+                  {updatingPaymentId === payment.id ? "Updating..." : (payment.payment_status === "paid" ? "Mark as Unpaid" : "Mark as Paid")}
                 </Button>
               </TableCell>
             </TableRow>

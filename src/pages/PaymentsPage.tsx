@@ -2,11 +2,12 @@
 import { useEffect } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Button } from "@/components/ui/button";
-import { Download } from "lucide-react";
+import { Download, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { usePaymentData } from "@/hooks/usePaymentData";
 import PaymentLedger from "@/components/payments/PaymentLedger";
 import AddPaymentDialog from "@/components/payments/AddPaymentDialog";
+import { ErrorMessage } from "@/components/ui/error-message";
 
 const PaymentsPage = () => {
   const { toast } = useToast();
@@ -20,6 +21,7 @@ const PaymentsPage = () => {
     residentsError,
     refetchPayments,
     refetchResidents,
+    refreshAllData,
     selectedBlock,
     setSelectedBlock,
     selectedYear,
@@ -33,29 +35,10 @@ const PaymentsPage = () => {
     paymentTypes,
   } = usePaymentData();
 
-  // If there's an error, show it in a toast
-  useEffect(() => {
-    if (paymentsError) {
-      toast({
-        title: "Error fetching payments",
-        description: "Failed to load payments. Please try again.",
-        variant: "destructive",
-      });
-    }
-
-    if (residentsError) {
-      toast({
-        title: "Error fetching residents",
-        description: "Failed to load residents. Please try again.",
-        variant: "destructive",
-      });
-    }
-  }, [paymentsError, residentsError, toast]);
-
   // Fetch data when component mounts
   useEffect(() => {
-    refetchResidents();
-  }, [refetchResidents]);
+    // The data is automatically fetched by the useQuery hooks
+  }, []);
 
   const handleExportReport = () => {
     toast({
@@ -72,6 +55,10 @@ const PaymentsPage = () => {
     }, 1500);
   };
 
+  const handleRefreshData = () => {
+    refreshAllData();
+  };
+
   if (isLoadingPayments || isLoadingResidents) {
     return (
       <DashboardLayout>
@@ -85,6 +72,9 @@ const PaymentsPage = () => {
     );
   }
 
+  // Check for data loading errors
+  const hasError = paymentsError || residentsError;
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
@@ -94,6 +84,10 @@ const PaymentsPage = () => {
             <p className="text-gray-500 mt-1">Track and manage resident payments</p>
           </div>
           <div className="flex space-x-2">
+            <Button variant="outline" onClick={handleRefreshData}>
+              <RefreshCw className="mr-2 h-4 w-4" /> Refresh Data
+            </Button>
+            
             <Button variant="outline" onClick={handleExportReport}>
               <Download className="mr-2 h-4 w-4" /> Export Report
             </Button>
@@ -109,20 +103,29 @@ const PaymentsPage = () => {
           </div>
         </div>
 
-        <PaymentLedger
-          payments={payments}
-          refetchPayments={refetchPayments}
-          selectedYear={selectedYear}
-          setSelectedYear={setSelectedYear}
-          selectedMonth={selectedMonth}
-          setSelectedMonth={setSelectedMonth}
-          selectedBlock={selectedBlock}
-          setSelectedBlock={setSelectedBlock}
-          years={years}
-          months={months}
-          blocks={blocks}
-          filteredPayments={filteredPayments}
-        />
+        {hasError ? (
+          <ErrorMessage 
+            title="Connection Error" 
+            message="Failed to load payment data. Please check your connection and try again." 
+            onRetry={handleRefreshData} 
+            isNetworkError={true}
+          />
+        ) : (
+          <PaymentLedger
+            payments={payments}
+            refetchPayments={refetchPayments}
+            selectedYear={selectedYear}
+            setSelectedYear={setSelectedYear}
+            selectedMonth={selectedMonth}
+            setSelectedMonth={setSelectedMonth}
+            selectedBlock={selectedBlock}
+            setSelectedBlock={setSelectedBlock}
+            years={years}
+            months={months}
+            blocks={blocks}
+            filteredPayments={filteredPayments}
+          />
+        )}
       </div>
     </DashboardLayout>
   );

@@ -1,4 +1,5 @@
 
+import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import PaymentsTable from "./PaymentsTable";
@@ -34,6 +35,20 @@ const PaymentLedger = ({
   blocks,
   filteredPayments,
 }: PaymentLedgerProps) => {
+  const [activeTab, setActiveTab] = useState<"all" | "paid" | "unpaid">("all");
+  
+  // Filter payments by payment status based on active tab
+  const getPaymentsByStatus = () => {
+    switch(activeTab) {
+      case "paid":
+        return filteredPayments.filter(p => p.payment_status === "paid");
+      case "unpaid":
+        return filteredPayments.filter(p => p.payment_status === "unpaid");
+      default:
+        return filteredPayments;
+    }
+  };
+  
   return (
     <Card>
       <CardHeader>
@@ -56,7 +71,7 @@ const PaymentLedger = ({
         </div>
       </CardHeader>
       <CardContent>
-        <Tabs defaultValue="all">
+        <Tabs defaultValue="all" onValueChange={(value) => setActiveTab(value as "all" | "paid" | "unpaid")}>
           <TabsList className="mb-4">
             <TabsTrigger value="all">All</TabsTrigger>
             <TabsTrigger value="paid">Paid</TabsTrigger>
@@ -65,7 +80,7 @@ const PaymentLedger = ({
           
           <TabsContent value="all" className="space-y-4">
             <PaymentsTable 
-              payments={filteredPayments} 
+              payments={getPaymentsByStatus()} 
               refetchPayments={refetchPayments}
               filter="all"
             />
@@ -73,7 +88,7 @@ const PaymentLedger = ({
           
           <TabsContent value="paid" className="space-y-4">
             <PaymentsTable 
-              payments={filteredPayments.filter((p: Payment) => p.payment_method === "paid")} 
+              payments={getPaymentsByStatus()} 
               refetchPayments={refetchPayments}
               filter="paid"
             />
@@ -81,7 +96,7 @@ const PaymentLedger = ({
           
           <TabsContent value="unpaid" className="space-y-4">
             <PaymentsTable 
-              payments={filteredPayments.filter((p: Payment) => p.payment_method !== "paid")} 
+              payments={getPaymentsByStatus()} 
               refetchPayments={refetchPayments}
               filter="unpaid"
             />

@@ -1,14 +1,18 @@
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getPayments, getResidents, Payment, Resident } from "@/services/paymentsService";
 import { useToast } from "@/hooks/use-toast";
+import { usePropertyData } from "@/hooks/usePropertyData";
 
 export const usePaymentData = () => {
   const { toast } = useToast();
   const [selectedBlock, setSelectedBlock] = useState<string>("all");
   const [selectedYear, setSelectedYear] = useState<string>(new Date().getFullYear().toString());
-  const [selectedMonth, setSelectedMonth] = useState<string>(new Date().getMonth().toString());
+  const [selectedMonth, setSelectedMonth] = useState<string>(new Date().getMonth() + 1 <= 9 ? `0${new Date().getMonth() + 1}` : (new Date().getMonth() + 1).toString());
+  
+  // Get property data to sync with
+  const { blocks: propertyBlocks, refreshData: refreshPropertyData } = usePropertyData();
 
   // Fetch payments with React Query
   const { 
@@ -18,7 +22,8 @@ export const usePaymentData = () => {
     refetch: refetchPayments
   } = useQuery({
     queryKey: ['payments'],
-    queryFn: getPayments
+    queryFn: getPayments,
+    staleTime: 1000 * 60 * 5, // Consider data fresh for 5 minutes
   });
 
   // Fetch residents with React Query
@@ -29,11 +34,37 @@ export const usePaymentData = () => {
     refetch: refetchResidents
   } = useQuery({
     queryKey: ['residents'],
-    queryFn: getResidents
+    queryFn: getResidents,
+    staleTime: 1000 * 60 * 5, // Consider data fresh for 5 minutes
   });
 
+  // Enhanced refetch function that refreshes all data
+  const refreshAllData = useCallback(async () => {
+    try {
+      await Promise.all([
+        refetchPayments(),
+        refetchResidents(),
+        refreshPropertyData()
+      ]);
+      
+      toast({
+        title: "Data refreshed",
+        description: "All payment and resident data has been refreshed",
+      });
+    } catch (error) {
+      console.error("Error refreshing data:", error);
+      toast({
+        title: "Error refreshing data",
+        description: "Failed to refresh some data. Please try again.",
+        variant: "destructive",
+      });
+    }
+  }, [refetchPayments, refetchResidents, refreshPropertyData, toast]);
+
   // Log residents for debugging
-  console.log("Residents in usePaymentData:", residents);
+  useEffect(() => {
+    console.log("Residents in usePaymentData:", residents);
+  }, [residents]);
 
   // Show error toast if there's an issue fetching residents
   useEffect(() => {
@@ -44,7 +75,15 @@ export const usePaymentData = () => {
         variant: "destructive"
       });
     }
-  }, [residentsError, toast]);
+    
+    if (paymentsError) {
+      toast({
+        title: "Error fetching payments",
+        description: "Could not load payment data. Please try again later.",
+        variant: "destructive"
+      });
+    }
+  }, [residentsError, paymentsError, toast]);
 
   // Filter payments based on selected filters
   const filteredPayments = useMemo(() => {
@@ -59,8 +98,8 @@ export const usePaymentData = () => {
         return false;
       }
       
-      // Extract month from payment_for_month (format: YYYY-MM)
-      const paymentMonth = payment.payment_for_month.split('-')[1] || '';
+      // Extract month as string with leading zero if needed
+      const paymentMonth = payment.payment_for_month.split('-')[1] || payment.payment_for_month;
       
       // Filter by month (if month is selected)
       if (selectedMonth && paymentMonth !== selectedMonth) {
@@ -71,13 +110,31 @@ export const usePaymentData = () => {
     });
   }, [payments, selectedBlock, selectedYear, selectedMonth]);
 
-  // Get unique blocks from residents
+  // Get unique blocks from both residents and properties for consistency
   const blocks = useMemo(() => {
-    if (!residents || residents.length === 0) {
-      return ["all"];
+    // Start with "all" option
+    const blockSet = new Set(["all"]);
+    
+    // Add blocks from residents
+    if (residents && residents.length > 0) {
+      residents.forEach((resident: Resident) => {
+        if (resident.block_number) {
+          blockSet.add(resident.block_number);
+        }
+      });
     }
-    return ["all", ...Array.from(new Set(residents.map((r: Resident) => r.block_number)))];
-  }, [residents]);
+    
+    // Add blocks from properties data
+    if (propertyBlocks && propertyBlocks.length > 0) {
+      propertyBlocks.forEach((block) => {
+        if (block.name) {
+          blockSet.add(block.name);
+        }
+      });
+    }
+    
+    return Array.from(blockSet);
+  }, [residents, propertyBlocks]);
 
   // Years for filtering
   const years = useMemo(() => {
@@ -119,6 +176,7 @@ export const usePaymentData = () => {
     residentsError,
     refetchPayments,
     refetchResidents,
+    refreshAllData,
     selectedBlock,
     setSelectedBlock,
     selectedYear,

@@ -11,6 +11,7 @@ export interface Payment {
   payment_for_year: string;
   payment_type: string;
   payment_method: string;
+  payment_status: "paid" | "unpaid"; // Added payment status
   notes?: string;
   created_at: string;
   updated_at: string;
@@ -64,7 +65,8 @@ export const getPayments = async () => {
         ...payment,
         residentName: "Unknown",
         block: "Unknown",
-        apartment: "Unknown"
+        apartment: "Unknown",
+        payment_status: payment.payment_status || "unpaid" // Ensure payment_status is defined
       }));
     }
 
@@ -81,7 +83,8 @@ export const getPayments = async () => {
         ...payment,
         residentName: resident ? resident.full_name : "Unknown",
         block: resident ? resident.block_number : "Unknown",
-        apartment: resident ? resident.apartment_number : "Unknown"
+        apartment: resident ? resident.apartment_number : "Unknown",
+        payment_status: payment.payment_status || "unpaid" // Ensure payment_status is defined
       };
     });
   } catch (error) {
@@ -125,29 +128,19 @@ export const getResidents = async () => {
   }
 };
 
-export const togglePaymentStatus = async (paymentId: string, status: boolean) => {
+export const togglePaymentStatus = async (paymentId: string, isPaid: boolean) => {
   try {
-    if (status) {
-      // Create a new payment
-      const { error } = await supabase
-        .from('payments')
-        .update({ payment_status: 'paid' } as any)
-        .eq('id', paymentId);
+    const newStatus = isPaid ? "paid" : "unpaid";
+    
+    // Update the payment status in the database
+    const { error } = await supabase
+      .from('payments')
+      .update({ payment_status: newStatus })
+      .eq('id', paymentId);
 
-      if (error) throw error;
-      
-      return { success: true };
-    } else {
-      // Mark as unpaid
-      const { error } = await supabase
-        .from('payments')
-        .update({ payment_status: 'unpaid' } as any)
-        .eq('id', paymentId);
-
-      if (error) throw error;
-      
-      return { success: true };
-    }
+    if (error) throw error;
+    
+    return { success: true };
   } catch (error: any) {
     console.error("Error toggling payment status:", error);
     return { 
@@ -157,11 +150,17 @@ export const togglePaymentStatus = async (paymentId: string, status: boolean) =>
   }
 };
 
-export const addPayment = async (payment: Omit<Payment, 'id' | 'created_at' | 'updated_at'>) => {
+export const addPayment = async (payment: Omit<Payment, 'id' | 'created_at' | 'updated_at' | 'payment_status'>) => {
   try {
+    // Add payment_status field with default value "paid"
+    const paymentWithStatus = {
+      ...payment,
+      payment_status: "paid"
+    };
+    
     const { data, error } = await supabase
       .from('payments')
-      .insert([payment] as any)
+      .insert([paymentWithStatus] as any)
       .select();
 
     if (error) throw error;
