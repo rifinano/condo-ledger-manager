@@ -12,6 +12,7 @@ import DeleteBlockAlert from "@/components/properties/DeleteBlockAlert";
 import EditApartmentSheet from "@/components/properties/EditApartmentSheet";
 import PropertiesHeader from "@/components/properties/PropertiesHeader";
 import PropertiesContent from "@/components/properties/PropertiesContent";
+import { ErrorMessage } from "@/components/ui/error-message";
 
 const PropertiesPage = () => {
   const { toast } = useToast();
@@ -21,7 +22,8 @@ const PropertiesPage = () => {
     fetchProperties, 
     isApartmentOccupied, 
     getResidentName,
-    refreshData 
+    refreshData,
+    fetchError 
   } = usePropertyData();
   
   const [isAddingBlock, setIsAddingBlock] = useState(false);
@@ -133,6 +135,7 @@ const PropertiesPage = () => {
   // Manual refresh handler
   const handleManualRefresh = () => {
     refreshData();
+    fetchProperties();
     toast({
       title: "Data refreshed",
       description: "The property data has been refreshed.",
@@ -150,14 +153,22 @@ const PropertiesPage = () => {
           loading={loading}
         />
 
-        <PropertiesContent 
-          loading={loading}
-          blocks={blocks}
-          onDeleteBlock={confirmDeleteBlock}
-          onEditApartment={openEditApartment}
-          isApartmentOccupied={isApartmentOccupied}
-          getResidentName={getResidentName}
-        />
+        {fetchError ? (
+          <ErrorMessage 
+            title="Connection Error" 
+            message={fetchError} 
+            onRetry={handleManualRefresh} 
+          />
+        ) : (
+          <PropertiesContent 
+            loading={loading}
+            blocks={blocks}
+            onDeleteBlock={confirmDeleteBlock}
+            onEditApartment={openEditApartment}
+            isApartmentOccupied={isApartmentOccupied}
+            getResidentName={getResidentName}
+          />
+        )}
       </div>
 
       <DeleteBlockAlert 

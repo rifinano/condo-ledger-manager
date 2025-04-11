@@ -9,10 +9,12 @@ import DeleteAllResidentsDialog from "@/components/residents/DeleteAllResidentsD
 import ResidentsHeader from "@/components/residents/ResidentsHeader";
 import ResidentsContent from "@/components/residents/ResidentsContent";
 import { usePropertyData } from "@/hooks/usePropertyData";
+import { ErrorMessage } from "@/components/ui/error-message";
 
 const ResidentsPage = () => {
   const { refreshData } = usePropertyData();
   const [isDeleteAllOpen, setIsDeleteAllOpen] = useState(false);
+  const [fetchError, setFetchError] = useState<string | null>(null);
   
   const {
     paginatedResidents,
@@ -47,8 +49,14 @@ const ResidentsPage = () => {
   // Fetch residents data when the component mounts
   useEffect(() => {
     const loadData = async () => {
-      await fetchResidents();
-      refreshData(); // Also refresh property data to ensure sync
+      try {
+        setFetchError(null);
+        await fetchResidents();
+        refreshData(); // Also refresh property data to ensure sync
+      } catch (error) {
+        console.error("Error loading resident data:", error);
+        setFetchError("Failed to load resident data. Please try again.");
+      }
     };
     
     loadData();
@@ -79,6 +87,17 @@ const ResidentsPage = () => {
     return result;
   };
 
+  const handleRetry = async () => {
+    try {
+      setFetchError(null);
+      await fetchResidents();
+      refreshData();
+    } catch (error) {
+      console.error("Error retrying data fetch:", error);
+      setFetchError("Failed to load data. Please try again later.");
+    }
+  };
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
@@ -89,18 +108,26 @@ const ResidentsPage = () => {
           onDeleteAll={() => setIsDeleteAllOpen(true)}
         />
 
-        <ResidentsContent 
-          residents={paginatedResidents}
-          isLoading={isLoading}
-          totalCount={totalCount}
-          searchTerm={searchTerm}
-          onSearchChange={setSearchTerm}
-          onEdit={editResident}
-          onDelete={confirmDeleteResident}
-          currentPage={currentPage}
-          totalPages={totalPages}
-          onPageChange={handlePageChange}
-        />
+        {fetchError ? (
+          <ErrorMessage 
+            title="Connection Error" 
+            message={fetchError} 
+            onRetry={handleRetry} 
+          />
+        ) : (
+          <ResidentsContent 
+            residents={paginatedResidents}
+            isLoading={isLoading}
+            totalCount={totalCount}
+            searchTerm={searchTerm}
+            onSearchChange={setSearchTerm}
+            onEdit={editResident}
+            onDelete={confirmDeleteResident}
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={handlePageChange}
+          />
+        )}
       </div>
 
       <AddResidentDialog 

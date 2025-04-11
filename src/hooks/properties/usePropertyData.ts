@@ -13,7 +13,8 @@ export const usePropertyData = () => {
     loading, 
     residents, 
     fetchProperties, 
-    refreshData 
+    refreshData,
+    fetchError
   } = usePropertyFetch();
   
   const {
@@ -48,6 +49,7 @@ export const usePropertyData = () => {
     getBlockNames,
     getApartments,
     months,
-    years
+    years,
+    fetchError
   };
 };

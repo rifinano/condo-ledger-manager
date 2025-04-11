@@ -8,52 +8,67 @@ import { Resident, ResidentApartment } from "./types";
  */
 export const getResidents = async (): Promise<Resident[]> => {
   try {
-    const { data, error } = await supabase
-      .from('residents')
-      .select('*')
-      .order('full_name');
-
-    if (error) {
-      console.error("Error fetching residents:", error);
-      toast({
-        title: "Error fetching residents",
-        description: error.message,
-        variant: "destructive",
-      });
-      return [];
-    }
-
-    // Fetch all resident-apartment assignments
-    const { data: residentApartments, error: apartmentsError } = await supabase
-      .from('resident_apartments')
-      .select('resident_id, block_number, apartment_number');
-
-    if (apartmentsError) {
-      console.error("Error fetching resident apartments:", apartmentsError);
-    }
-
-    // Group apartments by resident ID
-    const apartmentsByResident: Record<string, ResidentApartment[]> = {};
+    // Add retry logic for network issues
+    const maxRetries = 3;
+    let attempt = 0;
+    let error = null;
     
-    if (residentApartments) {
-      residentApartments.forEach((apt) => {
-        if (!apartmentsByResident[apt.resident_id]) {
-          apartmentsByResident[apt.resident_id] = [];
+    while (attempt < maxRetries) {
+      try {
+        const { data, error: fetchError } = await supabase
+          .from('residents')
+          .select('*')
+          .order('full_name');
+          
+        if (fetchError) throw fetchError;
+        
+        // Fetch all resident-apartment assignments
+        const { data: residentApartments, error: apartmentsError } = await supabase
+          .from('resident_apartments')
+          .select('resident_id, block_number, apartment_number');
+          
+        if (apartmentsError) throw apartmentsError;
+        
+        // Group apartments by resident ID
+        const apartmentsByResident: Record<string, ResidentApartment[]> = {};
+        
+        if (residentApartments) {
+          residentApartments.forEach((apt) => {
+            if (!apartmentsByResident[apt.resident_id]) {
+              apartmentsByResident[apt.resident_id] = [];
+            }
+            apartmentsByResident[apt.resident_id].push({
+              block_number: apt.block_number,
+              apartment_number: apt.apartment_number
+            });
+          });
         }
-        apartmentsByResident[apt.resident_id].push({
-          block_number: apt.block_number,
-          apartment_number: apt.apartment_number
-        });
-      });
+        
+        // Add apartments array to each resident
+        const residentsWithApartments = data.map(resident => ({
+          ...resident,
+          apartments: apartmentsByResident[resident.id] || []
+        }));
+        
+        return residentsWithApartments;
+      } catch (err) {
+        error = err;
+        attempt++;
+        // Wait before retrying (exponential backoff)
+        if (attempt < maxRetries) {
+          await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+        }
+      }
     }
-
-    // Add apartments array to each resident
-    const residentsWithApartments = data.map(resident => ({
-      ...resident,
-      apartments: apartmentsByResident[resident.id] || []
-    }));
-
-    return residentsWithApartments;
+    
+    // If we've exhausted all retries
+    console.error("Error fetching residents after retries:", error);
+    toast({
+      title: "Network error",
+      description: "Failed to connect to the server. Please check your internet connection and try again.",
+      variant: "destructive",
+    });
+    return [];
   } catch (error: any) {
     console.error("Unexpected error fetching residents:", error);
     toast({
