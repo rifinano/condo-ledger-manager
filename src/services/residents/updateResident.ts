@@ -7,44 +7,19 @@ import { ResidentFormData, ServiceResult } from "./types";
  */
 export const updateResident = async (id: string, resident: Omit<ResidentFormData, 'id'>): Promise<ServiceResult> => {
   try {
-    // Step 1: Update the resident record
+    // Use the database function to ensure all operations happen in a single transaction
     const { data, error } = await supabase
-      .from('residents')
-      .update({
-        full_name: resident.full_name,
-        phone_number: resident.phone_number || null,
-        block_number: resident.block_number,
-        apartment_number: resident.apartment_number,
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', id)
-      .select()
-      .single();
+      .rpc('update_resident_with_apartment', {
+        p_resident_id: id,
+        p_full_name: resident.full_name,
+        p_phone_number: resident.phone_number || null,
+        p_block_number: resident.block_number,
+        p_apartment_number: resident.apartment_number
+      });
 
     if (error) throw error;
     
-    // Step 2: Handle resident_apartments table
-    if (data) {
-      // Delete all existing apartment records for this resident
-      const { error: deleteError } = await supabase
-        .from('resident_apartments')
-        .delete()
-        .eq('resident_id', id);
-      
-      if (deleteError) throw deleteError;
-      
-      // Create a new apartment record with the updated information
-      const { error: insertError } = await supabase
-        .from('resident_apartments')
-        .insert({
-          resident_id: id,
-          block_number: resident.block_number,
-          apartment_number: resident.apartment_number
-        });
-      
-      if (insertError) throw insertError;
-    }
-    
+    // The operation was successful, return the data
     return { success: true, data };
   } catch (error: any) {
     console.error("Error updating resident:", error);
