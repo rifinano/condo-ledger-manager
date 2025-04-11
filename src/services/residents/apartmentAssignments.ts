@@ -22,7 +22,7 @@ export const addResidentApartment = async (
     // Insert directly into the resident_apartments table
     const { data, error } = await supabase
       .from('resident_apartments')
-      .insert(residentAptData);
+      .insert(residentAptData as any);
       
     if (error) throw error;
     

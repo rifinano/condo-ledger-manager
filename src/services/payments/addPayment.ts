@@ -24,7 +24,7 @@ export const addPayment = async (
     const { count, error: countError } = await supabase
       .from('residents')
       .select('id', { count: 'exact', head: true })
-      .eq('id', payment.resident_id);
+      .eq('id', payment.resident_id as any);
       
     if (countError || count === 0) {
       console.error("Resident verification error:", countError);

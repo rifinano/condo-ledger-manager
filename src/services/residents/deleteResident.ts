@@ -11,7 +11,7 @@ export const deleteResident = async (id: string): Promise<ServiceResult> => {
     const { error } = await supabase
       .from('residents')
       .delete()
-      .eq('id', id);
+      .eq('id', id as any);
 
     if (error) throw error;
     
@@ -34,7 +34,7 @@ export const deleteAllResidents = async (): Promise<ServiceResult> => {
     const { error } = await supabase
       .from('residents')
       .delete()
-      .neq('id', '00000000-0000-0000-0000-000000000000'); // Delete all records
+      .neq('id', '00000000-0000-0000-0000-000000000000' as any); // Delete all records
     
     if (error) throw error;
     

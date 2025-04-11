@@ -19,7 +19,7 @@ export const togglePaymentStatus = async (
     const { error } = await supabase
       .from('payments')
       .update(updateData)
-      .eq('id', paymentId);
+      .eq('id', paymentId as any);
 
     if (error) throw error;
     

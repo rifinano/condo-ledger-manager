@@ -33,7 +33,7 @@ export const getApartmentsByBlockId = async (blockId: string): Promise<Apartment
     }
 
     // Type assertion to ensure compatibility
-    const apartmentsData = (data || []) as Apartment[];
+    const apartmentsData = (data as unknown as Apartment[]) || [];
     
     // Update cache
     cache.apartments[blockId] = apartmentsData;

@@ -28,7 +28,7 @@ export const getBlocks = async (): Promise<Block[]> => {
     }
 
     // Type assertion to ensure compatibility
-    const blocksData = (data || []) as Block[];
+    const blocksData = (data as unknown as Block[]) || [];
     
     // Update cache
     cache.blocks = blocksData;
@@ -48,7 +48,7 @@ export const addBlock = async (name: string, apartmentCount: number): Promise<Bl
     
     const { data: blockData, error: blockError } = await supabase
       .from("blocks")
-      .insert(blockInsert)
+      .insert(blockInsert as any)
       .select()
       .single();
 
@@ -81,7 +81,7 @@ export const addBlock = async (name: string, apartmentCount: number): Promise<Bl
 
     const { error: apartmentsError } = await supabase
       .from("apartments")
-      .insert(apartmentInserts);
+      .insert(apartmentInserts as any);
 
     if (apartmentsError) {
       console.error("Error adding apartments:", apartmentsError);
@@ -108,7 +108,7 @@ export const deleteBlock = async (blockId: string): Promise<boolean> => {
     const { error } = await supabase
       .from("blocks")
       .delete()
-      .eq('id', blockId);
+      .eq('id', blockId as any);
 
     if (error) {
       console.error("Error deleting block:", error);

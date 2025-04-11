@@ -20,7 +20,7 @@ export const updateResident = async (id: string, resident: Omit<ResidentFormData
     // Update the resident record
     const { data, error } = await supabase
       .from('residents')
-      .update(residentUpdate)
+      .update(residentUpdate as any)
       .eq('id', id as any)
       .select()
       .single();
@@ -54,7 +54,7 @@ export const updateResident = async (id: string, resident: Omit<ResidentFormData
     // Create new apartment association
     const { error: insertError } = await supabase
       .from('resident_apartments')
-      .insert(residentAptData);
+      .insert(residentAptData as any);
     
     if (insertError) throw insertError;
     

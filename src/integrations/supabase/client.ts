@@ -28,7 +28,6 @@ export const supabase = createClient<Database>(
     // Add a longer timeout to prevent quick timeouts and handle connection issues better
     realtime: {
       timeout: 60000,
-      eventsPerSecond: 5, // Limit event rate
       params: {
         transports: ['websocket', 'polling'] // Fallback to polling if WebSocket fails
       }

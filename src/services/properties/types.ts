@@ -10,7 +10,7 @@ export interface Apartment {
   id: string;
   number: string;
   block_id: string;
-  floor: number; // Add the missing floor property
+  floor: number;
   created_at: string;
   updated_at: string;
 }

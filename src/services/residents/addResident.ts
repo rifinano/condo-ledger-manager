@@ -18,14 +18,14 @@ export const addResident = async (resident: Omit<ResidentFormData, 'id'>): Promi
 
     const { data, error } = await supabase
       .from('residents')
-      .insert(formattedResident)
+      .insert(formattedResident as any)
       .select();
 
     if (error) throw error;
     
     // Add to the resident_apartments table for the new resident
     if (data && data.length > 0) {
-      const newResidentId = data[0].id;
+      const newResidentId = (data[0] as any).id;
       
       // Insert directly into the resident_apartments table with proper typing
       const residentAptData: Database['public']['Tables']['resident_apartments']['Insert'] = {
@@ -36,7 +36,7 @@ export const addResident = async (resident: Omit<ResidentFormData, 'id'>): Promi
         
       const { error: aptError } = await supabase
         .from('resident_apartments')
-        .insert(residentAptData);
+        .insert(residentAptData as any);
         
       if (aptError) {
         console.error("Error adding resident apartment:", aptError);
