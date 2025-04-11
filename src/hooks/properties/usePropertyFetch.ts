@@ -8,7 +8,7 @@ import {
   getResidentByApartment,
   clearCache 
 } from "@/services/properties";
-import { toast } from "@/hooks/use-toast";
+import { useToast } from "@/hooks/use-toast";
 
 /**
  * Hook to handle property data fetching operations with improved error handling
@@ -25,6 +25,7 @@ export const usePropertyFetch = () => {
   const [manualRefreshRequested, setManualRefreshRequested] = useState(false);
   // Add a counter for tracking failed attempts
   const [failedAttempts, setFailedAttempts] = useState(0);
+  const { toast } = useToast();
 
   // Fetch blocks and apartments with improved error handling
   const fetchProperties = useCallback(async () => {
@@ -56,8 +57,14 @@ export const usePropertyFetch = () => {
           // Fetch all apartments for blocks in parallel
           const blocksWithApartments = await Promise.all(
             blocksData.map(async (block) => {
-              const apartments = await getApartmentsByBlockId(block.id);
-              return { ...block, apartments };
+              try {
+                const apartments = await getApartmentsByBlockId(block.id);
+                return { ...block, apartments };
+              } catch (aptError) {
+                console.error(`Error fetching apartments for block ${block.id}:`, aptError);
+                // Return block with empty apartments array if fetching apartments fails
+                return { ...block, apartments: [] };
+              }
             })
           );
           
@@ -77,7 +84,6 @@ export const usePropertyFetch = () => {
                   residentsMap[key] = resident;
                 }
               } catch (resError) {
-                console.error(`Error fetching resident for ${block.name}-${apartment.number}:`, resError);
                 // Continue with other fetches even if one fails
               }
             })
@@ -129,7 +135,7 @@ export const usePropertyFetch = () => {
       // Reset the manual refresh flag
       setManualRefreshRequested(false);
     }
-  }, [isFetching, failedAttempts, manualRefreshRequested]);
+  }, [isFetching, failedAttempts, manualRefreshRequested, toast]);
 
   // Force a refresh of data by completely clearing the cache
   const refreshData = useCallback(() => {
@@ -139,12 +145,9 @@ export const usePropertyFetch = () => {
     setManualRefreshRequested(true);
     // Reset failed attempts counter on manual refresh
     setFailedAttempts(0);
-    // Add toast to indicate refresh is happening
-    toast({
-      title: "Refreshing data",
-      description: "Fetching the latest property data...",
-    });
-  }, []);
+    // Schedule the fetch
+    setTimeout(() => fetchProperties(), 100);
+  }, [fetchProperties]);
 
   // Only automatically fetch properties on initial mount or when manual refresh is requested
   useEffect(() => {

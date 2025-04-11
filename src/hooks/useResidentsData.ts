@@ -2,6 +2,7 @@
 import { useCallback, useState } from "react";
 import { getResidents, Resident } from "@/services/residents";
 import { getBlocks } from "@/services/propertiesService";
+import { useToast } from "@/hooks/use-toast";
 
 /**
  * Hook to fetch and filter residents data
@@ -14,6 +15,8 @@ export const useResidentsData = (
   const [totalCount, setTotalCount] = useState(0);
   const [isFetching, setIsFetching] = useState(false);
   const [allResidents, setAllResidents] = useState<Resident[]>([]);
+  const [error, setError] = useState<string | null>(null);
+  const { toast } = useToast();
   
   const fetchResidents = useCallback(async () => {
     // Prevent concurrent fetches
@@ -21,32 +24,72 @@ export const useResidentsData = (
     
     setIsLoading(true);
     setIsFetching(true);
+    setError(null); // Reset error state
     
     try {
-      const data = await getResidents();
+      // Add retry mechanism for network issues
+      const maxRetries = 3;
+      let attempt = 0;
+      let lastError = null;
       
-      // Get the blocks from the database to ensure we have updated block names
-      const blocksData = await getBlocks();
-      const blockNames = new Set(blocksData.map(block => block.name));
+      while (attempt < maxRetries) {
+        try {
+          console.log(`Attempt ${attempt + 1} to fetch residents data`);
+          const data = await getResidents();
+          
+          // If we succeeded, get the blocks as well
+          let blocksData = [];
+          try {
+            blocksData = await getBlocks();
+          } catch (blockError) {
+            console.error("Error fetching blocks, proceeding with residents only:", blockError);
+            // Continue with empty blocks list
+          }
+          
+          const blockNames = new Set(blocksData.map(block => block.name));
+          
+          // Filter residents to show only those with valid blocks
+          // This prevents issues if blocks are deleted but residents still reference them
+          // If we don't have any blocks, show all residents
+          const validResidents = blockNames.size === 0 ? 
+            data : 
+            data.filter(resident => blockNames.has(resident.block_number));
+          
+          setResidents(validResidents || []);
+          setAllResidents(validResidents || []);
+          setTotalCount(validResidents.length);
+          return;
+        } catch (err) {
+          lastError = err;
+          attempt++;
+          console.log(`Residents fetch attempt ${attempt} failed, ${attempt < maxRetries ? "retrying..." : "giving up."}`);
+          // Wait before retrying (exponential backoff)
+          if (attempt < maxRetries) {
+            await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, attempt - 1)));
+          }
+        }
+      }
       
-      // Filter residents to show only those with valid blocks
-      // This prevents issues if blocks are deleted but residents still reference them
-      const validResidents = data.filter(resident => 
-        blockNames.has(resident.block_number) || blockNames.size === 0
-      );
+      // If we get here, all retries failed
+      throw lastError;
+    } catch (error: any) {
+      console.error("Error fetching residents after all retries:", error);
+      setError("Failed to fetch residents data. Please check your connection and try again.");
+      setResidents([]);
+      setAllResidents([]);
+      setTotalCount(0);
       
-      setResidents(validResidents || []);
-      setAllResidents(validResidents || []);
-      setTotalCount(validResidents.length);
-      return;
-    } catch (error) {
-      console.error("Error fetching residents:", error);
-      throw error; // Re-throw so the parent component can handle it
+      // Show toast notification only once
+      toast({
+        title: "Connection Error",
+        description: "Could not load resident data. Please try again later.",
+        variant: "destructive"
+      });
     } finally {
       setIsLoading(false);
       setIsFetching(false);
     }
-  }, [setResidents, setIsLoading, isFetching]);
+  }, [setResidents, setIsLoading, isFetching, toast]);
 
   const filterResidents = useCallback((residents: Resident[]) => {
     if (!searchTerm.trim()) return residents;
@@ -85,6 +128,7 @@ export const useResidentsData = (
     filterResidents,
     isApartmentOccupied,
     totalCount,
-    isFetching
+    isFetching,
+    error
   };
 };

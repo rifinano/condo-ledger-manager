@@ -1,6 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "@/hooks/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { Resident, ResidentApartment } from "./types";
 
 /**
@@ -15,6 +15,8 @@ export const getResidents = async (): Promise<Resident[]> => {
     
     while (attempt < maxRetries) {
       try {
+        console.log(`Attempt ${attempt + 1} to fetch residents`);
+        
         const { data, error: fetchError } = await supabase
           .from('residents')
           .select('*')
@@ -22,12 +24,17 @@ export const getResidents = async (): Promise<Resident[]> => {
           
         if (fetchError) throw fetchError;
         
+        console.log(`Successfully fetched residents: ${data.length}`);
+        
         // Fetch all resident-apartment assignments
         const { data: residentApartments, error: apartmentsError } = await supabase
           .from('resident_apartments')
           .select('resident_id, block_number, apartment_number');
           
-        if (apartmentsError) throw apartmentsError;
+        if (apartmentsError) {
+          console.error("Error fetching resident apartments:", apartmentsError);
+          // Continue with just the residents data
+        }
         
         // Group apartments by resident ID
         const apartmentsByResident: Record<string, ResidentApartment[]> = {};
@@ -52,8 +59,10 @@ export const getResidents = async (): Promise<Resident[]> => {
         
         return residentsWithApartments;
       } catch (err) {
+        console.log(`Resident fetch attempt ${attempt + 1} failed, retrying...`);
         error = err;
         attempt++;
+        
         // Wait before retrying (exponential backoff)
         if (attempt < maxRetries) {
           await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, attempt - 1)));
@@ -63,19 +72,10 @@ export const getResidents = async (): Promise<Resident[]> => {
     
     // If we've exhausted all retries
     console.error("Error fetching residents after retries:", error);
-    toast({
-      title: "Network error",
-      description: "Failed to connect to the server. Please check your internet connection and try again.",
-      variant: "destructive",
-    });
-    return [];
+    throw new Error("Failed to connect to the database after multiple attempts. Please check your internet connection.");
   } catch (error: any) {
-    console.error("Unexpected error fetching residents:", error);
-    toast({
-      title: "Unexpected error",
-      description: "Failed to fetch residents. Please try again.",
-      variant: "destructive",
-    });
+    console.error("Error fetching residents:", error);
+    // Return empty array instead of throwing, let calling code handle the error state
     return [];
   }
 };

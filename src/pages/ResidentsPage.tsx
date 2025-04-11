@@ -10,12 +10,15 @@ import ResidentsHeader from "@/components/residents/ResidentsHeader";
 import ResidentsContent from "@/components/residents/ResidentsContent";
 import { usePropertyData } from "@/hooks/usePropertyData";
 import { ErrorMessage } from "@/components/ui/error-message";
+import { Button } from "@/components/ui/button";
+import { RefreshCw } from "lucide-react";
 
 const ResidentsPage = () => {
   const { refreshData } = usePropertyData();
   const [isDeleteAllOpen, setIsDeleteAllOpen] = useState(false);
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [hasAttemptedFetch, setHasAttemptedFetch] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   
   const {
     paginatedResidents,
@@ -47,8 +50,16 @@ const ResidentsPage = () => {
     totalCount,
     isFetching,
     isApartmentOccupied,
-    selectedResidentId
+    selectedResidentId,
+    error: residentsError
   } = useResidentsPage();
+
+  // Set fetch error from the hook's error
+  useEffect(() => {
+    if (residentsError) {
+      setFetchError(residentsError);
+    }
+  }, [residentsError]);
 
   // Fetch residents data when the component mounts
   useEffect(() => {
@@ -97,6 +108,9 @@ const ResidentsPage = () => {
   };
 
   const handleRetry = async () => {
+    if (isRefreshing) return;
+    
+    setIsRefreshing(true);
     try {
       setFetchError(null);
       setHasAttemptedFetch(false); // Allow a new fetch attempt
@@ -105,6 +119,8 @@ const ResidentsPage = () => {
     } catch (error) {
       console.error("Error retrying data fetch:", error);
       setFetchError("Failed to load data. Please try again later.");
+    } finally {
+      setIsRefreshing(false);
     }
   };
 
@@ -119,12 +135,25 @@ const ResidentsPage = () => {
         />
 
         {fetchError ? (
-          <ErrorMessage 
-            title="Connection Error" 
-            message={fetchError} 
-            onRetry={handleRetry} 
-            isNetworkError={true}
-          />
+          <div className="space-y-4">
+            <ErrorMessage 
+              title="Connection Error" 
+              message={fetchError} 
+              onRetry={handleRetry} 
+              isNetworkError={true}
+            />
+            <div className="flex justify-center">
+              <Button 
+                onClick={handleRetry} 
+                variant="outline" 
+                disabled={isRefreshing}
+                className="flex items-center gap-2"
+              >
+                <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+                {isRefreshing ? "Refreshing..." : "Refresh Data"}
+              </Button>
+            </div>
+          </div>
         ) : (
           <ResidentsContent 
             residents={paginatedResidents}

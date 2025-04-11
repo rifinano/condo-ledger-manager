@@ -39,14 +39,25 @@ export const useResidentsPage = () => {
     getBlockNames, 
     getApartments, 
     months, 
-    years 
+    years,
+    fetchError: propertyFetchError
   } = usePropertyData();
 
-  const { fetchResidents, filterResidents, totalCount, isFetching, isApartmentOccupied } = useResidentsData(
+  const { 
+    fetchResidents, 
+    filterResidents, 
+    totalCount, 
+    isFetching, 
+    isApartmentOccupied,
+    error: residentsError 
+  } = useResidentsData(
     setResidents,
     setIsLoading,
     searchTerm
   );
+
+  // Combine errors from different sources
+  const error = residentsError || propertyFetchError || null;
 
   const {
     handleAddResident: addResident,
@@ -141,6 +152,7 @@ export const useResidentsPage = () => {
     setPageSize,
     totalCount,
     isFetching,
-    isApartmentOccupied
+    isApartmentOccupied,
+    error
   };
 };
