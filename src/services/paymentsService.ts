@@ -32,7 +32,7 @@ export interface Resident {
 
 export const getPayments = async () => {
   try {
-    // First, fetch all payments
+    // First, fetch all payments with proper error handling
     const { data: payments, error: paymentsError } = await supabase
       .from('payments')
       .select('*')
@@ -100,23 +100,43 @@ export const getPayments = async () => {
 
 export const getResidents = async () => {
   try {
-    // Use the generic query approach since TypeScript definitions don't recognize our tables yet
-    const { data, error } = await supabase
-      .from('residents')
-      .select('*')
-      .order('full_name');
+    // Implement robust fetching with retries
+    const maxRetries = 3;
+    let attempt = 0;
+    let error = null;
+    
+    while (attempt < maxRetries) {
+      try {
+        // Use the generic query approach since TypeScript definitions don't recognize our tables yet
+        const { data, error } = await supabase
+          .from('residents')
+          .select('*')
+          .order('full_name');
 
-    if (error) {
-      console.error("Error fetching residents:", error);
-      toast({
-        title: "Error fetching residents",
-        description: error.message,
-        variant: "destructive",
-      });
-      return [];
+        if (error) throw error;
+        
+        console.log("Successfully fetched residents:", data?.length || 0);
+        return data || [];
+      } catch (err) {
+        error = err;
+        attempt++;
+        console.log(`Resident fetch attempt ${attempt} failed, retrying...`);
+        
+        // Wait before retrying (exponential backoff)
+        if (attempt < maxRetries) {
+          await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, attempt - 1)));
+        }
+      }
     }
-
-    return data;
+    
+    // If we've exhausted all retries
+    console.error("Error fetching residents after retries:", error);
+    toast({
+      title: "Error fetching residents",
+      description: "Could not load resident data. Please try again later.",
+      variant: "destructive",
+    });
+    return [];
   } catch (error) {
     console.error("Unexpected error fetching residents:", error);
     toast({
@@ -163,6 +183,18 @@ export const addPayment = async (payment: Omit<Payment, 'id' | 'created_at' | 'u
     if (!user) {
       console.error("No authenticated user found");
       throw new Error("You must be logged in to add a payment");
+    }
+    
+    // Verify resident exists before adding payment
+    const { data: resident, error: residentError } = await supabase
+      .from('residents')
+      .select('id, full_name')
+      .eq('id', payment.resident_id)
+      .single();
+      
+    if (residentError || !resident) {
+      console.error("Resident verification error:", residentError);
+      throw new Error("Selected resident does not exist or could not be verified");
     }
     
     // Add payment_status field with default value "paid" and include created_by field

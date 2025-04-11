@@ -2,7 +2,7 @@
 import { useEffect } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Button } from "@/components/ui/button";
-import { Download, RefreshCw } from "lucide-react";
+import { Download } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { usePaymentData } from "@/hooks/usePaymentData";
 import PaymentLedger from "@/components/payments/PaymentLedger";
@@ -55,10 +55,6 @@ const PaymentsPage = () => {
     }, 1500);
   };
 
-  const handleRefreshData = () => {
-    refreshAllData();
-  };
-
   if (isLoadingPayments || isLoadingResidents) {
     return (
       <DashboardLayout>
@@ -84,10 +80,6 @@ const PaymentsPage = () => {
             <p className="text-gray-500 mt-1">Track and manage resident payments</p>
           </div>
           <div className="flex space-x-2">
-            <Button variant="outline" onClick={handleRefreshData}>
-              <RefreshCw className="mr-2 h-4 w-4" /> Refresh Data
-            </Button>
-            
             <Button variant="outline" onClick={handleExportReport}>
               <Download className="mr-2 h-4 w-4" /> Export Report
             </Button>
@@ -107,7 +99,7 @@ const PaymentsPage = () => {
           <ErrorMessage 
             title="Connection Error" 
             message="Failed to load payment data. Please check your connection and try again." 
-            onRetry={handleRefreshData} 
+            onRetry={refreshAllData} 
             isNetworkError={true}
           />
         ) : (

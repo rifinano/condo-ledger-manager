@@ -31,9 +31,15 @@ const AddPaymentDialog = ({
 }: AddPaymentDialogProps) => {
   const [isAddingPayment, setIsAddingPayment] = useState(false);
   const { toast } = useToast();
+  const [isResidentsLoaded, setIsResidentsLoaded] = useState(false);
   
+  // Check if residents data is loaded and valid
   useEffect(() => {
-    console.log("Residents in AddPaymentDialog:", residents);
+    if (residents && residents.length > 0) {
+      setIsResidentsLoaded(true);
+    } else {
+      setIsResidentsLoaded(false);
+    }
   }, [residents]);
 
   const closeDialog = () => setIsAddingPayment(false);
@@ -45,10 +51,23 @@ const AddPaymentDialog = ({
     isSubmitting
   } = usePaymentForm(closeDialog, refetchPayments);
 
+  // Show a notification if trying to add a payment without residents
+  const handleOpenDialog = () => {
+    if (!isResidentsLoaded) {
+      toast({
+        title: "No residents available",
+        description: "Please add residents before recording payments",
+        variant: "destructive"
+      });
+      return;
+    }
+    setIsAddingPayment(true);
+  };
+
   return (
     <Dialog open={isAddingPayment} onOpenChange={setIsAddingPayment}>
       <DialogTrigger asChild>
-        <Button>
+        <Button onClick={handleOpenDialog}>
           <Plus className="mr-2 h-4 w-4" /> Record Payment
         </Button>
       </DialogTrigger>

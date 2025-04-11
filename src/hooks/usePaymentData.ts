@@ -23,7 +23,9 @@ export const usePaymentData = () => {
   } = useQuery({
     queryKey: ['payments'],
     queryFn: getPayments,
-    staleTime: 1000 * 60 * 5, // Consider data fresh for 5 minutes
+    staleTime: 1000 * 60 * 2, // Reduce stale time to 2 minutes for fresher data
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
   });
 
   // Fetch residents with React Query
@@ -35,7 +37,9 @@ export const usePaymentData = () => {
   } = useQuery({
     queryKey: ['residents'],
     queryFn: getResidents,
-    staleTime: 1000 * 60 * 5, // Consider data fresh for 5 minutes
+    staleTime: 1000 * 60 * 2, // Reduce stale time to 2 minutes for fresher data
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
   });
 
   // Enhanced refetch function that refreshes all data
@@ -61,10 +65,17 @@ export const usePaymentData = () => {
     }
   }, [refetchPayments, refetchResidents, refreshPropertyData, toast]);
 
-  // Log residents for debugging
+  // Auto-refresh when the component mounts
   useEffect(() => {
-    console.log("Residents in usePaymentData:", residents);
-  }, [residents]);
+    refreshAllData();
+    // Set up an interval to periodically refresh data (every 5 minutes)
+    const refreshInterval = setInterval(() => {
+      refetchResidents();
+      refetchPayments();
+    }, 1000 * 60 * 5);
+    
+    return () => clearInterval(refreshInterval);
+  }, [refreshAllData, refetchResidents, refetchPayments]);
 
   // Show error toast if there's an issue fetching residents
   useEffect(() => {
