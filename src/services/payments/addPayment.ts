@@ -1,9 +1,9 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { AddPaymentResult } from "./types";
+import { AddPaymentResult, PaymentFormData } from "./types";
 
 export const addPayment = async (
-  payment: Omit<any, 'id' | 'created_at' | 'updated_at' | 'payment_status'>
+  payment: PaymentFormData
 ): Promise<AddPaymentResult> => {
   try {
     // Get the current authenticated user
@@ -32,11 +32,17 @@ export const addPayment = async (
     }
     
     // Create a complete payment object with all required fields
-    // Use the spread operator to merge payment with the default status
     const paymentWithStatus = {
-      ...payment, // This includes all the original payment fields
+      resident_id: payment.resident_id,
+      amount: payment.amount,
+      payment_date: payment.payment_date,
+      payment_for_month: payment.payment_for_month,
+      payment_for_year: payment.payment_for_year,
+      payment_type: payment.payment_type,
+      payment_method: payment.payment_method,
+      notes: payment.notes,
       payment_status: "paid" as const,
-      created_by: user.id // Use the authenticated user ID
+      created_by: user.id
     };
     
     console.log("Adding payment with data:", paymentWithStatus);
