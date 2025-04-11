@@ -11,7 +11,7 @@ export interface Payment {
   payment_for_year: string;
   payment_type: string;
   payment_method: string;
-  payment_status: "paid" | "unpaid"; // Added payment status
+  payment_status: "paid" | "unpaid"; 
   notes?: string;
   created_at: string;
   updated_at: string;
@@ -152,18 +152,27 @@ export const togglePaymentStatus = async (paymentId: string, isPaid: boolean) =>
 
 export const addPayment = async (payment: Omit<Payment, 'id' | 'created_at' | 'updated_at' | 'payment_status'>) => {
   try {
-    // Add payment_status field with default value "paid"
+    // Get the current authenticated user
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    // Add payment_status field with default value "paid" and include created_by field
     const paymentWithStatus = {
       ...payment,
-      payment_status: "paid" as const
+      payment_status: "paid" as const,
+      created_by: user?.id || null // Add the user ID who created this payment
     };
+    
+    console.log("Adding payment with data:", paymentWithStatus);
     
     const { data, error } = await supabase
       .from('payments')
       .insert([paymentWithStatus])
       .select();
 
-    if (error) throw error;
+    if (error) {
+      console.error("Error adding payment:", error);
+      throw error;
+    }
     
     return { success: true, data };
   } catch (error: any) {
