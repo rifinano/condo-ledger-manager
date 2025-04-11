@@ -1,7 +1,9 @@
 
 import { createContext, useContext, useState, ReactNode, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { Session, User } from "@supabase/supabase-js";
 
 interface Admin {
   id: string;
@@ -14,72 +16,120 @@ interface AuthContextType {
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<void>;
   logout: () => void;
+  session: Session | null;
+  user: User | null;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [admin, setAdmin] = useState<Admin | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
+  const [user, setUser] = useState<User | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  // Check if we have admin data in localStorage on mount
+  // Initialize auth state from Supabase
   useEffect(() => {
-    const storedAdmin = localStorage.getItem("syndicateAdmin");
-    if (storedAdmin) {
-      setAdmin(JSON.parse(storedAdmin));
-    }
+    // First set up the auth state listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, currentSession) => {
+        setSession(currentSession);
+        setUser(currentSession?.user ?? null);
+        
+        if (currentSession?.user) {
+          const adminData: Admin = {
+            id: currentSession.user.id,
+            email: currentSession.user.email || "",
+            name: "Syndicate Admin",
+          };
+          setAdmin(adminData);
+          localStorage.setItem("syndicateAdmin", JSON.stringify(adminData));
+        } else {
+          setAdmin(null);
+          localStorage.removeItem("syndicateAdmin");
+        }
+      }
+    );
+
+    // Then get the current session
+    supabase.auth.getSession().then(({ data: { session: currentSession } }) => {
+      setSession(currentSession);
+      setUser(currentSession?.user ?? null);
+      
+      if (currentSession?.user) {
+        const adminData: Admin = {
+          id: currentSession.user.id,
+          email: currentSession.user.email || "",
+          name: "Syndicate Admin",
+        };
+        setAdmin(adminData);
+        localStorage.setItem("syndicateAdmin", JSON.stringify(adminData));
+      }
+    });
+
+    // Clean up the subscription when component unmounts
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
-  // In a real app, this would validate against a backend
   const login = async (email: string, password: string) => {
-    // Mock login for demo purposes
-    // In a production app, this would call an API endpoint
-    if (email === "admin@example.com" && password === "password") {
-      const adminData: Admin = {
-        id: "1",
-        email: email,
-        name: "Syndicate Admin",
-      };
-      
-      // Set admin in state and localStorage
-      setAdmin(adminData);
-      localStorage.setItem("syndicateAdmin", JSON.stringify(adminData));
-      
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      // Session and user state will be updated by the auth state listener
       toast({
         title: "Login successful",
         description: "Welcome back to the Syndicate Manager",
       });
       
-      // Navigate to dashboard
       navigate("/dashboard");
-    } else {
+    } catch (error: any) {
       toast({
         title: "Login failed",
-        description: "Invalid email or password",
+        description: error?.message || "Invalid email or password",
         variant: "destructive",
       });
-      throw new Error("Invalid credentials");
+      throw error;
     }
   };
 
-  const logout = () => {
-    setAdmin(null);
-    localStorage.removeItem("syndicateAdmin");
-    navigate("/");
-    toast({
-      title: "Logged out",
-      description: "You have been successfully logged out",
-    });
+  const logout = async () => {
+    try {
+      await supabase.auth.signOut();
+      // Session and user state will be updated by the auth state listener
+      navigate("/");
+      toast({
+        title: "Logged out",
+        description: "You have been successfully logged out",
+      });
+    } catch (error) {
+      console.error("Logout error:", error);
+      toast({
+        title: "Logout failed",
+        description: "There was a problem logging out",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
     <AuthContext.Provider
       value={{
         admin,
-        isAuthenticated: !!admin,
+        isAuthenticated: !!session,
         login,
         logout,
+        session,
+        user
       }}
     >
       {children}
