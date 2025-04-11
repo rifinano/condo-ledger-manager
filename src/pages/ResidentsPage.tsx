@@ -1,9 +1,9 @@
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, Plus } from "lucide-react";
+import { Search, Plus, AlertTriangle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useResidentsPage } from "@/hooks/useResidentsPage";
 import AddResidentDialog from "@/components/residents/AddResidentDialog";
@@ -12,9 +12,25 @@ import ResidentsPagination from "@/components/residents/ResidentsPagination";
 import EditResidentDialog from "@/components/residents/EditResidentDialog";
 import DeleteResidentDialog from "@/components/residents/DeleteResidentDialog";
 import { usePropertyData } from "@/hooks/usePropertyData";
+import { 
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { deleteAllResidents } from "@/services/residents/deleteResident";
+import { useToast } from "@/hooks/use-toast";
+import { Loader2 } from "lucide-react";
 
 const ResidentsPage = () => {
   const { refreshData } = usePropertyData();
+  const { toast } = useToast();
+  const [isDeleteAllOpen, setIsDeleteAllOpen] = useState(false);
+  const [isDeletingAll, setIsDeletingAll] = useState(false);
   
   const {
     paginatedResidents,
@@ -81,6 +97,37 @@ const ResidentsPage = () => {
     return result;
   };
 
+  const handleDeleteAllResidents = async () => {
+    setIsDeletingAll(true);
+    try {
+      const result = await deleteAllResidents();
+      if (result.success) {
+        await fetchResidents();
+        refreshData();
+        toast({
+          title: "All residents deleted",
+          description: "All residents have been removed from the database",
+        });
+      } else {
+        toast({
+          title: "Error deleting residents",
+          description: result.error || "An error occurred while deleting all residents",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      console.error("Error deleting all residents:", error);
+      toast({
+        title: "Error deleting residents",
+        description: "An unexpected error occurred",
+        variant: "destructive"
+      });
+    } finally {
+      setIsDeletingAll(false);
+      setIsDeleteAllOpen(false);
+    }
+  };
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
@@ -90,6 +137,13 @@ const ResidentsPage = () => {
             <p className="text-gray-500 mt-1">Manage resident information</p>
           </div>
           <div className="flex space-x-2">
+            <Button 
+              variant="destructive"
+              onClick={() => setIsDeleteAllOpen(true)}
+              disabled={totalCount === 0 || isLoading}
+            >
+              <AlertTriangle className="mr-2 h-4 w-4" /> Delete All
+            </Button>
             <Button 
               className="bg-syndicate-600 hover:bg-syndicate-700"
               onClick={() => setIsAddingResident(true)}
@@ -173,6 +227,38 @@ const ResidentsPage = () => {
             : ""
         }
       />
+
+      <AlertDialog open={isDeleteAllOpen} onOpenChange={setIsDeleteAllOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete All Residents</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete all {totalCount} residents 
+              and remove all their apartment associations from the database.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeletingAll}>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={(e) => {
+                e.preventDefault();
+                handleDeleteAllResidents();
+              }}
+              className="bg-red-600 hover:bg-red-700"
+              disabled={isDeletingAll}
+            >
+              {isDeletingAll ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                "Yes, delete all residents"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </DashboardLayout>
   );
 };

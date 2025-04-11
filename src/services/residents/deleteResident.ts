@@ -32,3 +32,34 @@ export const deleteResident = async (id: string): Promise<ServiceResult> => {
     };
   }
 };
+
+/**
+ * Deletes all residents from the database
+ */
+export const deleteAllResidents = async (): Promise<ServiceResult> => {
+  try {
+    // First delete all resident apartment associations
+    const { error: apartmentError } = await supabase
+      .from('resident_apartments')
+      .delete()
+      .neq('resident_id', '00000000-0000-0000-0000-000000000000'); // Delete all records
+    
+    if (apartmentError) throw apartmentError;
+    
+    // Then delete all resident records
+    const { error } = await supabase
+      .from('residents')
+      .delete()
+      .neq('id', '00000000-0000-0000-0000-000000000000'); // Delete all records
+    
+    if (error) throw error;
+    
+    return { success: true };
+  } catch (error: any) {
+    console.error("Error deleting all residents:", error);
+    return { 
+      success: false, 
+      error: error.message || "Failed to delete all residents" 
+    };
+  }
+};
