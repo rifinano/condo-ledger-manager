@@ -9,6 +9,7 @@ import {
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { 
   MoreHorizontal, User, Phone, Building2, Home,
   Edit, Trash2
@@ -27,53 +28,58 @@ const ResidentsTable = ({
   onEdit, 
   onDelete 
 }: ResidentsTableProps) => {
+  if (isLoading) {
+    return <ResidentsTableSkeleton />;
+  }
+
+  if (residents.length === 0) {
+    return (
+      <div className="text-center py-8 border rounded-md bg-gray-50">
+        <p className="text-muted-foreground">No residents found</p>
+      </div>
+    );
+  }
+
   return (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead>Name</TableHead>
-          <TableHead>Phone</TableHead>
-          <TableHead>Location</TableHead>
-          <TableHead className="text-right">Actions</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {isLoading ? (
+    <div className="border rounded-md overflow-hidden">
+      <Table>
+        <TableHeader>
           <TableRow>
-            <TableCell colSpan={4} className="text-center py-4 text-muted-foreground">
-              Loading residents...
-            </TableCell>
+            <TableHead className="w-[40%]">Name</TableHead>
+            <TableHead className="w-[20%]">Phone</TableHead>
+            <TableHead className="w-[30%]">Location</TableHead>
+            <TableHead className="w-[10%] text-right">Actions</TableHead>
           </TableRow>
-        ) : residents.length === 0 ? (
-          <TableRow>
-            <TableCell colSpan={4} className="text-center py-4 text-muted-foreground">
-              No residents found
-            </TableCell>
-          </TableRow>
-        ) : (
-          residents.map((resident) => (
+        </TableHeader>
+        <TableBody>
+          {residents.map((resident) => (
             <TableRow key={resident.id}>
-              <TableCell className="font-medium flex items-center">
-                <User className="h-4 w-4 mr-2 text-gray-500" />
-                {resident.full_name}
-              </TableCell>
-              <TableCell className="flex items-center">
-                <Phone className="h-4 w-4 mr-2 text-gray-500" />
-                {resident.phone_number || "—"}
+              <TableCell className="font-medium">
+                <div className="flex items-center">
+                  <User className="h-4 w-4 mr-2 text-gray-500 flex-shrink-0" />
+                  <span className="truncate">{resident.full_name}</span>
+                </div>
               </TableCell>
               <TableCell>
                 <div className="flex items-center">
-                  <Building2 className="h-4 w-4 mr-1 text-gray-500" />
-                  {resident.block_number}
+                  <Phone className="h-4 w-4 mr-2 text-gray-500 flex-shrink-0" />
+                  <span>{resident.phone_number || "—"}</span>
+                </div>
+              </TableCell>
+              <TableCell>
+                <div className="flex items-center">
+                  <Building2 className="h-4 w-4 mr-1 text-gray-500 flex-shrink-0" />
+                  <span>{resident.block_number}</span>
                   <span className="mx-1">/</span>
-                  <Home className="h-4 w-4 mr-1 text-gray-500" />
-                  {resident.apartment_number}
+                  <Home className="h-4 w-4 mr-1 text-gray-500 flex-shrink-0" />
+                  <span>{resident.apartment_number}</span>
                 </div>
               </TableCell>
               <TableCell className="text-right">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="sm">
+                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                      <span className="sr-only">Open menu</span>
                       <MoreHorizontal className="h-4 w-4" />
                     </Button>
                   </DropdownMenuTrigger>
@@ -91,10 +97,56 @@ const ResidentsTable = ({
                 </DropdownMenu>
               </TableCell>
             </TableRow>
-          ))
-        )}
-      </TableBody>
-    </Table>
+          ))}
+        </TableBody>
+      </Table>
+    </div>
+  );
+};
+
+const ResidentsTableSkeleton = () => {
+  return (
+    <div className="border rounded-md overflow-hidden">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead className="w-[40%]">Name</TableHead>
+            <TableHead className="w-[20%]">Phone</TableHead>
+            <TableHead className="w-[30%]">Location</TableHead>
+            <TableHead className="w-[10%] text-right">Actions</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {Array.from({ length: 5 }).map((_, index) => (
+            <TableRow key={index}>
+              <TableCell>
+                <div className="flex items-center">
+                  <Skeleton className="h-4 w-4 mr-2 rounded-full" />
+                  <Skeleton className="h-4 w-[80%]" />
+                </div>
+              </TableCell>
+              <TableCell>
+                <div className="flex items-center">
+                  <Skeleton className="h-4 w-4 mr-2 rounded-full" />
+                  <Skeleton className="h-4 w-[60%]" />
+                </div>
+              </TableCell>
+              <TableCell>
+                <div className="flex items-center">
+                  <Skeleton className="h-4 w-4 mr-1 rounded-full" />
+                  <Skeleton className="h-4 w-8 mx-1" />
+                  <Skeleton className="h-4 w-4 mx-1 rounded-full" />
+                  <Skeleton className="h-4 w-8" />
+                </div>
+              </TableCell>
+              <TableCell className="text-right">
+                <Skeleton className="h-8 w-8 ml-auto rounded-full" />
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </div>
   );
 };
 

@@ -10,6 +10,7 @@ import AddResidentDialog from "@/components/residents/AddResidentDialog";
 import EditResidentDialog from "@/components/residents/EditResidentDialog";
 import DeleteResidentDialog from "@/components/residents/DeleteResidentDialog";
 import ResidentsTable from "@/components/residents/ResidentsTable";
+import { useEffect } from "react";
 
 const ResidentsPage = () => {
   const { toast } = useToast();
@@ -35,8 +36,14 @@ const ResidentsPage = () => {
     confirmDeleteResident,
     resetForm,
     months,
-    years
+    years,
+    fetchResidents
   } = useResidentsPage();
+
+  // Fetch residents data when the component mounts
+  useEffect(() => {
+    fetchResidents();
+  }, [fetchResidents]);
 
   return (
     <DashboardLayout>
