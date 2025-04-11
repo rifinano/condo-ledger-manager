@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { ResidentFormData } from "@/services/residentsService";
+import { ResidentFormData } from "@/services/residents/types";
 import { 
   Dialog, DialogContent, DialogDescription, 
   DialogHeader, DialogTitle, DialogFooter

@@ -1,5 +1,5 @@
 
-import { Resident } from "@/services/residentsService";
+import { Resident } from "@/services/residents/types";
 import { 
   Table, TableBody, TableCell, TableHead, 
   TableHeader, TableRow 

@@ -4,7 +4,7 @@ import { useResidentsState } from "./useResidentsState";
 import { usePropertyData } from "./usePropertyData";
 import { useResidentsData } from "./useResidentsData";
 import { useResidentActions } from "./useResidentActions";
-import { Resident } from "@/services/residentsService";
+import { Resident } from "@/services/residents/types";
 
 /**
  * Main hook for the residents page that combines all the smaller hooks
