@@ -1,4 +1,3 @@
-
 import { Resident } from "@/services/residentsService";
 import { 
   Table, TableBody, TableCell, TableHead, 
@@ -39,6 +38,18 @@ const ResidentsTable = ({
       </div>
     );
   }
+
+  const handleEdit = (e: React.MouseEvent, resident: Resident) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onEdit(resident);
+  };
+
+  const handleDelete = (e: React.MouseEvent, resident: Resident) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onDelete(resident);
+  };
 
   return (
     <div className="border rounded-md overflow-hidden">
@@ -84,12 +95,12 @@ const ResidentsTable = ({
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => onEdit(resident)}>
+                    <DropdownMenuItem onClick={(e) => handleEdit(e, resident)}>
                       <Edit className="h-4 w-4 mr-2" /> Edit
                     </DropdownMenuItem>
                     <DropdownMenuItem 
                       className="text-red-600"
-                      onClick={() => onDelete(resident)}
+                      onClick={(e) => handleDelete(e, resident)}
                     >
                       <Trash2 className="h-4 w-4 mr-2" /> Delete
                     </DropdownMenuItem>

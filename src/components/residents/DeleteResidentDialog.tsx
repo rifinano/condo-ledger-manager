@@ -25,6 +25,8 @@ const DeleteResidentDialog = ({
   const [isDeleting, setIsDeleting] = useState(false);
 
   const handleConfirmDelete = async () => {
+    if (isDeleting) return;
+    
     setIsDeleting(true);
     try {
       const result = await onConfirm();
@@ -38,12 +40,14 @@ const DeleteResidentDialog = ({
     }
   };
 
+  const handleOpenChange = (open: boolean) => {
+    if (!isDeleting) {
+      onOpenChange(open);
+    }
+  };
+
   return (
-    <Dialog open={open} onOpenChange={(open) => {
-      if (!isDeleting) {
-        onOpenChange(open);
-      }
-    }}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Confirm Deletion</DialogTitle>
@@ -61,8 +65,9 @@ const DeleteResidentDialog = ({
         <DialogFooter>
           <Button 
             variant="outline" 
-            onClick={() => onOpenChange(false)}
+            onClick={() => handleOpenChange(false)}
             disabled={isDeleting}
+            type="button"
           >
             Cancel
           </Button>
@@ -70,6 +75,7 @@ const DeleteResidentDialog = ({
             variant="destructive" 
             onClick={handleConfirmDelete}
             disabled={isDeleting}
+            type="button"
           >
             {isDeleting ? (
               <>

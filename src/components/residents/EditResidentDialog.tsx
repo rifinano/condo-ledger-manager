@@ -37,9 +37,14 @@ const EditResidentDialog = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async () => {
+    if (isSubmitting) return;
+    
     setIsSubmitting(true);
     try {
-      await handleUpdateResident();
+      const result = await handleUpdateResident();
+      if (result) {
+        onOpenChange(false);
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -75,12 +80,14 @@ const EditResidentDialog = ({
             variant="outline" 
             onClick={() => handleOpenChange(false)}
             disabled={isSubmitting}
+            type="button"
           >
             Cancel
           </Button>
           <Button 
             onClick={handleSubmit}
             disabled={isSubmitting}
+            type="button"
           >
             {isSubmitting ? (
               <>
