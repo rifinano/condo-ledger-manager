@@ -45,10 +45,9 @@ export const getResidents = async () => {
     }
 
     // Fetch all resident-apartment assignments using a separate query
-    // We need to use "from" with the string name since TypeScript doesn't know about the new table yet
+    // Use a raw query to bypass type checking since TypeScript doesn't know about this table yet
     const { data: residentApartments, error: apartmentsError } = await supabase
-      .from('resident_apartments')
-      .select('resident_id, block_number, apartment_number');
+      .rpc('get_resident_apartments'); // We'll create this function
 
     if (apartmentsError) {
       console.error("Error fetching resident apartments:", apartmentsError);
@@ -58,14 +57,7 @@ export const getResidents = async () => {
     const apartmentsByResident: Record<string, ResidentApartment[]> = {};
     
     if (residentApartments) {
-      // We need to type cast here since TypeScript doesn't know the structure yet
-      const typedApartments = residentApartments as Array<{
-        resident_id: string;
-        block_number: string;
-        apartment_number: string;
-      }>;
-      
-      typedApartments.forEach(apt => {
+      residentApartments.forEach((apt: any) => {
         if (!apartmentsByResident[apt.resident_id]) {
           apartmentsByResident[apt.resident_id] = [];
         }
@@ -115,16 +107,13 @@ export const addResident = async (resident: Omit<ResidentFormData, 'id'>) => {
     if (data && data.length > 0) {
       const newResidentId = data[0].id;
       
-      // First apartment is the primary one from the form
-      const apartmentData = {
-        resident_id: newResidentId,
-        block_number: resident.block_number,
-        apartment_number: resident.apartment_number
-      };
-      
+      // Call our custom function to add an apartment for a resident
       const { error: aptError } = await supabase
-        .from('resident_apartments')
-        .insert([apartmentData]);
+        .rpc('add_resident_apartment', {
+          p_resident_id: newResidentId,
+          p_block_number: resident.block_number,
+          p_apartment_number: resident.apartment_number
+        });
         
       if (aptError) {
         console.error("Error adding resident apartment:", aptError);
@@ -195,16 +184,13 @@ export const addResidentApartment = async (
   apartmentNumber: string
 ) => {
   try {
-    const apartmentData = {
-      resident_id: residentId,
-      block_number: blockNumber,
-      apartment_number: apartmentNumber
-    };
-    
+    // Call our custom function to add an apartment for a resident
     const { data, error } = await supabase
-      .from('resident_apartments')
-      .insert([apartmentData])
-      .select();
+      .rpc('add_resident_apartment', {
+        p_resident_id: residentId,
+        p_block_number: blockNumber,
+        p_apartment_number: apartmentNumber
+      });
       
     if (error) throw error;
     
@@ -224,12 +210,13 @@ export const removeResidentApartment = async (
   apartmentNumber: string
 ) => {
   try {
+    // Call our custom function to remove an apartment from a resident
     const { error } = await supabase
-      .from('resident_apartments')
-      .delete()
-      .eq('resident_id', residentId)
-      .eq('block_number', blockNumber)
-      .eq('apartment_number', apartmentNumber);
+      .rpc('remove_resident_apartment', {
+        p_resident_id: residentId,
+        p_block_number: blockNumber,
+        p_apartment_number: apartmentNumber
+      });
       
     if (error) throw error;
     
