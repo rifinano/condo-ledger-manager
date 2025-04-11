@@ -1,4 +1,3 @@
-
 import { useCallback, useMemo } from "react";
 import { useResidentsState } from "./useResidentsState";
 import { usePropertyData } from "./usePropertyData";
