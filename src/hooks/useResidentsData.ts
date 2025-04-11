@@ -72,6 +72,7 @@ export const useResidentsData = (
 
   // Check if an apartment is already occupied by another resident
   const isApartmentOccupied = useCallback((blockNumber: string, apartmentNumber: string, excludeResidentId?: string) => {
+    // If excludeResidentId is provided, don't count that resident's current apartment as occupied
     return allResidents.some(resident => 
       resident.block_number === blockNumber && 
       resident.apartment_number === apartmentNumber &&

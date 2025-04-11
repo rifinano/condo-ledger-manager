@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ResidentFormData } from "@/services/residents/types";
 import { 
   Dialog, DialogContent, DialogDescription, 
@@ -39,6 +39,21 @@ const EditResidentDialog = ({
   years
 }: EditResidentDialogProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [apartmentOccupiedError, setApartmentOccupiedError] = useState(false);
+
+  // Update apartment occupied error when relevant props change
+  useEffect(() => {
+    if (isApartmentOccupied && currentResident.block_number && currentResident.apartment_number) {
+      const isOccupied = isApartmentOccupied(
+        currentResident.block_number, 
+        currentResident.apartment_number, 
+        currentResidentId
+      );
+      setApartmentOccupiedError(isOccupied);
+    } else {
+      setApartmentOccupiedError(false);
+    }
+  }, [currentResident.block_number, currentResident.apartment_number, isApartmentOccupied, currentResidentId]);
 
   const handleSubmit = async () => {
     if (isSubmitting) return;
@@ -100,12 +115,7 @@ const EditResidentDialog = ({
           </Button>
           <Button 
             onClick={handleSubmit}
-            disabled={isSubmitting || (
-              isApartmentOccupied && 
-              currentResident.block_number && 
-              currentResident.apartment_number && 
-              isApartmentOccupied(currentResident.block_number, currentResident.apartment_number, currentResidentId)
-            )}
+            disabled={isSubmitting || apartmentOccupiedError}
             type="button"
           >
             {isSubmitting ? (

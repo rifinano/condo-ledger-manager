@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ResidentFormData } from "@/services/residents/types";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -32,6 +32,23 @@ const ResidentForm = ({
 }: ResidentFormProps) => {
   const [apartmentError, setApartmentError] = useState<string | null>(null);
 
+  // Check apartment occupancy when component mounts or when relevant props change
+  useEffect(() => {
+    if (resident.block_number && resident.apartment_number && isApartmentOccupied) {
+      const isOccupied = isApartmentOccupied(
+        resident.block_number, 
+        resident.apartment_number, 
+        isEditing ? currentResidentId : undefined
+      );
+      
+      if (isOccupied) {
+        setApartmentError(`This apartment is already occupied by another resident.`);
+      } else {
+        setApartmentError(null);
+      }
+    }
+  }, [resident.block_number, resident.apartment_number, isApartmentOccupied, currentResidentId, isEditing]);
+
   const handleChange = (field: keyof ResidentFormData, value: string) => {
     const updatedResident = { ...resident, [field]: value };
     
@@ -47,7 +64,12 @@ const ResidentForm = ({
     
     // Check if apartment is already occupied when selecting an apartment
     if (field === 'apartment_number' && value && resident.block_number && isApartmentOccupied) {
-      const isOccupied = isApartmentOccupied(resident.block_number, value, currentResidentId);
+      const isOccupied = isApartmentOccupied(
+        resident.block_number, 
+        value, 
+        isEditing ? currentResidentId : undefined
+      );
+      
       if (isOccupied) {
         setApartmentError(`This apartment is already occupied by another resident.`);
       } else {
