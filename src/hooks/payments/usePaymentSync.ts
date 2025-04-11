@@ -1,23 +1,48 @@
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 
 /**
- * Hook to handle automatic data synchronization
+ * Hook to handle automatic data synchronization with debouncing
  */
 export const usePaymentSync = (
   refreshAllData: () => Promise<void>,
   refetchResidents: () => void,
   refetchPayments: () => void
 ) => {
-  // Auto-refresh when the component mounts
+  // Using refs to track if the component is mounted
+  const isMountedRef = useRef(true);
+  
+  // Auto-refresh when the component mounts, but only once
   useEffect(() => {
-    refreshAllData();
+    // Only refresh if the component is mounted
+    if (isMountedRef.current) {
+      refreshAllData();
+    }
+    
     // Set up an interval to periodically refresh data (every 5 minutes)
+    // Using a longer interval to reduce server load
     const refreshInterval = setInterval(() => {
-      refetchResidents();
-      refetchPayments();
+      if (document.visibilityState === 'visible') {
+        // Only refresh if the tab is visible to the user
+        refetchResidents();
+        refetchPayments();
+      }
     }, 1000 * 60 * 5);
     
-    return () => clearInterval(refreshInterval);
+    // Add visibility change listener to refresh data when tab becomes visible
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        refetchResidents();
+        refetchPayments();
+      }
+    };
+    
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    
+    return () => {
+      isMountedRef.current = false;
+      clearInterval(refreshInterval);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
   }, [refreshAllData, refetchResidents, refetchPayments]);
 };

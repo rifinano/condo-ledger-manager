@@ -19,15 +19,14 @@ export const addPayment = async (
       throw new Error("You must be logged in to add a payment");
     }
     
-    // Verify resident exists before adding payment
-    const { data: resident, error: residentError } = await supabase
+    // Verify resident exists before adding payment - use simple count query for efficiency
+    const { count, error: countError } = await supabase
       .from('residents')
-      .select('id, full_name')
-      .eq('id', payment.resident_id)
-      .single();
+      .select('id', { count: 'exact', head: true })
+      .eq('id', payment.resident_id);
       
-    if (residentError || !resident) {
-      console.error("Resident verification error:", residentError);
+    if (countError || count === 0) {
+      console.error("Resident verification error:", countError);
       throw new Error("Selected resident does not exist or could not be verified");
     }
     
