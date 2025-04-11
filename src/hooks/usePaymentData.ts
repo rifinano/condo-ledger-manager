@@ -1,4 +1,3 @@
-
 import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getPayments, getResidents, Payment, Resident } from "@/services/paymentsService";
@@ -31,6 +30,9 @@ export const usePaymentData = () => {
     queryFn: getResidents
   });
 
+  // Add this console log to debug the residents data
+  console.log("Residents in usePaymentData:", residents);
+
   // Filter payments based on selected filters
   const filteredPayments = useMemo(() => {
     return payments.filter((payment: Payment) => {
@@ -58,7 +60,7 @@ export const usePaymentData = () => {
 
   // Get unique blocks from residents
   const blocks = useMemo(() => {
-    return ["all", ...Array.from(new Set(residents.map((r: any) => r.block_number)))];
+    return ["all", ...Array.from(new Set(residents.map((r: Resident) => r.block_number)))];
   }, [residents]);
 
   // Years for filtering

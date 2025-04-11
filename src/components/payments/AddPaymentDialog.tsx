@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { 
   Dialog, DialogContent, DialogDescription, DialogFooter, 
@@ -69,7 +68,6 @@ const AddPaymentDialog = ({
       });
       setIsAddingPayment(false);
       refetchPayments();
-      // Reset the form
       setNewPayment({
         resident_id: "",
         amount: "",
@@ -88,6 +86,8 @@ const AddPaymentDialog = ({
       });
     }
   };
+
+  console.log("Residents in AddPaymentDialog:", residents);
 
   return (
     <Dialog open={isAddingPayment} onOpenChange={setIsAddingPayment}>
@@ -115,12 +115,18 @@ const AddPaymentDialog = ({
               <SelectTrigger className="col-span-3">
                 <SelectValue placeholder="Select a resident" />
               </SelectTrigger>
-              <SelectContent>
-                {residents.map((resident: any) => (
-                  <SelectItem key={resident.id} value={resident.id}>
-                    {resident.full_name} ({resident.block_number}, Apt {resident.apartment_number})
+              <SelectContent className="max-h-[300px] overflow-y-auto">
+                {residents && residents.length > 0 ? (
+                  residents.map((resident) => (
+                    <SelectItem key={resident.id} value={resident.id}>
+                      {resident.full_name} ({resident.block_number}, Apt {resident.apartment_number})
+                    </SelectItem>
+                  ))
+                ) : (
+                  <SelectItem value="no-residents" disabled>
+                    No residents found
                   </SelectItem>
-                ))}
+                )}
               </SelectContent>
             </Select>
           </div>
