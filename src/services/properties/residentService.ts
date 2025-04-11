@@ -15,7 +15,7 @@ export const getResidentByApartment = async (blockName: string, apartmentNumber:
     return cache.residents[cacheKey];
   }
 
-  // Add retry logic for network issues
+  // Add robust retry logic for network issues
   const maxRetries = 3;
   let attempt = 0;
   let fetchError = null;
@@ -39,9 +39,10 @@ export const getResidentByApartment = async (blockName: string, apartmentNumber:
     } catch (error) {
       fetchError = error;
       attempt++;
+      console.log(`Resident fetch attempt ${attempt} failed, retrying...`);
       // Wait before retrying (exponential backoff)
       if (attempt < maxRetries) {
-        await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+        await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, attempt - 1)));
       }
     }
   }

@@ -11,21 +11,22 @@ import {
 import { toast } from "@/hooks/use-toast";
 
 /**
- * Hook to handle property data fetching operations
+ * Hook to handle property data fetching operations with improved error handling
  */
 export const usePropertyFetch = () => {
   const [loading, setLoading] = useState(true);
   const [blocks, setBlocks] = useState<(Block & { apartments: Apartment[] })[]>([]);
   const [residents, setResidents] = useState<Record<string, any>>({});
   const [fetchError, setFetchError] = useState<string | null>(null);
+  const [lastSuccessfulFetch, setLastSuccessfulFetch] = useState<number | null>(null);
 
-  // Fetch blocks and apartments
+  // Fetch blocks and apartments with improved error handling
   const fetchProperties = useCallback(async () => {
     setLoading(true);
     setFetchError(null);
     
     try {
-      // Add retry logic for network issues
+      // Add robust retry logic for network issues
       const maxRetries = 3;
       let attempt = 0;
       let error = null;
@@ -43,6 +44,7 @@ export const usePropertyFetch = () => {
           );
           
           setBlocks(blocksWithApartments);
+          setLastSuccessfulFetch(Date.now());
           
           // Batch resident data fetching to reduce network requests
           const residentsMap: Record<string, any> = {};
@@ -72,9 +74,10 @@ export const usePropertyFetch = () => {
         } catch (err) {
           error = err;
           attempt++;
+          console.log(`Attempt ${attempt} failed, retrying...`);
           // Wait before retrying (exponential backoff)
           if (attempt < maxRetries) {
-            await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+            await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, attempt - 1)));
           }
         }
       }
@@ -82,10 +85,11 @@ export const usePropertyFetch = () => {
       // If we've exhausted all retries and still have an error
       if (attempt === maxRetries) {
         console.error("Error fetching properties after retries:", error);
-        setFetchError("Network error: Failed to connect to the server.");
+        const errorMessage = "Network error: Failed to connect to the server. Please check your internet connection and try again.";
+        setFetchError(errorMessage);
         toast({
-          title: "Network error",
-          description: "Failed to connect to the server. Please check your internet connection and try again.",
+          title: "Connection Error",
+          description: "We're having trouble connecting to the server. Please check your internet connection.",
           variant: "destructive",
         });
       }
@@ -101,6 +105,11 @@ export const usePropertyFetch = () => {
   const refreshData = useCallback(() => {
     // Clear the cache using our utility function
     clearCache();
+    // Add toast to indicate refresh is happening
+    toast({
+      title: "Refreshing data",
+      description: "Fetching the latest property data...",
+    });
   }, []);
 
   return {
@@ -109,6 +118,7 @@ export const usePropertyFetch = () => {
     residents,
     fetchProperties,
     refreshData,
-    fetchError
+    fetchError,
+    lastSuccessfulFetch
   };
 };

@@ -158,6 +158,7 @@ const PropertiesPage = () => {
             title="Connection Error" 
             message={fetchError} 
             onRetry={handleManualRefresh} 
+            isNetworkError={true}
           />
         ) : (
           <PropertiesContent 
