@@ -2,30 +2,14 @@
 import DashboardLayout from "@/components/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { 
-  Table, TableBody, TableCell, TableHead, 
-  TableHeader, TableRow 
-} from "@/components/ui/table";
-import { 
-  Dialog, DialogContent, DialogDescription, 
-  DialogHeader, DialogTitle
-} from "@/components/ui/dialog";
+import { Search, Plus } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { 
-  Search, Plus, MoreHorizontal, 
-  User, Phone, Building2, Home,
-  Edit, Trash2
-} from "lucide-react";
 import { useResidentsPage } from "@/hooks/useResidentsPage";
-import ResidentForm from "@/components/residents/ResidentForm";
-import DeleteResidentDialog from "@/components/residents/DeleteResidentDialog";
-import { DialogFooter } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import PaymentFormActions from "@/components/payments/PaymentFormActions";
-import { 
-  DropdownMenu, DropdownMenuContent, DropdownMenuItem, 
-  DropdownMenuTrigger 
-} from "@/components/ui/dropdown-menu";
+import AddResidentDialog from "@/components/residents/AddResidentDialog";
+import EditResidentDialog from "@/components/residents/EditResidentDialog";
+import DeleteResidentDialog from "@/components/residents/DeleteResidentDialog";
+import ResidentsTable from "@/components/residents/ResidentsTable";
 
 const ResidentsPage = () => {
   const { toast } = useToast();
@@ -63,36 +47,12 @@ const ResidentsPage = () => {
             <p className="text-gray-500 mt-1">Manage resident information</p>
           </div>
           <div className="flex space-x-2">
-            <Dialog open={isAddingResident} onOpenChange={(open) => {
-              setIsAddingResident(open);
-              if (!open) resetForm();
-            }}>
-              <DialogTrigger asChild>
-                <Button className="bg-syndicate-600 hover:bg-syndicate-700">
-                  <Plus className="mr-2 h-4 w-4" /> Add Resident
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="sm:max-w-[525px]">
-                <DialogHeader>
-                  <DialogTitle>Add New Resident</DialogTitle>
-                  <DialogDescription>
-                    Enter resident details to add them to your property
-                  </DialogDescription>
-                </DialogHeader>
-                <ResidentForm
-                  resident={currentResident}
-                  onResidentChange={setCurrentResident}
-                  blocks={blocks}
-                  getApartments={getApartments}
-                  months={months}
-                  years={years}
-                />
-                <PaymentFormActions
-                  onCancel={() => setIsAddingResident(false)}
-                  onSubmit={handleAddResident}
-                />
-              </DialogContent>
-            </Dialog>
+            <Button 
+              className="bg-syndicate-600 hover:bg-syndicate-700"
+              onClick={() => setIsAddingResident(true)}
+            >
+              <Plus className="mr-2 h-4 w-4" /> Add Resident
+            </Button>
           </div>
         </div>
 
@@ -112,110 +72,44 @@ const ResidentsPage = () => {
                 />
               </div>
             </div>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Phone</TableHead>
-                  <TableHead>Location</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {isLoading ? (
-                  <TableRow>
-                    <TableCell colSpan={4} className="text-center py-4 text-muted-foreground">
-                      Loading residents...
-                    </TableCell>
-                  </TableRow>
-                ) : filteredResidents.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={4} className="text-center py-4 text-muted-foreground">
-                      No residents found
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  filteredResidents.map((resident) => (
-                    <TableRow key={resident.id}>
-                      <TableCell className="font-medium flex items-center">
-                        <User className="h-4 w-4 mr-2 text-gray-500" />
-                        {resident.full_name}
-                      </TableCell>
-                      <TableCell className="flex items-center">
-                        <Phone className="h-4 w-4 mr-2 text-gray-500" />
-                        {resident.phone_number || "—"}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center">
-                          <Building2 className="h-4 w-4 mr-1 text-gray-500" />
-                          {resident.block_number}
-                          <span className="mx-1">/</span>
-                          <Home className="h-4 w-4 mr-1 text-gray-500" />
-                          {resident.apartment_number}
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="sm">
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => editResident(resident)}>
-                              <Edit className="h-4 w-4 mr-2" /> Edit
-                            </DropdownMenuItem>
-                            <DropdownMenuItem 
-                              className="text-red-600"
-                              onClick={() => confirmDeleteResident(resident)}
-                            >
-                              <Trash2 className="h-4 w-4 mr-2" /> Delete
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
+            
+            <ResidentsTable 
+              residents={filteredResidents}
+              isLoading={isLoading}
+              onEdit={editResident}
+              onDelete={confirmDeleteResident}
+            />
           </CardContent>
         </Card>
       </div>
 
-      {/* Edit Resident Dialog */}
-      <Dialog open={isEditingResident} onOpenChange={(open) => {
-        setIsEditingResident(open);
-        if (!open) resetForm();
-      }}>
-        <DialogContent className="sm:max-w-[525px]">
-          <DialogHeader>
-            <DialogTitle>Edit Resident</DialogTitle>
-            <DialogDescription>
-              Update resident information
-            </DialogDescription>
-          </DialogHeader>
-          <ResidentForm
-            resident={currentResident}
-            onResidentChange={setCurrentResident}
-            blocks={blocks}
-            getApartments={getApartments}
-            months={months}
-            years={years}
-            isEditing={true}
-          />
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsEditingResident(false)}>
-              Cancel
-            </Button>
-            <Button onClick={handleUpdateResident}>
-              Update Resident
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {/* Dialogs */}
+      <AddResidentDialog 
+        open={isAddingResident}
+        onOpenChange={setIsAddingResident}
+        currentResident={currentResident}
+        setCurrentResident={setCurrentResident}
+        blocks={blocks}
+        getApartments={getApartments}
+        handleAddResident={handleAddResident}
+        resetForm={resetForm}
+        months={months}
+        years={years}
+      />
 
-      {/* Delete Resident Dialog */}
+      <EditResidentDialog 
+        open={isEditingResident}
+        onOpenChange={setIsEditingResident}
+        currentResident={currentResident}
+        setCurrentResident={setCurrentResident}
+        blocks={blocks}
+        getApartments={getApartments}
+        handleUpdateResident={handleUpdateResident}
+        resetForm={resetForm}
+        months={months}
+        years={years}
+      />
+
       <DeleteResidentDialog
         open={isDeletingResident}
         onOpenChange={setIsDeletingResident}
@@ -223,7 +117,6 @@ const ResidentsPage = () => {
         residentName={currentResident.full_name || ""}
         apartmentInfo={`${currentResident.block_number || ""}, ${currentResident.apartment_number || ""}`}
       />
-
     </DashboardLayout>
   );
 };
