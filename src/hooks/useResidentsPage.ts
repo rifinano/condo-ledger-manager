@@ -4,6 +4,7 @@ import { useResidentsState } from "./useResidentsState";
 import { usePropertyData } from "./usePropertyData";
 import { useResidentsData } from "./useResidentsData";
 import { useResidentActions } from "./useResidentActions";
+import { Resident } from "@/services/residentsService";
 
 /**
  * Main hook for the residents page that combines all the smaller hooks
@@ -68,7 +69,7 @@ export const useResidentsPage = () => {
     return deleteResident(selectedResidentId, setIsDeletingResident);
   }, [deleteResident, selectedResidentId, setIsDeletingResident]);
   
-  const editResident = useCallback((resident: any) => {
+  const editResident = useCallback((resident: Resident) => {
     return editResidentAction(
       resident, 
       setSelectedResidentId, 
@@ -77,7 +78,7 @@ export const useResidentsPage = () => {
     );
   }, [editResidentAction, setSelectedResidentId, setCurrentResident, setIsEditingResident]);
 
-  const confirmDeleteResident = useCallback((resident: any) => {
+  const confirmDeleteResident = useCallback((resident: Resident) => {
     return confirmDeleteResidentAction(
       resident,
       setSelectedResidentId,

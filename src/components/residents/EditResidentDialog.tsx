@@ -1,4 +1,5 @@
 
+import { useState } from "react";
 import { ResidentFormData } from "@/services/residentsService";
 import { 
   Dialog, DialogContent, DialogDescription, 
@@ -6,6 +7,7 @@ import {
 } from "@/components/ui/dialog";
 import ResidentForm from "@/components/residents/ResidentForm";
 import { Button } from "@/components/ui/button";
+import { Loader2 } from "lucide-react";
 
 interface EditResidentDialogProps {
   open: boolean;
@@ -14,7 +16,7 @@ interface EditResidentDialogProps {
   setCurrentResident: (resident: Partial<ResidentFormData>) => void;
   blocks: string[];
   getApartments: (block: string) => string[];
-  handleUpdateResident: () => void;
+  handleUpdateResident: () => Promise<boolean>;
   resetForm: () => void;
   months: { value: string; label: string }[];
   years: string[];
@@ -32,11 +34,26 @@ const EditResidentDialog = ({
   months,
   years
 }: EditResidentDialogProps) => {
-  return (
-    <Dialog open={open} onOpenChange={(open) => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleSubmit = async () => {
+    setIsSubmitting(true);
+    try {
+      await handleUpdateResident();
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleOpenChange = (open: boolean) => {
+    if (!isSubmitting) {
       onOpenChange(open);
       if (!open) resetForm();
-    }}>
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-[525px]">
         <DialogHeader>
           <DialogTitle>Edit Resident</DialogTitle>
@@ -54,11 +71,25 @@ const EditResidentDialog = ({
           isEditing={true}
         />
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+          <Button 
+            variant="outline" 
+            onClick={() => handleOpenChange(false)}
+            disabled={isSubmitting}
+          >
             Cancel
           </Button>
-          <Button onClick={handleUpdateResident}>
-            Update Resident
+          <Button 
+            onClick={handleSubmit}
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Updating...
+              </>
+            ) : (
+              "Update Resident"
+            )}
           </Button>
         </DialogFooter>
       </DialogContent>

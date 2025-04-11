@@ -18,7 +18,7 @@ export const useResidentActions = (
 ) => {
   const { toast } = useToast();
 
-  const handleAddResident = async (
+  const handleAddResident = useCallback(async (
     currentResident: Partial<ResidentFormData>,
     setIsAddingResident: (value: boolean) => void
   ) => {
@@ -31,28 +31,38 @@ export const useResidentActions = (
       return false;
     }
 
-    const result = await addResident(currentResident as ResidentFormData);
-    
-    if (result.success) {
-      setIsAddingResident(false);
-      resetForm();
-      await fetchResidents();
-      toast({
-        title: "Resident added",
-        description: `${currentResident.full_name} has been added to ${currentResident.block_number}, ${currentResident.apartment_number}`
-      });
-      return true;
-    } else {
+    try {
+      const result = await addResident(currentResident as ResidentFormData);
+      
+      if (result.success) {
+        setIsAddingResident(false);
+        resetForm();
+        await fetchResidents();
+        toast({
+          title: "Resident added",
+          description: `${currentResident.full_name} has been added to ${currentResident.block_number}, ${currentResident.apartment_number}`
+        });
+        return true;
+      } else {
+        toast({
+          title: "Error adding resident",
+          description: result.error || "An error occurred while adding the resident",
+          variant: "destructive"
+        });
+        return false;
+      }
+    } catch (error) {
+      console.error("Error in handleAddResident:", error);
       toast({
         title: "Error adding resident",
-        description: result.error || "An error occurred while adding the resident",
+        description: "An unexpected error occurred",
         variant: "destructive"
       });
       return false;
     }
-  };
+  }, [fetchResidents, resetForm, toast]);
 
-  const handleUpdateResident = async (
+  const handleUpdateResident = useCallback(async (
     selectedResidentId: string | null,
     currentResident: Partial<ResidentFormData>,
     setIsEditingResident: (value: boolean) => void
@@ -66,28 +76,38 @@ export const useResidentActions = (
       return false;
     }
 
-    const result = await updateResident(selectedResidentId, currentResident as ResidentFormData);
-    
-    if (result.success) {
-      setIsEditingResident(false);
-      resetForm();
-      await fetchResidents();
-      toast({
-        title: "Resident updated",
-        description: `${currentResident.full_name}'s information has been updated`
-      });
-      return true;
-    } else {
+    try {
+      const result = await updateResident(selectedResidentId, currentResident as ResidentFormData);
+      
+      if (result.success) {
+        setIsEditingResident(false);
+        resetForm();
+        await fetchResidents();
+        toast({
+          title: "Resident updated",
+          description: `${currentResident.full_name}'s information has been updated`
+        });
+        return true;
+      } else {
+        toast({
+          title: "Error updating resident",
+          description: result.error || "An error occurred while updating the resident",
+          variant: "destructive"
+        });
+        return false;
+      }
+    } catch (error) {
+      console.error("Error in handleUpdateResident:", error);
       toast({
         title: "Error updating resident",
-        description: result.error || "An error occurred while updating the resident",
+        description: "An unexpected error occurred",
         variant: "destructive"
       });
       return false;
     }
-  };
+  }, [fetchResidents, resetForm, toast]);
 
-  const handleDeleteResident = async (
+  const handleDeleteResident = useCallback(async (
     selectedResidentId: string | null,
     setIsDeletingResident: (value: boolean) => void
   ) => {
@@ -128,9 +148,9 @@ export const useResidentActions = (
       });
       return false;
     }
-  };
+  }, [fetchResidents, toast]);
 
-  const editResident = (
+  const editResident = useCallback((
     resident: Resident,
     setSelectedResidentId: (id: string) => void,
     setCurrentResident: (resident: Partial<ResidentFormData>) => void,
@@ -146,9 +166,9 @@ export const useResidentActions = (
       move_in_year: new Date().getFullYear().toString()
     });
     setIsEditingResident(true);
-  };
+  }, []);
 
-  const confirmDeleteResident = (
+  const confirmDeleteResident = useCallback((
     resident: Resident,
     setSelectedResidentId: (id: string) => void,
     setCurrentResident: (resident: Partial<ResidentFormData>) => void,
@@ -161,7 +181,7 @@ export const useResidentActions = (
       apartment_number: resident.apartment_number
     });
     setIsDeletingResident(true);
-  };
+  }, []);
 
   return {
     handleAddResident,
