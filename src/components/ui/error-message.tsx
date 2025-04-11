@@ -1,5 +1,5 @@
 
-import { AlertCircle, WifiOff } from "lucide-react";
+import { AlertCircle, WifiOff, RefreshCw } from "lucide-react";
 import { Button } from "./button";
 
 interface ErrorMessageProps {
@@ -28,8 +28,9 @@ export function ErrorMessage({
         <Button 
           variant="outline" 
           onClick={onRetry}
-          className="border-red-200 hover:bg-red-100 hover:text-red-700"
+          className="border-red-200 hover:bg-red-100 hover:text-red-700 flex gap-2 items-center"
         >
+          <RefreshCw className="h-4 w-4" />
           Try Again
         </Button>
       )}

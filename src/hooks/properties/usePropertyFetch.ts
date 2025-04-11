@@ -1,5 +1,5 @@
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { 
   Block, 
   Apartment, 
@@ -19,9 +19,17 @@ export const usePropertyFetch = () => {
   const [residents, setResidents] = useState<Record<string, any>>({});
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [lastSuccessfulFetch, setLastSuccessfulFetch] = useState<number | null>(null);
+  // Add a flag to track if we're in the process of fetching to prevent multiple concurrent fetches
+  const [isFetching, setIsFetching] = useState(false);
+  // Add a flag to track if the user has manually requested a refresh
+  const [manualRefreshRequested, setManualRefreshRequested] = useState(false);
 
   // Fetch blocks and apartments with improved error handling
   const fetchProperties = useCallback(async () => {
+    // If already fetching, don't start another fetch operation
+    if (isFetching) return;
+    
+    setIsFetching(true);
     setLoading(true);
     setFetchError(null);
     
@@ -98,19 +106,31 @@ export const usePropertyFetch = () => {
       setFetchError("Unexpected error: Failed to fetch property data.");
     } finally {
       setLoading(false);
+      setIsFetching(false);
+      // Reset the manual refresh flag
+      setManualRefreshRequested(false);
     }
-  }, []);
+  }, [isFetching]);
 
   // Force a refresh of data by completely clearing the cache
   const refreshData = useCallback(() => {
     // Clear the cache using our utility function
     clearCache();
+    // Mark that a manual refresh was requested
+    setManualRefreshRequested(true);
     // Add toast to indicate refresh is happening
     toast({
       title: "Refreshing data",
       description: "Fetching the latest property data...",
     });
   }, []);
+
+  // Only automatically fetch properties on initial mount or when manual refresh is requested
+  useEffect(() => {
+    if (!isFetching && (lastSuccessfulFetch === null || manualRefreshRequested)) {
+      fetchProperties();
+    }
+  }, [fetchProperties, isFetching, lastSuccessfulFetch, manualRefreshRequested]);
 
   return {
     blocks,

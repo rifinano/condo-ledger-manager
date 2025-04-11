@@ -13,7 +13,7 @@ export const usePropertyData = () => {
     loading, 
     residents, 
     fetchProperties, 
-    refreshData,
+    refreshData: refresh,
     fetchError
   } = usePropertyFetch();
   
@@ -30,13 +30,9 @@ export const usePropertyData = () => {
 
   // Wrapper for refresh that also updates the timestamp
   const handleRefreshData = () => {
-    refreshData();
+    refresh();
     setLastRefresh(Date.now());
   };
-
-  useEffect(() => {
-    fetchProperties();
-  }, [fetchProperties, lastRefresh]);
 
   return {
     blocks,

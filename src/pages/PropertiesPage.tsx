@@ -32,10 +32,10 @@ const PropertiesPage = () => {
   const [isEditingApartment, setIsEditingApartment] = useState(false);
   const [currentApartment, setCurrentApartment] = useState<Apartment | null>(null);
 
+  // Only trigger refresh once when component mounts, not on every render
   useEffect(() => {
-    // When page loads, force a complete refresh to ensure latest data
-    refreshData();
-  }, [refreshData]);
+    // No explicit refresh needed here - the usePropertyData hook handles initial loading
+  }, []);
 
   const handleAddBlock = async (name: string, apartmentCount: number) => {
     if (!name || !apartmentCount) {
@@ -135,7 +135,6 @@ const PropertiesPage = () => {
   // Manual refresh handler
   const handleManualRefresh = () => {
     refreshData();
-    fetchProperties();
     toast({
       title: "Data refreshed",
       description: "The property data has been refreshed.",
