@@ -15,6 +15,7 @@ const ResidentsPage = () => {
   const { refreshData } = usePropertyData();
   const [isDeleteAllOpen, setIsDeleteAllOpen] = useState(false);
   const [fetchError, setFetchError] = useState<string | null>(null);
+  const [hasAttemptedFetch, setHasAttemptedFetch] = useState(false);
   
   const {
     paginatedResidents,
@@ -43,24 +44,30 @@ const ResidentsPage = () => {
     currentPage,
     totalPages,
     handlePageChange,
-    totalCount
+    totalCount,
+    isFetching
   } = useResidentsPage();
 
   // Fetch residents data when the component mounts
   useEffect(() => {
-    const loadData = async () => {
-      try {
-        setFetchError(null);
-        await fetchResidents();
-        refreshData(); // Also refresh property data to ensure sync
-      } catch (error) {
-        console.error("Error loading resident data:", error);
-        setFetchError("Failed to load resident data. Please try again.");
-      }
-    };
-    
-    loadData();
-  }, [fetchResidents, refreshData]);
+    // Only fetch if we haven't already attempted a fetch
+    if (!hasAttemptedFetch && !isFetching) {
+      const loadData = async () => {
+        try {
+          setFetchError(null);
+          await fetchResidents();
+          refreshData(); // Also refresh property data to ensure sync
+          setHasAttemptedFetch(true);
+        } catch (error) {
+          console.error("Error loading resident data:", error);
+          setFetchError("Failed to load resident data. Please try again.");
+          setHasAttemptedFetch(true);
+        }
+      };
+      
+      loadData();
+    }
+  }, [fetchResidents, refreshData, hasAttemptedFetch, isFetching]);
 
   // Custom handlers that also refresh property data
   const handleAddResidentWithRefresh = async () => {
@@ -90,6 +97,7 @@ const ResidentsPage = () => {
   const handleRetry = async () => {
     try {
       setFetchError(null);
+      setHasAttemptedFetch(false); // Allow a new fetch attempt
       await fetchResidents();
       refreshData();
     } catch (error) {

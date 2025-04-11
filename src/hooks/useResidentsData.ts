@@ -12,9 +12,15 @@ export const useResidentsData = (
   searchTerm: string
 ) => {
   const [totalCount, setTotalCount] = useState(0);
+  const [isFetching, setIsFetching] = useState(false);
   
   const fetchResidents = useCallback(async () => {
+    // Prevent concurrent fetches
+    if (isFetching) return;
+    
     setIsLoading(true);
+    setIsFetching(true);
+    
     try {
       const data = await getResidents();
       
@@ -30,13 +36,15 @@ export const useResidentsData = (
       
       setResidents(validResidents || []);
       setTotalCount(validResidents.length);
+      return true;
     } catch (error) {
       console.error("Error fetching residents:", error);
       throw error; // Re-throw so the parent component can handle it
     } finally {
       setIsLoading(false);
+      setIsFetching(false);
     }
-  }, [setResidents, setIsLoading]);
+  }, [setResidents, setIsLoading, isFetching]);
 
   const filterResidents = useCallback((residents: Resident[]) => {
     if (!searchTerm.trim()) return residents;
@@ -63,6 +71,7 @@ export const useResidentsData = (
   return {
     fetchResidents,
     filterResidents,
-    totalCount
+    totalCount,
+    isFetching
   };
 };

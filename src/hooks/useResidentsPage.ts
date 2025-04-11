@@ -42,7 +42,7 @@ export const useResidentsPage = () => {
     years 
   } = usePropertyData();
 
-  const { fetchResidents, filterResidents, totalCount } = useResidentsData(
+  const { fetchResidents, filterResidents, totalCount, isFetching } = useResidentsData(
     setResidents,
     setIsLoading,
     searchTerm
@@ -139,6 +139,7 @@ export const useResidentsPage = () => {
     handlePageChange,
     pageSize,
     setPageSize,
-    totalCount
+    totalCount,
+    isFetching
   };
 };
