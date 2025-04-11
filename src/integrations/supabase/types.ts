@@ -127,6 +127,7 @@ export type Database = {
           payment_for_month: string
           payment_for_year: string
           payment_method: string
+          payment_status: string
           payment_type: string
           resident_id: string
           updated_at: string
@@ -141,6 +142,7 @@ export type Database = {
           payment_for_month: string
           payment_for_year: string
           payment_method: string
+          payment_status?: string
           payment_type: string
           resident_id: string
           updated_at?: string
@@ -155,6 +157,7 @@ export type Database = {
           payment_for_month?: string
           payment_for_year?: string
           payment_method?: string
+          payment_status?: string
           payment_type?: string
           resident_id?: string
           updated_at?: string

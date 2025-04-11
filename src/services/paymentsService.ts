@@ -155,12 +155,12 @@ export const addPayment = async (payment: Omit<Payment, 'id' | 'created_at' | 'u
     // Add payment_status field with default value "paid"
     const paymentWithStatus = {
       ...payment,
-      payment_status: "paid"
+      payment_status: "paid" as const
     };
     
     const { data, error } = await supabase
       .from('payments')
-      .insert([paymentWithStatus] as any)
+      .insert([paymentWithStatus])
       .select();
 
     if (error) throw error;
