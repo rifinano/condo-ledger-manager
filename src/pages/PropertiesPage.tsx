@@ -1,5 +1,4 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -23,7 +22,8 @@ const PropertiesPage = () => {
     loading, 
     fetchProperties, 
     isApartmentOccupied, 
-    getResidentName 
+    getResidentName,
+    refreshData 
   } = usePropertyData();
   
   const [isAddingBlock, setIsAddingBlock] = useState(false);
@@ -31,6 +31,10 @@ const PropertiesPage = () => {
   const [currentBlockId, setCurrentBlockId] = useState<string | null>(null);
   const [isEditingApartment, setIsEditingApartment] = useState(false);
   const [currentApartment, setCurrentApartment] = useState<Apartment | null>(null);
+
+  useEffect(() => {
+    refreshData();
+  }, [refreshData]);
 
   const handleAddBlock = async (name: string, apartmentCount: number) => {
     if (!name || !apartmentCount) {
@@ -130,12 +134,21 @@ const PropertiesPage = () => {
             <h1 className="text-3xl font-bold text-gray-900">Properties</h1>
             <p className="text-gray-500 mt-1">Manage your blocks and apartments</p>
           </div>
-          <AddBlockDialog 
-            isOpen={isAddingBlock}
-            onOpenChange={setIsAddingBlock}
-            onAddBlock={handleAddBlock}
-            loading={loading}
-          />
+          <div className="flex space-x-2">
+            <Button 
+              variant="outline" 
+              onClick={refreshData} 
+              className="mr-2"
+            >
+              Refresh
+            </Button>
+            <AddBlockDialog 
+              isOpen={isAddingBlock}
+              onOpenChange={setIsAddingBlock}
+              onAddBlock={handleAddBlock}
+              loading={loading}
+            />
+          </div>
         </div>
 
         {loading ? (

@@ -25,23 +25,13 @@ export const updateResident = async (id: string, resident: Omit<ResidentFormData
     
     // Step 2: Handle resident_apartments table
     if (data) {
-      // First, get all existing apartments for this resident
-      const { data: existingApartments, error: fetchError } = await supabase
+      // Delete all existing apartment records for this resident
+      const { error: deleteError } = await supabase
         .from('resident_apartments')
-        .select('*')
+        .delete()
         .eq('resident_id', id);
-        
-      if (fetchError) throw fetchError;
       
-      if (existingApartments && existingApartments.length > 0) {
-        // Delete all existing apartment records for this resident
-        const { error: deleteError } = await supabase
-          .from('resident_apartments')
-          .delete()
-          .eq('resident_id', id);
-        
-        if (deleteError) throw deleteError;
-      }
+      if (deleteError) throw deleteError;
       
       // Create a new apartment record with the updated information
       const { error: insertError } = await supabase

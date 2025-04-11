@@ -59,11 +59,20 @@ export const usePropertyData = () => {
 
   // Force a refresh of data
   const refreshData = useCallback(() => {
-    // Clear caches in propertiesService
-    // This is important to ensure we get fresh data after resident updates
-    for (const key in window) {
-      if (key.startsWith('_cache_')) {
-        delete (window as any)[key];
+    // Clear all caches in propertiesService to ensure we get fresh data
+    if (typeof window !== 'undefined') {
+      // Clear the cache object directly in the propertiesService
+      if ((window as any).cache) {
+        (window as any).cache = {
+          blocks: null,
+          apartments: {},
+          residents: {},
+          lastFetch: {
+            blocks: 0,
+            apartments: {},
+            residents: {}
+          }
+        };
       }
     }
     setLastRefresh(Date.now());
