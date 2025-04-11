@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   Dialog, DialogContent, DialogDescription, DialogFooter, 
   DialogHeader, DialogTitle, DialogTrigger 
@@ -42,6 +42,10 @@ const AddPaymentDialog = ({
     payment_method: "Cash",
     notes: ""
   });
+
+  useEffect(() => {
+    console.log("Residents in AddPaymentDialog:", residents);
+  }, [residents]);
 
   const handleAddPayment = async () => {
     if (!newPayment.resident_id || !newPayment.amount || !newPayment.payment_date) {
@@ -87,8 +91,6 @@ const AddPaymentDialog = ({
     }
   };
 
-  console.log("Residents in AddPaymentDialog:", residents);
-
   return (
     <Dialog open={isAddingPayment} onOpenChange={setIsAddingPayment}>
       <DialogTrigger asChild>
@@ -115,7 +117,7 @@ const AddPaymentDialog = ({
               <SelectTrigger className="col-span-3">
                 <SelectValue placeholder="Select a resident" />
               </SelectTrigger>
-              <SelectContent className="max-h-[300px] overflow-y-auto">
+              <SelectContent className="max-h-[300px] overflow-y-auto z-50 bg-white">
                 {residents && residents.length > 0 ? (
                   residents.map((resident) => (
                     <SelectItem key={resident.id} value={resident.id}>

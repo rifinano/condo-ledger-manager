@@ -1,4 +1,5 @@
-import { useState, useMemo } from "react";
+
+import { useState, useMemo, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getPayments, getResidents, Payment, Resident } from "@/services/paymentsService";
 import { useToast } from "@/hooks/use-toast";
@@ -24,14 +25,26 @@ export const usePaymentData = () => {
   const { 
     data: residents = [], 
     isLoading: isLoadingResidents,
-    error: residentsError
+    error: residentsError,
+    refetch: refetchResidents
   } = useQuery({
     queryKey: ['residents'],
     queryFn: getResidents
   });
 
-  // Add this console log to debug the residents data
+  // Log residents for debugging
   console.log("Residents in usePaymentData:", residents);
+
+  // Show error toast if there's an issue fetching residents
+  useEffect(() => {
+    if (residentsError) {
+      toast({
+        title: "Error fetching residents",
+        description: "Could not load resident data. Please try again later.",
+        variant: "destructive"
+      });
+    }
+  }, [residentsError, toast]);
 
   // Filter payments based on selected filters
   const filteredPayments = useMemo(() => {
@@ -60,6 +73,9 @@ export const usePaymentData = () => {
 
   // Get unique blocks from residents
   const blocks = useMemo(() => {
+    if (!residents || residents.length === 0) {
+      return ["all"];
+    }
     return ["all", ...Array.from(new Set(residents.map((r: Resident) => r.block_number)))];
   }, [residents]);
 
@@ -102,6 +118,7 @@ export const usePaymentData = () => {
     paymentsError,
     residentsError,
     refetchPayments,
+    refetchResidents,
     selectedBlock,
     setSelectedBlock,
     selectedYear,

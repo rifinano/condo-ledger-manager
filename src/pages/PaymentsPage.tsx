@@ -19,6 +19,7 @@ const PaymentsPage = () => {
     paymentsError,
     residentsError,
     refetchPayments,
+    refetchResidents,
     selectedBlock,
     setSelectedBlock,
     selectedYear,
@@ -50,6 +51,11 @@ const PaymentsPage = () => {
       });
     }
   }, [paymentsError, residentsError, toast]);
+
+  // Fetch data when component mounts
+  useEffect(() => {
+    refetchResidents();
+  }, [refetchResidents]);
 
   const handleExportReport = () => {
     toast({
