@@ -3,16 +3,8 @@ import {
   Table, TableBody, TableCell, TableHead, 
   TableHeader, TableRow 
 } from "@/components/ui/table";
-import { 
-  DropdownMenu, DropdownMenuContent, DropdownMenuItem, 
-  DropdownMenuTrigger 
-} from "@/components/ui/dropdown-menu";
-import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { 
-  MoreHorizontal, User, Phone, Building2, Home,
-  Edit, Trash2
-} from "lucide-react";
+import { User, Phone, Building2, Home } from "lucide-react";
 
 interface ResidentsTableProps {
   residents: Resident[];
@@ -23,7 +15,7 @@ interface ResidentsTableProps {
 
 const ResidentsTable = ({ 
   residents, 
-  isLoading, 
+  isLoading,
   onEdit, 
   onDelete 
 }: ResidentsTableProps) => {
@@ -39,27 +31,14 @@ const ResidentsTable = ({
     );
   }
 
-  const handleEdit = (e: React.MouseEvent, resident: Resident) => {
-    e.preventDefault();
-    e.stopPropagation();
-    onEdit(resident);
-  };
-
-  const handleDelete = (e: React.MouseEvent, resident: Resident) => {
-    e.preventDefault();
-    e.stopPropagation();
-    onDelete(resident);
-  };
-
   return (
     <div className="border rounded-md overflow-hidden">
       <Table>
         <TableHeader>
           <TableRow>
             <TableHead className="w-[40%]">Name</TableHead>
-            <TableHead className="w-[20%]">Phone</TableHead>
-            <TableHead className="w-[30%]">Location</TableHead>
-            <TableHead className="w-[10%] text-right">Actions</TableHead>
+            <TableHead className="w-[25%]">Phone</TableHead>
+            <TableHead className="w-[35%]">Location</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -86,27 +65,6 @@ const ResidentsTable = ({
                   <span>{resident.apartment_number}</span>
                 </div>
               </TableCell>
-              <TableCell className="text-right">
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                      <span className="sr-only">Open menu</span>
-                      <MoreHorizontal className="h-4 w-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={(e) => handleEdit(e, resident)}>
-                      <Edit className="h-4 w-4 mr-2" /> Edit
-                    </DropdownMenuItem>
-                    <DropdownMenuItem 
-                      className="text-red-600"
-                      onClick={(e) => handleDelete(e, resident)}
-                    >
-                      <Trash2 className="h-4 w-4 mr-2" /> Delete
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </TableCell>
             </TableRow>
           ))}
         </TableBody>
@@ -122,9 +80,8 @@ const ResidentsTableSkeleton = () => {
         <TableHeader>
           <TableRow>
             <TableHead className="w-[40%]">Name</TableHead>
-            <TableHead className="w-[20%]">Phone</TableHead>
-            <TableHead className="w-[30%]">Location</TableHead>
-            <TableHead className="w-[10%] text-right">Actions</TableHead>
+            <TableHead className="w-[25%]">Phone</TableHead>
+            <TableHead className="w-[35%]">Location</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -149,9 +106,6 @@ const ResidentsTableSkeleton = () => {
                   <Skeleton className="h-4 w-4 mx-1 rounded-full" />
                   <Skeleton className="h-4 w-8" />
                 </div>
-              </TableCell>
-              <TableCell className="text-right">
-                <Skeleton className="h-8 w-8 ml-auto rounded-full" />
               </TableCell>
             </TableRow>
           ))}

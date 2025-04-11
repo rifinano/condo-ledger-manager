@@ -1,4 +1,3 @@
-
 import { useEffect } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Button } from "@/components/ui/button";
@@ -7,8 +6,6 @@ import { Search, Plus } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useResidentsPage } from "@/hooks/useResidentsPage";
 import AddResidentDialog from "@/components/residents/AddResidentDialog";
-import EditResidentDialog from "@/components/residents/EditResidentDialog";
-import DeleteResidentDialog from "@/components/residents/DeleteResidentDialog";
 import ResidentsTable from "@/components/residents/ResidentsTable";
 import ResidentsPagination from "@/components/residents/ResidentsPagination";
 
@@ -20,17 +17,11 @@ const ResidentsPage = () => {
     setSearchTerm,
     isAddingResident,
     setIsAddingResident,
-    isEditingResident,
-    setIsEditingResident,
-    isDeletingResident,
-    setIsDeletingResident,
     currentResident,
     setCurrentResident,
     blockNames,
     getApartments,
     handleAddResident,
-    handleUpdateResident,
-    handleDeleteResident,
     editResident,
     confirmDeleteResident,
     resetForm,
@@ -103,7 +94,6 @@ const ResidentsPage = () => {
         </Card>
       </div>
 
-      {/* Dialogs */}
       <AddResidentDialog 
         open={isAddingResident}
         onOpenChange={setIsAddingResident}
@@ -115,27 +105,6 @@ const ResidentsPage = () => {
         resetForm={resetForm}
         months={months}
         years={years}
-      />
-
-      <EditResidentDialog 
-        open={isEditingResident}
-        onOpenChange={setIsEditingResident}
-        currentResident={currentResident}
-        setCurrentResident={setCurrentResident}
-        blocks={blockNames}
-        getApartments={getApartments}
-        handleUpdateResident={handleUpdateResident}
-        resetForm={resetForm}
-        months={months}
-        years={years}
-      />
-
-      <DeleteResidentDialog
-        open={isDeletingResident}
-        onOpenChange={setIsDeletingResident}
-        onConfirm={handleDeleteResident}
-        residentName={currentResident.full_name || ""}
-        apartmentInfo={`${currentResident.block_number || ""}, ${currentResident.apartment_number || ""}`}
       />
     </DashboardLayout>
   );
