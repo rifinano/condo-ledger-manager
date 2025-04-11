@@ -28,7 +28,7 @@ export const useResidentActions = (
         description: "Please fill in all required fields",
         variant: "destructive"
       });
-      return;
+      return false;
     }
 
     const result = await addResident(currentResident as ResidentFormData);
@@ -36,17 +36,19 @@ export const useResidentActions = (
     if (result.success) {
       setIsAddingResident(false);
       resetForm();
-      fetchResidents();
+      await fetchResidents();
       toast({
         title: "Resident added",
         description: `${currentResident.full_name} has been added to ${currentResident.block_number}, ${currentResident.apartment_number}`
       });
+      return true;
     } else {
       toast({
         title: "Error adding resident",
         description: result.error || "An error occurred while adding the resident",
         variant: "destructive"
       });
+      return false;
     }
   };
 
@@ -61,7 +63,7 @@ export const useResidentActions = (
         description: "Please fill in all required fields",
         variant: "destructive"
       });
-      return;
+      return false;
     }
 
     const result = await updateResident(selectedResidentId, currentResident as ResidentFormData);
@@ -69,17 +71,19 @@ export const useResidentActions = (
     if (result.success) {
       setIsEditingResident(false);
       resetForm();
-      fetchResidents();
+      await fetchResidents();
       toast({
         title: "Resident updated",
         description: `${currentResident.full_name}'s information has been updated`
       });
+      return true;
     } else {
       toast({
         title: "Error updating resident",
         description: result.error || "An error occurred while updating the resident",
         variant: "destructive"
       });
+      return false;
     }
   };
 
@@ -87,23 +91,42 @@ export const useResidentActions = (
     selectedResidentId: string | null,
     setIsDeletingResident: (value: boolean) => void
   ) => {
-    if (!selectedResidentId) return;
-
-    const result = await deleteResident(selectedResidentId);
-    
-    if (result.success) {
-      setIsDeletingResident(false);
-      fetchResidents();
-      toast({
-        title: "Resident deleted",
-        description: "The resident has been removed"
-      });
-    } else {
+    if (!selectedResidentId) {
       toast({
         title: "Error deleting resident",
-        description: result.error || "An error occurred while deleting the resident",
+        description: "Resident ID is missing",
         variant: "destructive"
       });
+      return false;
+    }
+
+    try {
+      const result = await deleteResident(selectedResidentId);
+      
+      if (result.success) {
+        setIsDeletingResident(false);
+        await fetchResidents();
+        toast({
+          title: "Resident deleted",
+          description: "The resident has been removed"
+        });
+        return true;
+      } else {
+        toast({
+          title: "Error deleting resident",
+          description: result.error || "An error occurred while deleting the resident",
+          variant: "destructive"
+        });
+        return false;
+      }
+    } catch (error) {
+      console.error("Error in handleDeleteResident:", error);
+      toast({
+        title: "Error deleting resident",
+        description: "An unexpected error occurred",
+        variant: "destructive"
+      });
+      return false;
     }
   };
 

@@ -4,11 +4,13 @@ import {
   DialogHeader, DialogTitle 
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { useState } from "react";
+import { Loader2 } from "lucide-react";
 
 interface DeleteResidentDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onConfirm: () => void;
+  onConfirm: () => Promise<boolean> | void;
   residentName: string;
   apartmentInfo: string;
 }
@@ -20,8 +22,28 @@ const DeleteResidentDialog = ({
   residentName,
   apartmentInfo
 }: DeleteResidentDialogProps) => {
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const handleConfirmDelete = async () => {
+    setIsDeleting(true);
+    try {
+      const result = await onConfirm();
+      if (result !== false) {
+        onOpenChange(false);
+      }
+    } catch (error) {
+      console.error("Error deleting resident:", error);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={(open) => {
+      if (!isDeleting) {
+        onOpenChange(open);
+      }
+    }}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Confirm Deletion</DialogTitle>
@@ -37,11 +59,26 @@ const DeleteResidentDialog = ({
         </div>
         
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+          <Button 
+            variant="outline" 
+            onClick={() => onOpenChange(false)}
+            disabled={isDeleting}
+          >
             Cancel
           </Button>
-          <Button variant="destructive" onClick={onConfirm}>
-            Delete Resident
+          <Button 
+            variant="destructive" 
+            onClick={handleConfirmDelete}
+            disabled={isDeleting}
+          >
+            {isDeleting ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Deleting...
+              </>
+            ) : (
+              "Delete Resident"
+            )}
           </Button>
         </DialogFooter>
       </DialogContent>
