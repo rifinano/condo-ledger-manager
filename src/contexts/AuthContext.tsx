@@ -15,6 +15,7 @@ interface AuthContextType {
   admin: Admin | null;
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<void>;
+  signup: (email: string, password: string) => Promise<void>;
   logout: () => void;
   session: Session | null;
   user: User | null;
@@ -102,6 +103,51 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const signup = async (email: string, password: string) => {
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          // Skip email verification for now
+          emailRedirectTo: window.location.origin,
+          data: {
+            name: "Syndicate Admin", 
+          }
+        },
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      if (data.session) {
+        // If we have a session, the user was automatically signed in
+        // This happens when email confirmation is disabled in Supabase
+        toast({
+          title: "Account created successfully",
+          description: "Welcome to the Syndicate Manager",
+        });
+        navigate("/dashboard");
+      } else {
+        // If no session, email verification might be required
+        toast({
+          title: "Sign up successful",
+          description: "Please check your email to verify your account before logging in.",
+        });
+        // Stay on the login page for the user to log in after verification
+      }
+    } catch (error: any) {
+      console.error("Signup error:", error);
+      toast({
+        title: "Sign up failed",
+        description: error?.message || "There was a problem creating your account",
+        variant: "destructive",
+      });
+      throw error;
+    }
+  };
+
   const logout = async () => {
     try {
       await supabase.auth.signOut();
@@ -127,6 +173,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         admin,
         isAuthenticated: !!session,
         login,
+        signup,
         logout,
         session,
         user

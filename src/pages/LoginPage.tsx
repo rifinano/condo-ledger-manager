@@ -6,36 +6,24 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Building2 } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 
 const LoginPage = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isSigningUp, setIsSigningUp] = useState(false);
-  const { login } = useAuth();
+  const { login, signup } = useAuth();
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     
     try {
-      const { error } = await supabase.auth.signUp({
-        email,
-        password,
-      });
-
-      if (error) throw error;
-      
-      setIsSigningUp(false);
-      setEmail("");
-      setPassword("");
-      
-      // Show success message
-      alert("Sign up successful! Please check your email for verification.");
+      await signup(email, password);
+      // Session state and navigation handled in auth context
     } catch (error: any) {
       console.error("Sign up error:", error);
-      alert(error.message || "An error occurred during sign up");
+      // Error toast shown in auth context
     } finally {
       setIsLoading(false);
     }

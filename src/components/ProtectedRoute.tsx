@@ -9,8 +9,7 @@ interface ProtectedRouteProps {
 }
 
 const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
-  const { isAuthenticated, session } = useAuth();
-  const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
   const { toast } = useToast();
 
   useEffect(() => {
