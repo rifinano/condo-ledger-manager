@@ -169,6 +169,41 @@ export type Database = {
           },
         ]
       }
+      resident_apartments: {
+        Row: {
+          apartment_number: string
+          block_number: string
+          created_at: string
+          id: string
+          resident_id: string
+          updated_at: string
+        }
+        Insert: {
+          apartment_number: string
+          block_number: string
+          created_at?: string
+          id?: string
+          resident_id: string
+          updated_at?: string
+        }
+        Update: {
+          apartment_number?: string
+          block_number?: string
+          created_at?: string
+          id?: string
+          resident_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "resident_apartments_resident_id_fkey"
+            columns: ["resident_id"]
+            isOneToOne: false
+            referencedRelation: "residents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       residents: {
         Row: {
           apartment_number: string

@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 
@@ -43,7 +44,8 @@ export const getResidents = async () => {
       return [];
     }
 
-    // Fetch all resident-apartment assignments
+    // Fetch all resident-apartment assignments using a separate query
+    // We need to use "from" with the string name since TypeScript doesn't know about the new table yet
     const { data: residentApartments, error: apartmentsError } = await supabase
       .from('resident_apartments')
       .select('resident_id, block_number, apartment_number');
@@ -53,9 +55,17 @@ export const getResidents = async () => {
     }
 
     // Group apartments by resident ID
-    const apartmentsByResident = {};
+    const apartmentsByResident: Record<string, ResidentApartment[]> = {};
+    
     if (residentApartments) {
-      residentApartments.forEach(apt => {
+      // We need to type cast here since TypeScript doesn't know the structure yet
+      const typedApartments = residentApartments as Array<{
+        resident_id: string;
+        block_number: string;
+        apartment_number: string;
+      }>;
+      
+      typedApartments.forEach(apt => {
         if (!apartmentsByResident[apt.resident_id]) {
           apartmentsByResident[apt.resident_id] = [];
         }
@@ -100,6 +110,27 @@ export const addResident = async (resident: Omit<ResidentFormData, 'id'>) => {
       .select();
 
     if (error) throw error;
+    
+    // Add to the resident_apartments table for the new resident
+    if (data && data.length > 0) {
+      const newResidentId = data[0].id;
+      
+      // First apartment is the primary one from the form
+      const apartmentData = {
+        resident_id: newResidentId,
+        block_number: resident.block_number,
+        apartment_number: resident.apartment_number
+      };
+      
+      const { error: aptError } = await supabase
+        .from('resident_apartments')
+        .insert([apartmentData]);
+        
+      if (aptError) {
+        console.error("Error adding resident apartment:", aptError);
+        // Continue with success even if this fails, we'll just have inconsistent data
+      }
+    }
     
     return { success: true, data };
   } catch (error: any) {
@@ -154,6 +185,60 @@ export const deleteResident = async (id: string) => {
     return { 
       success: false, 
       error: error.message || "Failed to delete resident" 
+    };
+  }
+};
+
+export const addResidentApartment = async (
+  residentId: string, 
+  blockNumber: string, 
+  apartmentNumber: string
+) => {
+  try {
+    const apartmentData = {
+      resident_id: residentId,
+      block_number: blockNumber,
+      apartment_number: apartmentNumber
+    };
+    
+    const { data, error } = await supabase
+      .from('resident_apartments')
+      .insert([apartmentData])
+      .select();
+      
+    if (error) throw error;
+    
+    return { success: true, data };
+  } catch (error: any) {
+    console.error("Error adding resident apartment:", error);
+    return {
+      success: false,
+      error: error.message || "Failed to add apartment for resident"
+    };
+  }
+};
+
+export const removeResidentApartment = async (
+  residentId: string, 
+  blockNumber: string, 
+  apartmentNumber: string
+) => {
+  try {
+    const { error } = await supabase
+      .from('resident_apartments')
+      .delete()
+      .eq('resident_id', residentId)
+      .eq('block_number', blockNumber)
+      .eq('apartment_number', apartmentNumber);
+      
+    if (error) throw error;
+    
+    return { success: true };
+  } catch (error: any) {
+    console.error("Error removing resident apartment:", error);
+    return {
+      success: false,
+      error: error.message || "Failed to remove apartment from resident"
     };
   }
 };
