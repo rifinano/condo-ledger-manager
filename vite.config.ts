@@ -12,6 +12,10 @@ export default defineConfig(({ mode }) => ({
     cors: true, // Enable CORS for all requests
     strictPort: true,
     hmr: {
+      // Fix WebSocket connection issues
+      protocol: 'ws',
+      host: 'localhost',
+      port: 8080,
       clientPort: 8080
     },
   },
