@@ -16,7 +16,7 @@ export function ErrorMessage({
   isNetworkError = false
 }: ErrorMessageProps) {
   return (
-    <div className="flex flex-col items-center justify-center p-6 bg-red-50 border border-red-200 rounded-lg text-center">
+    <div className="flex flex-col items-center justify-center p-6 bg-red-50 border-2 border-red-300 rounded-lg text-center shadow-md">
       {isNetworkError ? (
         <WifiOff className="h-12 w-12 text-red-500 mb-2" />
       ) : (

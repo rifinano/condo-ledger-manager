@@ -23,11 +23,19 @@ export const usePropertyFetch = () => {
   const [isFetching, setIsFetching] = useState(false);
   // Add a flag to track if the user has manually requested a refresh
   const [manualRefreshRequested, setManualRefreshRequested] = useState(false);
+  // Add a counter for tracking failed attempts
+  const [failedAttempts, setFailedAttempts] = useState(0);
 
   // Fetch blocks and apartments with improved error handling
   const fetchProperties = useCallback(async () => {
     // If already fetching, don't start another fetch operation
     if (isFetching) return;
+    
+    // If we've had too many failed attempts in a row, only allow manual refreshes
+    if (failedAttempts > 5 && !manualRefreshRequested) {
+      console.log("Too many failed attempts, waiting for manual refresh");
+      return;
+    }
     
     setIsFetching(true);
     setLoading(true);
@@ -38,9 +46,11 @@ export const usePropertyFetch = () => {
       const maxRetries = 3;
       let attempt = 0;
       let error = null;
+      let success = false;
       
-      while (attempt < maxRetries) {
+      while (attempt < maxRetries && !success) {
         try {
+          console.log(`Attempt ${attempt + 1} to fetch blocks`);
           const blocksData = await getBlocks();
           
           // Fetch all apartments for blocks in parallel
@@ -78,6 +88,9 @@ export const usePropertyFetch = () => {
           setResidents(residentsMap);
           
           // If we got here, we succeeded
+          success = true;
+          // Reset failed attempts counter on success
+          setFailedAttempts(0);
           break;
         } catch (err) {
           error = err;
@@ -91,18 +104,24 @@ export const usePropertyFetch = () => {
       }
       
       // If we've exhausted all retries and still have an error
-      if (attempt === maxRetries) {
+      if (!success) {
         console.error("Error fetching properties after retries:", error);
+        setFailedAttempts(prev => prev + 1);
         const errorMessage = "Network error: Failed to connect to the server. Please check your internet connection and try again.";
         setFetchError(errorMessage);
-        toast({
-          title: "Connection Error",
-          description: "We're having trouble connecting to the server. Please check your internet connection.",
-          variant: "destructive",
-        });
+        
+        // Only show toast on the first few errors to avoid spam
+        if (failedAttempts < 3) {
+          toast({
+            title: "Connection Error",
+            description: "We're having trouble connecting to the server. Please check your internet connection.",
+            variant: "destructive",
+          });
+        }
       }
     } catch (error) {
       console.error("Unexpected error fetching properties:", error);
+      setFailedAttempts(prev => prev + 1);
       setFetchError("Unexpected error: Failed to fetch property data.");
     } finally {
       setLoading(false);
@@ -110,7 +129,7 @@ export const usePropertyFetch = () => {
       // Reset the manual refresh flag
       setManualRefreshRequested(false);
     }
-  }, [isFetching]);
+  }, [isFetching, failedAttempts, manualRefreshRequested]);
 
   // Force a refresh of data by completely clearing the cache
   const refreshData = useCallback(() => {
@@ -118,6 +137,8 @@ export const usePropertyFetch = () => {
     clearCache();
     // Mark that a manual refresh was requested
     setManualRefreshRequested(true);
+    // Reset failed attempts counter on manual refresh
+    setFailedAttempts(0);
     // Add toast to indicate refresh is happening
     toast({
       title: "Refreshing data",
