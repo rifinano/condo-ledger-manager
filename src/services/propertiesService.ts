@@ -17,7 +17,28 @@ export interface Apartment {
   updated_at: string;
 }
 
+// Cache mechanism for frequently accessed data
+const cache = {
+  blocks: null as Block[] | null,
+  apartments: {} as Record<string, Apartment[]>,
+  residents: {} as Record<string, any>,
+  lastFetch: {
+    blocks: 0,
+    apartments: {} as Record<string, number>,
+    residents: {} as Record<string, number>
+  }
+};
+
+// Cache expiration time (5 minutes)
+const CACHE_EXPIRATION = 5 * 60 * 1000;
+
 export const getBlocks = async (): Promise<Block[]> => {
+  // Check if cached data exists and is still valid
+  const now = Date.now();
+  if (cache.blocks && (now - cache.lastFetch.blocks) < CACHE_EXPIRATION) {
+    return cache.blocks;
+  }
+
   try {
     const { data, error } = await supabase
       .from("blocks")
@@ -34,6 +55,10 @@ export const getBlocks = async (): Promise<Block[]> => {
       return [];
     }
 
+    // Update cache
+    cache.blocks = data || [];
+    cache.lastFetch.blocks = now;
+
     return data || [];
   } catch (error) {
     console.error("Error fetching blocks:", error);
@@ -42,6 +67,16 @@ export const getBlocks = async (): Promise<Block[]> => {
 };
 
 export const getApartmentsByBlockId = async (blockId: string): Promise<Apartment[]> => {
+  // Check if cached data exists and is still valid
+  const now = Date.now();
+  if (
+    cache.apartments[blockId] && 
+    cache.lastFetch.apartments[blockId] && 
+    (now - cache.lastFetch.apartments[blockId]) < CACHE_EXPIRATION
+  ) {
+    return cache.apartments[blockId];
+  }
+
   try {
     const { data, error } = await supabase
       .from("apartments")
@@ -58,6 +93,10 @@ export const getApartmentsByBlockId = async (blockId: string): Promise<Apartment
       });
       return [];
     }
+
+    // Update cache
+    cache.apartments[blockId] = data || [];
+    cache.lastFetch.apartments[blockId] = now;
 
     return data || [];
   } catch (error) {
@@ -86,7 +125,6 @@ export const addBlock = async (name: string, apartmentCount: number): Promise<Bl
     }
 
     // 2. Add the apartments for this block
-    const blockPrefix = name.replace(/\s+/g, '');
     const apartments = Array.from({ length: apartmentCount }, (_, i) => {
       // Ensure apartment numbers are properly zero-padded
       const aptNum = (i + 1).toString().padStart(2, '0');
@@ -111,6 +149,9 @@ export const addBlock = async (name: string, apartmentCount: number): Promise<Bl
       // We don't return null here because the block was successfully created
     }
 
+    // Invalidate blocks cache
+    cache.blocks = null;
+
     return blockData;
   } catch (error) {
     console.error("Error adding block:", error);
@@ -134,6 +175,10 @@ export const deleteBlock = async (blockId: string): Promise<boolean> => {
       });
       return false;
     }
+
+    // Invalidate caches
+    cache.blocks = null;
+    delete cache.apartments[blockId];
 
     return true;
   } catch (error) {
@@ -161,6 +206,11 @@ export const updateApartment = async (apartment: Partial<Apartment> & { id: stri
       return null;
     }
 
+    // Invalidate apartment cache for this block
+    if (data.block_id) {
+      delete cache.apartments[data.block_id];
+    }
+
     return data;
   } catch (error) {
     console.error("Error updating apartment:", error);
@@ -169,6 +219,18 @@ export const updateApartment = async (apartment: Partial<Apartment> & { id: stri
 };
 
 export const getResidentByApartment = async (blockName: string, apartmentNumber: string) => {
+  const cacheKey = `${blockName}-${apartmentNumber}`;
+  const now = Date.now();
+  
+  // Check if cached data exists and is still valid
+  if (
+    cache.residents[cacheKey] && 
+    cache.lastFetch.residents[cacheKey] && 
+    (now - cache.lastFetch.residents[cacheKey]) < CACHE_EXPIRATION
+  ) {
+    return cache.residents[cacheKey];
+  }
+
   try {
     const { data, error } = await supabase
       .from("residents")
@@ -181,6 +243,10 @@ export const getResidentByApartment = async (blockName: string, apartmentNumber:
       console.error("Error fetching resident:", error);
       return null;
     }
+
+    // Update cache
+    cache.residents[cacheKey] = data;
+    cache.lastFetch.residents[cacheKey] = now;
 
     return data;
   } catch (error) {

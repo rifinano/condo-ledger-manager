@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { memo } from "react";
 import { Building2, Home, Trash2, User, Edit } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -14,23 +14,33 @@ interface BlockCardProps {
   getResidentName: (blockName: string, apartmentNumber: string) => string | null;
 }
 
-const BlockCard: React.FC<BlockCardProps> = ({
+// Using memo to prevent unnecessary re-renders
+const BlockCard: React.FC<BlockCardProps> = memo(({
   block,
   onDeleteBlock,
   onEditApartment,
   isApartmentOccupied,
   getResidentName
 }) => {
-  // Sort apartments numerically
-  const sortedApartments = [...block.apartments].sort((a, b) => {
-    // Extract number part from apartment number and convert to integer
-    const numA = parseInt(a.number.replace(/\D/g, ''), 10);
-    const numB = parseInt(b.number.replace(/\D/g, ''), 10);
-    return numA - numB;
-  });
+  // Only sort apartments once when the component mounts or when apartments change
+  const sortedApartments = React.useMemo(() => {
+    return [...block.apartments].sort((a, b) => {
+      // Extract number part from apartment number and convert to integer
+      const numA = parseInt(a.number.replace(/\D/g, ''), 10);
+      const numB = parseInt(b.number.replace(/\D/g, ''), 10);
+      return numA - numB;
+    });
+  }, [block.apartments]);
+
+  // Calculate occupied count once
+  const occupiedCount = React.useMemo(() => {
+    return block.apartments.filter(apt => 
+      isApartmentOccupied(block.name, apt.number)
+    ).length;
+  }, [block.apartments, block.name, isApartmentOccupied]);
 
   return (
-    <Card key={block.id}>
+    <Card>
       <CardHeader>
         <div className="flex justify-between items-center">
           <div className="flex items-center">
@@ -49,11 +59,7 @@ const BlockCard: React.FC<BlockCardProps> = ({
           </div>
         </div>
         <CardDescription>
-          {block.apartments.length} apartments | {
-            block.apartments.filter(apt => 
-              isApartmentOccupied(block.name, apt.number)
-            ).length
-          } occupied
+          {block.apartments.length} apartments | {occupiedCount} occupied
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -69,7 +75,8 @@ const BlockCard: React.FC<BlockCardProps> = ({
           <TableBody>
             {sortedApartments.slice(0, 5).map((apt) => {
               const occupied = isApartmentOccupied(block.name, apt.number);
-              const residentName = getResidentName(block.name, apt.number);
+              const residentName = occupied ? getResidentName(block.name, apt.number) : null;
+              
               return (
                 <TableRow key={apt.id}>
                   <TableCell className="font-medium flex items-center">
@@ -121,6 +128,9 @@ const BlockCard: React.FC<BlockCardProps> = ({
       </CardContent>
     </Card>
   );
-};
+});
+
+// Display name for React DevTools
+BlockCard.displayName = "BlockCard";
 
 export default BlockCard;

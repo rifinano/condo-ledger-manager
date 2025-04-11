@@ -14,6 +14,7 @@ import AddBlockDialog from "@/components/properties/AddBlockDialog";
 import DeleteBlockAlert from "@/components/properties/DeleteBlockAlert";
 import EditApartmentSheet from "@/components/properties/EditApartmentSheet";
 import EmptyBlocksState from "@/components/properties/EmptyBlocksState";
+import BlocksLoadingSkeleton from "@/components/properties/BlocksLoadingSkeleton";
 
 const PropertiesPage = () => {
   const { toast } = useToast();
@@ -137,10 +138,8 @@ const PropertiesPage = () => {
           />
         </div>
 
-        {loading && blocks.length === 0 ? (
-          <div className="text-center py-8">
-            <p className="text-gray-500">Loading properties...</p>
-          </div>
+        {loading ? (
+          <BlocksLoadingSkeleton />
         ) : blocks.length === 0 ? (
           <EmptyBlocksState />
         ) : (
