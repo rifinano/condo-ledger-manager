@@ -56,6 +56,17 @@ export const usePropertyData = () => {
     fetchProperties();
   }, []);
 
+  // Helper function to get block names for dropdowns
+  const getBlockNames = (): string[] => {
+    return blocks.map(block => block.name);
+  };
+
+  // Helper function to get apartments for a specific block
+  const getApartments = (blockName: string): string[] => {
+    const block = blocks.find(b => b.name === blockName);
+    return block ? block.apartments.map(apt => apt.number) : [];
+  };
+
   const isApartmentOccupied = (blockName: string, apartmentNumber: string) => {
     const key = `${blockName}-${apartmentNumber}`;
     return !!residents[key];
@@ -67,12 +78,35 @@ export const usePropertyData = () => {
     return resident ? resident.full_name : null;
   };
 
+  // Month and year data for resident forms
+  const months = [
+    { value: "01", label: "January" },
+    { value: "02", label: "February" },
+    { value: "03", label: "March" },
+    { value: "04", label: "April" },
+    { value: "05", label: "May" },
+    { value: "06", label: "June" },
+    { value: "07", label: "July" },
+    { value: "08", label: "August" },
+    { value: "09", label: "September" },
+    { value: "10", label: "October" },
+    { value: "11", label: "November" },
+    { value: "12", label: "December" }
+  ];
+
+  const currentYear = new Date().getFullYear();
+  const years = Array.from({ length: 10 }, (_, i) => (currentYear - 5 + i).toString());
+
   return {
     blocks,
     loading,
     fetchProperties,
     isApartmentOccupied,
     getResidentName,
-    residents
+    residents,
+    getBlockNames,
+    getApartments,
+    months,
+    years
   };
 };

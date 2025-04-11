@@ -26,7 +26,7 @@ const ResidentsPage = () => {
     setIsDeletingResident,
     currentResident,
     setCurrentResident,
-    blocks,
+    blockNames,
     getApartments,
     handleAddResident,
     handleUpdateResident,
@@ -89,7 +89,7 @@ const ResidentsPage = () => {
         onOpenChange={setIsAddingResident}
         currentResident={currentResident}
         setCurrentResident={setCurrentResident}
-        blocks={blocks}
+        blocks={blockNames}
         getApartments={getApartments}
         handleAddResident={handleAddResident}
         resetForm={resetForm}
@@ -102,7 +102,7 @@ const ResidentsPage = () => {
         onOpenChange={setIsEditingResident}
         currentResident={currentResident}
         setCurrentResident={setCurrentResident}
-        blocks={blocks}
+        blocks={blockNames}
         getApartments={getApartments}
         handleUpdateResident={handleUpdateResident}
         resetForm={resetForm}

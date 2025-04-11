@@ -28,7 +28,13 @@ export const useResidentsPage = () => {
     resetForm
   } = useResidentsState();
 
-  const { blocks, getApartments, months, years } = usePropertyData();
+  const { 
+    blocks, 
+    getBlockNames, 
+    getApartments, 
+    months, 
+    years 
+  } = usePropertyData();
 
   const { fetchResidents, filterResidents } = useResidentsData(
     setResidents,
@@ -80,7 +86,7 @@ export const useResidentsPage = () => {
     currentResident,
     setCurrentResident,
     selectedResidentId,
-    blocks,
+    blockNames: getBlockNames(),
     getApartments,
     handleAddResident,
     handleUpdateResident,
