@@ -1,19 +1,25 @@
+
 import { Resident } from "@/services/residentsService";
 import { 
   Table, TableBody, TableCell, TableHead, 
   TableHeader, TableRow 
 } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
-import { User, Phone, Building2, Home } from "lucide-react";
+import { User, Phone, Building2, Home, Edit, Trash2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface ResidentsTableProps {
   residents: Resident[];
   isLoading: boolean;
+  onEdit?: (resident: Resident) => void;
+  onDelete?: (resident: Resident) => void;
 }
 
 const ResidentsTable = ({ 
   residents, 
-  isLoading
+  isLoading,
+  onEdit,
+  onDelete
 }: ResidentsTableProps) => {
   if (isLoading) {
     return <ResidentsTableSkeleton />;
@@ -32,9 +38,10 @@ const ResidentsTable = ({
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead className="w-[35%]">Name</TableHead>
-            <TableHead className="w-[20%]">Phone</TableHead>
-            <TableHead className="w-[45%]">Location</TableHead>
+            <TableHead className="w-[30%]">Name</TableHead>
+            <TableHead className="w-[15%]">Phone</TableHead>
+            <TableHead className="w-[40%]">Location</TableHead>
+            <TableHead className="w-[15%] text-right">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -75,6 +82,30 @@ const ResidentsTable = ({
                   )}
                 </div>
               </TableCell>
+              <TableCell className="text-right">
+                <div className="flex justify-end space-x-2">
+                  {onEdit && (
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => onEdit(resident)}
+                      className="h-8 px-2"
+                    >
+                      <Edit className="h-4 w-4 text-blue-600" />
+                    </Button>
+                  )}
+                  {onDelete && (
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => onDelete(resident)}
+                      className="h-8 px-2"
+                    >
+                      <Trash2 className="h-4 w-4 text-red-600" />
+                    </Button>
+                  )}
+                </div>
+              </TableCell>
             </TableRow>
           ))}
         </TableBody>
@@ -89,9 +120,10 @@ const ResidentsTableSkeleton = () => {
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead className="w-[35%]">Name</TableHead>
-            <TableHead className="w-[20%]">Phone</TableHead>
-            <TableHead className="w-[45%]">Location</TableHead>
+            <TableHead className="w-[30%]">Name</TableHead>
+            <TableHead className="w-[15%]">Phone</TableHead>
+            <TableHead className="w-[40%]">Location</TableHead>
+            <TableHead className="w-[15%] text-right">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -115,6 +147,12 @@ const ResidentsTableSkeleton = () => {
                   <Skeleton className="h-4 w-8 mx-1" />
                   <Skeleton className="h-4 w-4 mx-1 rounded-full" />
                   <Skeleton className="h-4 w-8" />
+                </div>
+              </TableCell>
+              <TableCell className="text-right">
+                <div className="flex justify-end space-x-2">
+                  <Skeleton className="h-8 w-8 rounded" />
+                  <Skeleton className="h-8 w-8 rounded" />
                 </div>
               </TableCell>
             </TableRow>

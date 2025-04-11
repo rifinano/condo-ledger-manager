@@ -9,6 +9,8 @@ import { useResidentsPage } from "@/hooks/useResidentsPage";
 import AddResidentDialog from "@/components/residents/AddResidentDialog";
 import ResidentsTable from "@/components/residents/ResidentsTable";
 import ResidentsPagination from "@/components/residents/ResidentsPagination";
+import EditResidentDialog from "@/components/residents/EditResidentDialog";
+import DeleteResidentDialog from "@/components/residents/DeleteResidentDialog";
 
 const ResidentsPage = () => {
   const {
@@ -18,11 +20,19 @@ const ResidentsPage = () => {
     setSearchTerm,
     isAddingResident,
     setIsAddingResident,
+    isEditingResident,
+    setIsEditingResident,
+    isDeletingResident,
+    setIsDeletingResident,
     currentResident,
     setCurrentResident,
     blockNames,
     getApartments,
     handleAddResident,
+    handleUpdateResident,
+    handleDeleteResident,
+    editResident,
+    confirmDeleteResident,
     resetForm,
     months,
     years,
@@ -76,6 +86,8 @@ const ResidentsPage = () => {
             <ResidentsTable 
               residents={paginatedResidents}
               isLoading={isLoading}
+              onEdit={editResident}
+              onDelete={confirmDeleteResident}
             />
             
             {totalPages > 1 && (
@@ -102,6 +114,31 @@ const ResidentsPage = () => {
         resetForm={resetForm}
         months={months}
         years={years}
+      />
+
+      <EditResidentDialog 
+        open={isEditingResident}
+        onOpenChange={setIsEditingResident}
+        currentResident={currentResident}
+        setCurrentResident={setCurrentResident}
+        blocks={blockNames}
+        getApartments={getApartments}
+        handleUpdateResident={handleUpdateResident}
+        resetForm={resetForm}
+        months={months}
+        years={years}
+      />
+
+      <DeleteResidentDialog 
+        open={isDeletingResident}
+        onOpenChange={setIsDeletingResident}
+        onConfirm={handleDeleteResident}
+        residentName={currentResident.full_name || ""}
+        apartmentInfo={
+          currentResident.block_number && currentResident.apartment_number 
+            ? `Block ${currentResident.block_number}, Apt ${currentResident.apartment_number}` 
+            : ""
+        }
       />
     </DashboardLayout>
   );
