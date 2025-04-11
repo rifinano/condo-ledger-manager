@@ -52,7 +52,8 @@ export const updateApartment = async (apartment: Partial<Apartment> & { id: stri
     const updateData: Database['public']['Tables']['apartments']['Update'] = {
       ...(apartment.number && { number: apartment.number }),
       ...(apartment.block_id && { block_id: apartment.block_id }),
-      ...(apartment.floor && { floor: apartment.floor })
+      // Only include floor if it exists in the input object
+      ...(apartment.floor !== undefined && { floor: apartment.floor })
     };
     
     const { data, error } = await supabase

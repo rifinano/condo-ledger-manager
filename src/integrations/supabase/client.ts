@@ -36,7 +36,9 @@ export const supabase = createClient<Database>(
 // Export a method to explicitly check connection
 export const checkSupabaseConnection = async () => {
   try {
-    const { data, error } = await supabase.from('health_check').select('*').limit(1);
+    // Instead of trying to access a non-existent table, 
+    // let's use a table we know exists for the health check
+    const { data, error } = await supabase.from('blocks').select('*').limit(1);
     return !error;
   } catch (err) {
     console.error("Supabase connection check failed:", err);
