@@ -52,7 +52,7 @@ const DeleteResidentDialog = ({
         <DialogHeader>
           <DialogTitle>Confirm Deletion</DialogTitle>
           <DialogDescription>
-            Are you sure you want to delete this resident? This action cannot be undone.
+            Are you sure you want to delete this resident? This will remove the resident record but keep their apartment association.
           </DialogDescription>
         </DialogHeader>
         

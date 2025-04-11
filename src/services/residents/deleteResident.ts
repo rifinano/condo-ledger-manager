@@ -7,15 +7,7 @@ import { ServiceResult } from "./types";
  */
 export const deleteResident = async (id: string): Promise<ServiceResult> => {
   try {
-    // First delete any associated apartment records
-    const { error: apartmentError } = await supabase
-      .from('resident_apartments')
-      .delete()
-      .eq('resident_id', id);
-    
-    if (apartmentError) throw apartmentError;
-    
-    // Then delete the resident record
+    // Delete the resident record without deleting apartment associations
     const { error } = await supabase
       .from('residents')
       .delete()
@@ -38,15 +30,7 @@ export const deleteResident = async (id: string): Promise<ServiceResult> => {
  */
 export const deleteAllResidents = async (): Promise<ServiceResult> => {
   try {
-    // First delete all resident apartment associations
-    const { error: apartmentError } = await supabase
-      .from('resident_apartments')
-      .delete()
-      .neq('resident_id', '00000000-0000-0000-0000-000000000000'); // Delete all records
-    
-    if (apartmentError) throw apartmentError;
-    
-    // Then delete all resident records
+    // Delete all resident records without deleting apartment associations
     const { error } = await supabase
       .from('residents')
       .delete()
