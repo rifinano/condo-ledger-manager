@@ -7,19 +7,14 @@ import { ResidentFormData, ServiceResult } from "./types";
  */
 export const updateResident = async (id: string, resident: Omit<ResidentFormData, 'id'>): Promise<ServiceResult> => {
   try {
-    // Format the data for the API
-    const formattedResident = {
-      full_name: resident.full_name,
-      phone_number: resident.phone_number || null,
-      block_number: resident.block_number,
-      apartment_number: resident.apartment_number,
-    };
-
-    const { data, error } = await supabase
-      .from('residents')
-      .update(formattedResident)
-      .eq('id', id)
-      .select();
+    // Start a transaction to ensure all changes are applied atomically
+    const { data, error } = await supabase.rpc('update_resident_with_apartment', {
+      p_resident_id: id,
+      p_full_name: resident.full_name,
+      p_phone_number: resident.phone_number || null,
+      p_block_number: resident.block_number,
+      p_apartment_number: resident.apartment_number,
+    });
 
     if (error) throw error;
     

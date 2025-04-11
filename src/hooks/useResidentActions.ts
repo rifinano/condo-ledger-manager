@@ -77,6 +77,7 @@ export const useResidentActions = (
     }
 
     try {
+      // Call the updated updateResident function which handles both the resident record and apartment assignment
       const result = await updateResident(selectedResidentId, currentResident as ResidentFormData);
       
       if (result.success) {

@@ -11,8 +11,11 @@ import ResidentsTable from "@/components/residents/ResidentsTable";
 import ResidentsPagination from "@/components/residents/ResidentsPagination";
 import EditResidentDialog from "@/components/residents/EditResidentDialog";
 import DeleteResidentDialog from "@/components/residents/DeleteResidentDialog";
+import { usePropertyData } from "@/hooks/usePropertyData";
 
 const ResidentsPage = () => {
+  const { refreshData } = usePropertyData();
+  
   const {
     paginatedResidents,
     isLoading,
@@ -45,8 +48,38 @@ const ResidentsPage = () => {
 
   // Fetch residents data when the component mounts
   useEffect(() => {
-    fetchResidents();
-  }, [fetchResidents]);
+    const loadData = async () => {
+      await fetchResidents();
+      refreshData(); // Also refresh property data to ensure sync
+    };
+    
+    loadData();
+  }, [fetchResidents, refreshData]);
+
+  // Custom handlers that also refresh property data
+  const handleAddResidentWithRefresh = async () => {
+    const result = await handleAddResident();
+    if (result) {
+      refreshData();
+    }
+    return result;
+  };
+
+  const handleUpdateResidentWithRefresh = async () => {
+    const result = await handleUpdateResident();
+    if (result) {
+      refreshData();
+    }
+    return result;
+  };
+
+  const handleDeleteResidentWithRefresh = async () => {
+    const result = await handleDeleteResident();
+    if (result) {
+      refreshData();
+    }
+    return result;
+  };
 
   return (
     <DashboardLayout>
@@ -110,7 +143,7 @@ const ResidentsPage = () => {
         setCurrentResident={setCurrentResident}
         blocks={blockNames}
         getApartments={getApartments}
-        handleAddResident={handleAddResident}
+        handleAddResident={handleAddResidentWithRefresh}
         resetForm={resetForm}
         months={months}
         years={years}
@@ -123,7 +156,7 @@ const ResidentsPage = () => {
         setCurrentResident={setCurrentResident}
         blocks={blockNames}
         getApartments={getApartments}
-        handleUpdateResident={handleUpdateResident}
+        handleUpdateResident={handleUpdateResidentWithRefresh}
         resetForm={resetForm}
         months={months}
         years={years}
@@ -132,7 +165,7 @@ const ResidentsPage = () => {
       <DeleteResidentDialog 
         open={isDeletingResident}
         onOpenChange={setIsDeletingResident}
-        onConfirm={handleDeleteResident}
+        onConfirm={handleDeleteResidentWithRefresh}
         residentName={currentResident.full_name || ""}
         apartmentInfo={
           currentResident.block_number && currentResident.apartment_number 

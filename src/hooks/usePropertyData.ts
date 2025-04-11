@@ -1,4 +1,3 @@
-
 import { useEffect, useState, useCallback } from "react";
 import { 
   Block, 
@@ -15,6 +14,7 @@ export const usePropertyData = () => {
   const [blocks, setBlocks] = useState<(Block & { apartments: Apartment[] })[]>([]);
   const [loading, setLoading] = useState(true);
   const [residents, setResidents] = useState<Record<string, any>>({});
+  const [lastRefresh, setLastRefresh] = useState<number>(Date.now());
 
   // Fetch blocks and apartments
   const fetchProperties = useCallback(async () => {
@@ -56,9 +56,14 @@ export const usePropertyData = () => {
     }
   }, []);
 
+  // Force a refresh of data
+  const refreshData = useCallback(() => {
+    setLastRefresh(Date.now());
+  }, []);
+
   useEffect(() => {
     fetchProperties();
-  }, [fetchProperties]);
+  }, [fetchProperties, lastRefresh]);
 
   // Helper function to get block names for dropdowns
   const getBlockNames = (): string[] => {
@@ -114,6 +119,7 @@ export const usePropertyData = () => {
     blocks,
     loading,
     fetchProperties,
+    refreshData,
     isApartmentOccupied,
     getResidentName,
     residents,
