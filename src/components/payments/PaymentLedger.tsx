@@ -21,6 +21,7 @@ interface PaymentLedgerProps {
 }
 
 const PaymentLedger = ({
+  payments,
   refetchPayments,
   selectedYear,
   setSelectedYear,

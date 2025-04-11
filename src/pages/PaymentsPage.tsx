@@ -104,6 +104,7 @@ const PaymentsPage = () => {
         </div>
 
         <PaymentLedger
+          payments={payments}
           refetchPayments={refetchPayments}
           selectedYear={selectedYear}
           setSelectedYear={setSelectedYear}
