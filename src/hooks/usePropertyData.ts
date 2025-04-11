@@ -57,24 +57,28 @@ export const usePropertyData = () => {
     }
   }, []);
 
-  // Force a refresh of data
+  // Force a refresh of data by completely clearing the cache
   const refreshData = useCallback(() => {
-    // Access the cache object directly in the propertiesService
-    // and reset it completely to ensure fresh data
+    // Access and reset the cache completely
     if (typeof window !== 'undefined') {
-      const propertiesServiceCache = (window as any).cache;
+      const propertiesServiceCache = (window as any).__propertiesCache;
       if (propertiesServiceCache) {
         // Reset all cache properties
-        propertiesServiceCache.blocks = null;
-        propertiesServiceCache.apartments = {};
-        propertiesServiceCache.residents = {};
-        propertiesServiceCache.lastFetch = {
-          blocks: 0,
-          apartments: {},
-          residents: {}
-        };
+        Object.keys(propertiesServiceCache).forEach(key => {
+          if (typeof propertiesServiceCache[key] === 'object' && propertiesServiceCache[key] !== null) {
+            if (Array.isArray(propertiesServiceCache[key])) {
+              propertiesServiceCache[key] = [];
+            } else {
+              propertiesServiceCache[key] = {};
+            }
+          } else {
+            propertiesServiceCache[key] = null;
+          }
+        });
       }
     }
+    
+    // Trigger a refresh by updating the timestamp
     setLastRefresh(Date.now());
   }, []);
 

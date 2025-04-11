@@ -7,6 +7,15 @@ import { ServiceResult } from "./types";
  */
 export const deleteResident = async (id: string): Promise<ServiceResult> => {
   try {
+    // First delete any associated apartment records
+    const { error: apartmentError } = await supabase
+      .from('resident_apartments')
+      .delete()
+      .eq('resident_id', id);
+    
+    if (apartmentError) throw apartmentError;
+    
+    // Then delete the resident record
     const { error } = await supabase
       .from('residents')
       .delete()

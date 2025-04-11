@@ -3,55 +3,47 @@ import { supabase } from "@/integrations/supabase/client";
 import { ResidentFormData, ServiceResult } from "./types";
 
 /**
- * Updates an existing resident in the database by deleting the old record and creating a new one
+ * Updates an existing resident in the database
  */
 export const updateResident = async (id: string, resident: Omit<ResidentFormData, 'id'>): Promise<ServiceResult> => {
   try {
-    // Begin by getting the current resident data for reference
-    const { data: existingResident, error: fetchError } = await supabase
+    // Update transaction using multiple steps
+    
+    // Step 1: Update the resident record
+    const { data, error } = await supabase
       .from('residents')
-      .select('*')
-      .eq('id', id)
-      .single();
-    
-    if (fetchError) throw fetchError;
-
-    // Start a transaction by deleting the existing resident
-    // First, delete any associated records in resident_apartments table
-    const { error: deleteApartmentError } = await supabase
-      .from('resident_apartments')
-      .delete()
-      .eq('resident_id', id);
-      
-    if (deleteApartmentError) throw deleteApartmentError;
-    
-    // Then delete the resident record itself
-    const { error: deleteResidentError } = await supabase
-      .from('residents')
-      .delete()
-      .eq('id', id);
-    
-    if (deleteResidentError) throw deleteResidentError;
-    
-    // Now insert the new resident data with the same ID
-    const { data: newResident, error: insertError } = await supabase
-      .from('residents')
-      .insert({
-        id: id, // Keep the same ID for continuity
+      .update({
         full_name: resident.full_name,
         phone_number: resident.phone_number || null,
         block_number: resident.block_number,
         apartment_number: resident.apartment_number,
-        created_at: existingResident.created_at, // Preserve original creation date
         updated_at: new Date().toISOString()
       })
+      .eq('id', id)
       .select()
       .single();
+
+    if (error) throw error;
     
-    if (insertError) throw insertError;
+    // Step 2: Update apartment association
+    // First, check if there are existing apartment associations
+    const { data: existingApartments } = await supabase
+      .from('resident_apartments')
+      .select('*')
+      .eq('resident_id', id);
     
-    // Add the new apartment association
-    const { error: insertApartmentError } = await supabase
+    // Delete existing apartment associations
+    if (existingApartments && existingApartments.length > 0) {
+      const { error: deleteError } = await supabase
+        .from('resident_apartments')
+        .delete()
+        .eq('resident_id', id);
+      
+      if (deleteError) throw deleteError;
+    }
+    
+    // Create new apartment association
+    const { error: insertError } = await supabase
       .from('resident_apartments')
       .insert({
         resident_id: id,
@@ -59,9 +51,9 @@ export const updateResident = async (id: string, resident: Omit<ResidentFormData
         apartment_number: resident.apartment_number
       });
     
-    if (insertApartmentError) throw insertApartmentError;
+    if (insertError) throw insertError;
     
-    return { success: true, data: newResident };
+    return { success: true, data };
   } catch (error: any) {
     console.error("Error updating resident:", error);
     return { 

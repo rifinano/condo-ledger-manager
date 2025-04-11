@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Button } from "@/components/ui/button";
@@ -33,6 +34,7 @@ const PropertiesPage = () => {
   const [currentApartment, setCurrentApartment] = useState<Apartment | null>(null);
 
   useEffect(() => {
+    // When page loads, force a complete refresh to ensure latest data
     refreshData();
   }, [refreshData]);
 
@@ -87,7 +89,8 @@ const PropertiesPage = () => {
     try {
       const success = await deleteBlock(currentBlockId);
       if (success) {
-        await fetchProperties();
+        // Use refreshData instead of fetchProperties to clear cache
+        refreshData();
         setIsDeletingBlock(false);
         setCurrentBlockId(null);
         
@@ -120,9 +123,22 @@ const PropertiesPage = () => {
 
   const handleManageResidents = () => {
     setIsEditingApartment(false);
+    
+    // Force a data refresh when navigating to residents
+    refreshData();
+    
     toast({
       title: "Navigate to Residents",
       description: "To assign residents to apartments, please use the Residents page.",
+    });
+  };
+
+  // Manual refresh handler
+  const handleManualRefresh = () => {
+    refreshData();
+    toast({
+      title: "Data refreshed",
+      description: "The property data has been refreshed.",
     });
   };
 
@@ -137,7 +153,7 @@ const PropertiesPage = () => {
           <div className="flex space-x-2">
             <Button 
               variant="outline" 
-              onClick={refreshData} 
+              onClick={handleManualRefresh} 
               className="mr-2"
             >
               Refresh
