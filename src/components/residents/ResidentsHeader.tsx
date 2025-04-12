@@ -1,12 +1,13 @@
 
 import { Button } from "@/components/ui/button";
-import { Download, Plus } from "lucide-react";
+import { Download, Plus, Import } from "lucide-react";
 
 interface ResidentsHeaderProps {
   totalCount: number;
   isLoading: boolean;
   onAddResident: () => void;
   onDownloadCsv: () => void;
+  onImport: () => void;
 }
 
 const ResidentsHeader = ({
@@ -14,6 +15,7 @@ const ResidentsHeader = ({
   isLoading,
   onAddResident,
   onDownloadCsv,
+  onImport,
 }: ResidentsHeaderProps) => {
   return (
     <div className="flex justify-between items-center">
@@ -28,6 +30,12 @@ const ResidentsHeader = ({
           disabled={totalCount === 0 || isLoading}
         >
           <Download className="mr-2 h-4 w-4" /> Download CSV
+        </Button>
+        <Button 
+          variant="outline"
+          onClick={onImport}
+        >
+          <Import className="mr-2 h-4 w-4" /> Import
         </Button>
         <Button 
           className="bg-syndicate-600 hover:bg-syndicate-700"

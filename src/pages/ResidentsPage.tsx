@@ -13,6 +13,9 @@ import { Resident } from "@/services/residents/types";
 const ResidentsPage = () => {
   const { refreshData } = usePropertyData();
   const [fetchError, setFetchError] = useState<string | null>(null);
+  const [isImporting, setIsImporting] = useState(false);
+  const [importErrors, setImportErrors] = useState<string[]>([]);
+  const [importSuccess, setImportSuccess] = useState(0);
   
   const {
     paginatedResidents,
@@ -114,27 +117,8 @@ const ResidentsPage = () => {
     const residents = filteredResidents;
     if (residents.length === 0) return;
 
-    // Format move-in date for CSV export
-    const formatMoveInDate = (resident: Resident) => {
-      if (!resident.move_in_month || !resident.move_in_year) {
-        return "Not available";
-      }
-      
-      const months = [
-        "January", "February", "March", "April", "May", "June",
-        "July", "August", "September", "October", "November", "December"
-      ];
-      
-      const monthIndex = parseInt(resident.move_in_month, 10) - 1;
-      if (monthIndex < 0 || monthIndex >= 12) {
-        return "Invalid date";
-      }
-      
-      return `${months[monthIndex]} ${resident.move_in_year}`;
-    };
-
-    // Create CSV content
-    const headers = ["Name", "Phone", "Block", "Apartment", "Move-in Date"];
+    // Create CSV content with separate month and year columns
+    const headers = ["Name", "Phone", "Block", "Apartment", "Move-in Month", "Move-in Year"];
     const csvContent = [
       headers.join(","),
       ...residents.map(resident => [
@@ -142,7 +126,8 @@ const ResidentsPage = () => {
         `"${resident.phone_number || ""}"`,
         `"${resident.block_number}"`,
         `"${resident.apartment_number}"`,
-        `"${formatMoveInDate(resident)}"`
+        `"${resident.move_in_month ? months.find(m => m.value === resident.move_in_month)?.label || resident.move_in_month : ""}"`,
+        `"${resident.move_in_year || ""}"`
       ].join(","))
     ].join("\n");
 
@@ -157,6 +142,123 @@ const ResidentsPage = () => {
     document.body.removeChild(link);
   };
 
+  const handleImportClick = () => {
+    // Create a file input element
+    const fileInput = document.createElement("input");
+    fileInput.type = "file";
+    fileInput.accept = ".csv";
+    fileInput.onchange = handleFileChange;
+    fileInput.click();
+  };
+
+  const handleFileChange = (event: Event) => {
+    const target = event.target as HTMLInputElement;
+    if (!target.files || target.files.length === 0) return;
+    
+    const file = target.files[0];
+    const reader = new FileReader();
+    
+    reader.onload = async (e) => {
+      setIsImporting(true);
+      setImportErrors([]);
+      setImportSuccess(0);
+      
+      try {
+        const content = e.target?.result as string;
+        const rows = content.split('\n');
+        
+        // Skip header row, process each data row
+        const dataRows = rows.slice(1).filter(row => row.trim() !== '');
+        const errors: string[] = [];
+        let successCount = 0;
+        
+        for (const row of dataRows) {
+          // Handle quoted CSV values properly
+          const values: string[] = [];
+          let inQuotes = false;
+          let currentValue = '';
+          
+          for (let i = 0; i < row.length; i++) {
+            const char = row[i];
+            
+            if (char === '"') {
+              inQuotes = !inQuotes;
+            } else if (char === ',' && !inQuotes) {
+              values.push(currentValue);
+              currentValue = '';
+            } else {
+              currentValue += char;
+            }
+          }
+          values.push(currentValue); // Add the last value
+          
+          // Remove quotes from values
+          const cleanValues = values.map(val => val.replace(/^"(.*)"$/, '$1'));
+          
+          if (cleanValues.length < 4) {
+            errors.push(`Invalid data format: ${row}`);
+            continue;
+          }
+          
+          const [fullName, phoneNumber, blockNumber, apartmentNumber, moveInMonthName, moveInYear] = cleanValues;
+          
+          // Check if the location is already occupied
+          if (isApartmentOccupied(blockNumber, apartmentNumber)) {
+            errors.push(`Location ${blockNumber}, ${apartmentNumber} is already occupied by a resident.`);
+            continue;
+          }
+          
+          // Convert month name to month number
+          const moveInMonth = months.find(m => m.label === moveInMonthName)?.value || 
+                             (moveInMonthName && !isNaN(parseInt(moveInMonthName)) ? 
+                              (parseInt(moveInMonthName) < 10 ? `0${parseInt(moveInMonthName)}` : `${parseInt(moveInMonthName)}`) : 
+                              undefined);
+          
+          // Prepare resident data
+          const residentData = {
+            full_name: fullName,
+            phone_number: phoneNumber,
+            block_number: blockNumber,
+            apartment_number: apartmentNumber,
+            move_in_month: moveInMonth,
+            move_in_year: moveInYear
+          };
+          
+          // Add resident
+          try {
+            const result = await handleAddResidentWithRefresh();
+            if (result) {
+              successCount++;
+            } else {
+              errors.push(`Failed to add resident: ${fullName} at ${blockNumber}, ${apartmentNumber}`);
+            }
+            // Reset form for next resident
+            resetForm();
+            setCurrentResident(residentData);
+          } catch (error) {
+            errors.push(`Error adding resident: ${fullName}. ${error instanceof Error ? error.message : String(error)}`);
+          }
+        }
+        
+        setImportSuccess(successCount);
+        setImportErrors(errors);
+        
+        if (errors.length === 0) {
+          // All imported successfully
+          await fetchResidents();
+          refreshData();
+        }
+      } catch (error) {
+        console.error("Error processing import:", error);
+        setImportErrors([`Error processing file: ${error instanceof Error ? error.message : String(error)}`]);
+      } finally {
+        setIsImporting(false);
+      }
+    };
+    
+    reader.readAsText(file);
+  };
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
@@ -165,6 +267,7 @@ const ResidentsPage = () => {
           isLoading={isLoading}
           onAddResident={() => setIsAddingResident(true)}
           onDownloadCsv={handleDownloadCsv}
+          onImport={handleImportClick}
         />
 
         {fetchError ? (
@@ -185,6 +288,9 @@ const ResidentsPage = () => {
             currentPage={currentPage}
             totalPages={totalPages}
             onPageChange={handlePageChange}
+            importErrors={importErrors}
+            importSuccess={importSuccess}
+            isImporting={isImporting}
           />
         )}
       </div>
