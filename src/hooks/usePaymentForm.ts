@@ -1,4 +1,3 @@
-
 import { useState, useCallback } from 'react';
 import { useToast } from "@/hooks/use-toast";
 import { addPayment } from "@/services/payments";
@@ -21,7 +20,7 @@ const initialPayment: PaymentFormState = {
   payment_date: new Date().toISOString().split("T")[0],
   payment_for_month: new Date().toISOString().split("-")[1],
   payment_for_year: new Date().getFullYear().toString(),
-  payment_type: "Rent",
+  payment_type: "",
   payment_method: "Cash",
   notes: ""
 };
@@ -34,15 +33,12 @@ export const usePaymentForm = (
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [newPayment, setNewPayment] = useState<PaymentFormState>(initialPayment);
 
-  // Memoize the reset function to prevent unnecessary re-creations
   const resetForm = useCallback(() => {
     setNewPayment(initialPayment);
   }, []);
 
-  // Memoize the submit handler to prevent unnecessary re-creations
   const handleSubmit = useCallback(async () => {
-    // Validate form data early to prevent unnecessary processing
-    if (!newPayment.resident_id || !newPayment.amount || !newPayment.payment_date) {
+    if (!newPayment.resident_id || !newPayment.amount || !newPayment.payment_date || !newPayment.payment_type) {
       toast({
         title: "Missing information",
         description: "Please fill in all required fields",
@@ -54,7 +50,6 @@ export const usePaymentForm = (
     setIsSubmitting(true);
     
     try {
-      // Format the payment data properly for the Supabase insert
       const formattedPayment: PaymentFormData = {
         resident_id: newPayment.resident_id,
         amount: parseFloat(newPayment.amount),

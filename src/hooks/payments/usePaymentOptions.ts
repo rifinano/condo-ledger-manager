@@ -1,6 +1,5 @@
-
 import { useMemo } from "react";
-import { Resident } from "@/services/paymentsService";
+import { Resident } from "@/services/payments/types";
 import { usePropertyData } from "@/hooks/usePropertyData";
 
 /**
@@ -36,9 +35,11 @@ export const usePaymentOptions = (residents: Resident[] = []) => {
     return Array.from(blockSet);
   }, [residents, propertyBlocks]);
 
-  // Payment methods and types for the form
+  // Payment methods for the form (keep this hardcoded list)
   const paymentMethods = ["Cash", "Bank Transfer", "Check", "Credit Card", "Mobile Payment"];
-  const paymentTypes = ["Rent", "Maintenance", "Deposit", "Other"];
+  
+  // We're removing the hardcoded payment types, as we'll get them from the charges table
+  const paymentTypes: string[] = [];
 
   return {
     blocks,

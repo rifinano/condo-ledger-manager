@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Resident, Payment } from "@/services/payments/types";
 import { getCharges } from '@/services/charges';
@@ -65,9 +66,6 @@ const PaymentForm = ({
     .filter(charge => charge.charge_type === 'Resident')
     .map(charge => charge.name);
   
-  // Combined payment types list (keep standard types and add resident charges)
-  const filteredPaymentTypes = [...new Set([...paymentTypes, ...residentChargeNames])];
-  
   // When payment type changes to a charge, update the amount
   useEffect(() => {
     const selectedCharge = charges.find(charge => charge.name === newPayment.payment_type);
@@ -123,7 +121,7 @@ const PaymentForm = ({
       <PaymentTypeSelect 
         value={newPayment.payment_type}
         onChange={handlePaymentTypeChange}
-        paymentTypes={filteredPaymentTypes}
+        paymentTypes={residentChargeNames}
         isLoading={isLoadingCharges}
       />
       
