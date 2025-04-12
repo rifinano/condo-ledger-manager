@@ -32,7 +32,7 @@ export const useChargesData = () => {
       const result = await addCharge(chargeData);
       
       if (result.success) {
-        fetchCharges(); // Refresh the charges list
+        await fetchCharges(); // Immediately refresh the charges list after adding
         toast({
           title: "Charge added",
           description: "The new charge has been added successfully"
