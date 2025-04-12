@@ -9,7 +9,7 @@ import { Database } from "@/integrations/supabase/types";
 export const updateResident = async (id: string, resident: Omit<ResidentFormData, 'id'>): Promise<ServiceResult> => {
   try {
     // Create a type-safe update object
-    const residentUpdate: Database['public']['Tables']['residents']['Update'] = {
+    const residentUpdate = {
       full_name: resident.full_name,
       phone_number: resident.phone_number || null,
       block_number: resident.block_number,
@@ -47,7 +47,7 @@ export const updateResident = async (id: string, resident: Omit<ResidentFormData
     }
     
     // Create properly typed apartment data
-    const residentAptData: Database['public']['Tables']['resident_apartments']['Insert'] = {
+    const residentAptData = {
       resident_id: id,
       block_number: resident.block_number,
       apartment_number: resident.apartment_number
