@@ -19,6 +19,7 @@ const BlockNameEditor: React.FC<BlockNameEditorProps> = ({
   const [isEditingName, setIsEditingName] = useState(false);
   const [blockLetter, setBlockLetter] = useState("");
   const [blockNumber, setBlockNumber] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
   
   const blockLetters = Array.from({ length: 26 }, (_, i) => String.fromCharCode(65 + i));
@@ -61,13 +62,21 @@ const BlockNameEditor: React.FC<BlockNameEditorProps> = ({
       ? `Block ${blockLetter}${blockNumber}` 
       : `Block ${blockLetter}`;
     
-    const success = await onUpdateBlockName(block.id, newName);
-    if (success) {
+    // Don't update if the name hasn't changed
+    if (newName === block.name) {
       setIsEditingName(false);
-      toast({
-        title: "Block updated",
-        description: `Block name has been updated to "${newName}"`,
-      });
+      return;
+    }
+    
+    setIsSubmitting(true);
+    
+    try {
+      const success = await onUpdateBlockName(block.id, newName);
+      if (success) {
+        setIsEditingName(false);
+      }
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -95,7 +104,7 @@ const BlockNameEditor: React.FC<BlockNameEditorProps> = ({
                 <SelectValue placeholder="Number (Optional)" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem key="no-number" value="no-number">None</SelectItem>
+                <SelectItem key="empty" value="">None</SelectItem>
                 {blockNumbers.map(number => (
                   <SelectItem key={number} value={number}>
                     {number}
@@ -110,6 +119,7 @@ const BlockNameEditor: React.FC<BlockNameEditorProps> = ({
           variant="ghost" 
           onClick={saveBlockName}
           className="p-1 h-8 w-8"
+          disabled={isSubmitting}
         >
           <Check className="h-4 w-4 text-green-600" />
         </Button>
@@ -118,6 +128,7 @@ const BlockNameEditor: React.FC<BlockNameEditorProps> = ({
           variant="ghost" 
           onClick={cancelEditingName}
           className="p-1 h-8 w-8"
+          disabled={isSubmitting}
         >
           <X className="h-4 w-4 text-red-600" />
         </Button>

@@ -123,6 +123,7 @@ export const updateBlockName = async (blockId: string, newName: string): Promise
     }
 
     const oldBlockName = blockData.name;
+    console.log(`Updating block name from "${oldBlockName}" to "${newName}"`);
 
     // 2. Update the block name
     const { error: blockUpdateError } = await supabase
@@ -141,10 +142,11 @@ export const updateBlockName = async (blockId: string, newName: string): Promise
     }
 
     // 3. Update all residents with the old block_number to have the new block_number
-    const { error: residentUpdateError } = await supabase
+    const { data: residentUpdateData, error: residentUpdateError } = await supabase
       .from("residents")
       .update({ block_number: newName })
-      .eq('block_number', oldBlockName as any);
+      .eq('block_number', oldBlockName as any)
+      .select('id');
 
     if (residentUpdateError) {
       console.error("Error updating resident block references:", residentUpdateError);
@@ -154,13 +156,16 @@ export const updateBlockName = async (blockId: string, newName: string): Promise
         variant: "destructive",
       });
       // We don't fail the entire operation if resident updates fail
+    } else {
+      console.log(`Updated ${residentUpdateData?.length || 0} resident records with the new block name`);
     }
 
     // 4. Update all resident_apartments with the old block_number to have the new block_number
-    const { error: apartmentUpdateError } = await supabase
+    const { data: apartmentUpdateData, error: apartmentUpdateError } = await supabase
       .from("resident_apartments")
       .update({ block_number: newName })
-      .eq('block_number', oldBlockName as any);
+      .eq('block_number', oldBlockName as any)
+      .select('id');
 
     if (apartmentUpdateError) {
       console.error("Error updating resident_apartments block references:", apartmentUpdateError);
@@ -170,11 +175,18 @@ export const updateBlockName = async (blockId: string, newName: string): Promise
         variant: "destructive",
       });
       // We don't fail the entire operation if apartment updates fail
+    } else {
+      console.log(`Updated ${apartmentUpdateData?.length || 0} resident apartment assignments with the new block name`);
     }
 
     // Invalidate all relevant caches
     cache.blocks = null;
     cache.residents = {}; // Clear the entire resident cache
+    
+    toast({
+      title: "Block updated",
+      description: `Block name changed from "${oldBlockName}" to "${newName}" and all resident records have been updated.`,
+    });
 
     return true;
   } catch (error) {
