@@ -2,23 +2,17 @@
 import { useEffect, useState } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 import { useResidentsPage } from "@/hooks/useResidentsPage";
-import AddResidentDialog from "@/components/residents/AddResidentDialog";
-import EditResidentDialog from "@/components/residents/EditResidentDialog";
-import DeleteResidentDialog from "@/components/residents/DeleteResidentDialog";
-import DeleteAllResidentsDialog from "@/components/residents/DeleteAllResidentsDialog";
+import { usePropertyData } from "@/hooks/usePropertyData";
 import ResidentsHeader from "@/components/residents/ResidentsHeader";
 import ResidentsContent from "@/components/residents/ResidentsContent";
-import { usePropertyData } from "@/hooks/usePropertyData";
-import { ErrorMessage } from "@/components/ui/error-message";
-import { Button } from "@/components/ui/button";
-import { RefreshCw } from "lucide-react";
+import ResidentsDialogs from "@/components/residents/ResidentsDialogs";
+import ResidentsErrorState from "@/components/residents/ResidentsErrorState";
+import { useResidentRefresh } from "@/hooks/residents/useResidentRefresh";
 
 const ResidentsPage = () => {
   const { refreshData } = usePropertyData();
   const [isDeleteAllOpen, setIsDeleteAllOpen] = useState(false);
   const [fetchError, setFetchError] = useState<string | null>(null);
-  const [hasAttemptedFetch, setHasAttemptedFetch] = useState(false);
-  const [isRefreshing, setIsRefreshing] = useState(false);
   
   const {
     paginatedResidents,
@@ -54,6 +48,13 @@ const ResidentsPage = () => {
     error: residentsError
   } = useResidentsPage();
 
+  const {
+    isRefreshing,
+    hasAttemptedFetch,
+    setHasAttemptedFetch,
+    handleRetry
+  } = useResidentRefresh(fetchResidents, refreshData);
+
   // Set fetch error from the hook's error
   useEffect(() => {
     if (residentsError) {
@@ -80,7 +81,7 @@ const ResidentsPage = () => {
       
       loadData();
     }
-  }, [fetchResidents, refreshData, hasAttemptedFetch, isFetching]);
+  }, [fetchResidents, refreshData, hasAttemptedFetch, isFetching, setHasAttemptedFetch]);
 
   // Custom handlers that also refresh property data
   const handleAddResidentWithRefresh = async () => {
@@ -107,23 +108,6 @@ const ResidentsPage = () => {
     return result;
   };
 
-  const handleRetry = async () => {
-    if (isRefreshing) return;
-    
-    setIsRefreshing(true);
-    try {
-      setFetchError(null);
-      setHasAttemptedFetch(false); // Allow a new fetch attempt
-      await fetchResidents();
-      refreshData();
-    } catch (error) {
-      console.error("Error retrying data fetch:", error);
-      setFetchError("Failed to load data. Please try again later.");
-    } finally {
-      setIsRefreshing(false);
-    }
-  };
-
   return (
     <DashboardLayout>
       <div className="space-y-6">
@@ -135,25 +119,11 @@ const ResidentsPage = () => {
         />
 
         {fetchError ? (
-          <div className="space-y-4">
-            <ErrorMessage 
-              title="Connection Error" 
-              message={fetchError} 
-              onRetry={handleRetry} 
-              isNetworkError={true}
-            />
-            <div className="flex justify-center">
-              <Button 
-                onClick={handleRetry} 
-                variant="outline" 
-                disabled={isRefreshing}
-                className="flex items-center gap-2"
-              >
-                <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-                {isRefreshing ? "Refreshing..." : "Refresh Data"}
-              </Button>
-            </div>
-          </div>
+          <ResidentsErrorState 
+            fetchError={fetchError}
+            isRefreshing={isRefreshing}
+            onRetry={handleRetry}
+          />
         ) : (
           <ResidentsContent 
             residents={paginatedResidents}
@@ -170,53 +140,30 @@ const ResidentsPage = () => {
         )}
       </div>
 
-      <AddResidentDialog 
-        open={isAddingResident}
-        onOpenChange={setIsAddingResident}
+      <ResidentsDialogs 
+        isAddingResident={isAddingResident}
+        setIsAddingResident={setIsAddingResident}
+        isEditingResident={isEditingResident}
+        setIsEditingResident={setIsEditingResident}
+        isDeletingResident={isDeletingResident}
+        setIsDeletingResident={setIsDeletingResident}
+        isDeleteAllOpen={isDeleteAllOpen}
+        setIsDeleteAllOpen={setIsDeleteAllOpen}
         currentResident={currentResident}
         setCurrentResident={setCurrentResident}
-        blocks={blockNames}
+        blockNames={blockNames}
         getApartments={getApartments}
         isApartmentOccupied={isApartmentOccupied}
+        selectedResidentId={selectedResidentId}
         handleAddResident={handleAddResidentWithRefresh}
-        resetForm={resetForm}
-        months={months}
-        years={years}
-      />
-
-      <EditResidentDialog 
-        open={isEditingResident}
-        onOpenChange={setIsEditingResident}
-        currentResident={currentResident}
-        setCurrentResident={setCurrentResident}
-        blocks={blockNames}
-        getApartments={getApartments}
-        isApartmentOccupied={isApartmentOccupied}
-        currentResidentId={selectedResidentId}
         handleUpdateResident={handleUpdateResidentWithRefresh}
+        handleDeleteResident={handleDeleteResidentWithRefresh}
         resetForm={resetForm}
         months={months}
         years={years}
-      />
-
-      <DeleteResidentDialog 
-        open={isDeletingResident}
-        onOpenChange={setIsDeletingResident}
-        onConfirm={handleDeleteResidentWithRefresh}
-        residentName={currentResident.full_name || ""}
-        apartmentInfo={
-          currentResident.block_number && currentResident.apartment_number 
-            ? `Block ${currentResident.block_number}, Apt ${currentResident.apartment_number}` 
-            : ""
-        }
-      />
-
-      <DeleteAllResidentsDialog 
-        open={isDeleteAllOpen}
-        onOpenChange={setIsDeleteAllOpen}
-        totalCount={totalCount}
-        onSuccess={fetchResidents}
+        fetchResidents={fetchResidents}
         refreshData={refreshData}
+        totalCount={totalCount}
       />
     </DashboardLayout>
   );
