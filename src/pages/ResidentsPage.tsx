@@ -8,10 +8,10 @@ import ResidentsContent from "@/components/residents/ResidentsContent";
 import ResidentsDialogs from "@/components/residents/ResidentsDialogs";
 import ResidentsErrorState from "@/components/residents/ResidentsErrorState";
 import { useResidentRefresh } from "@/hooks/residents/useResidentRefresh";
+import { Resident } from "@/services/residents/types";
 
 const ResidentsPage = () => {
   const { refreshData } = usePropertyData();
-  const [isDeleteAllOpen, setIsDeleteAllOpen] = useState(false);
   const [fetchError, setFetchError] = useState<string | null>(null);
   
   const {
@@ -45,7 +45,8 @@ const ResidentsPage = () => {
     isFetching,
     isApartmentOccupied,
     selectedResidentId,
-    error: residentsError
+    error: residentsError,
+    filteredResidents,
   } = useResidentsPage();
 
   const {
@@ -108,6 +109,54 @@ const ResidentsPage = () => {
     return result;
   };
 
+  const handleDownloadCsv = () => {
+    // Use all filtered residents, not just paginated ones
+    const residents = filteredResidents;
+    if (residents.length === 0) return;
+
+    // Format move-in date for CSV export
+    const formatMoveInDate = (resident: Resident) => {
+      if (!resident.move_in_month || !resident.move_in_year) {
+        return "Not available";
+      }
+      
+      const months = [
+        "January", "February", "March", "April", "May", "June",
+        "July", "August", "September", "October", "November", "December"
+      ];
+      
+      const monthIndex = parseInt(resident.move_in_month, 10) - 1;
+      if (monthIndex < 0 || monthIndex >= 12) {
+        return "Invalid date";
+      }
+      
+      return `${months[monthIndex]} ${resident.move_in_year}`;
+    };
+
+    // Create CSV content
+    const headers = ["Name", "Phone", "Block", "Apartment", "Move-in Date"];
+    const csvContent = [
+      headers.join(","),
+      ...residents.map(resident => [
+        `"${resident.full_name}"`,
+        `"${resident.phone_number || ""}"`,
+        `"${resident.block_number}"`,
+        `"${resident.apartment_number}"`,
+        `"${formatMoveInDate(resident)}"`
+      ].join(","))
+    ].join("\n");
+
+    // Create and download the file
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `residents_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
@@ -115,7 +164,7 @@ const ResidentsPage = () => {
           totalCount={totalCount}
           isLoading={isLoading}
           onAddResident={() => setIsAddingResident(true)}
-          onDeleteAll={() => setIsDeleteAllOpen(true)}
+          onDownloadCsv={handleDownloadCsv}
         />
 
         {fetchError ? (
@@ -147,8 +196,8 @@ const ResidentsPage = () => {
         setIsEditingResident={setIsEditingResident}
         isDeletingResident={isDeletingResident}
         setIsDeletingResident={setIsDeletingResident}
-        isDeleteAllOpen={isDeleteAllOpen}
-        setIsDeleteAllOpen={setIsDeleteAllOpen}
+        isDeleteAllOpen={false} // We're removing the delete all functionality
+        setIsDeleteAllOpen={() => {}} // Empty function as we're not using it anymore
         currentResident={currentResident}
         setCurrentResident={setCurrentResident}
         blockNames={blockNames}

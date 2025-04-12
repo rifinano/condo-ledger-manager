@@ -1,19 +1,19 @@
 
 import { Button } from "@/components/ui/button";
-import { AlertTriangle, Plus } from "lucide-react";
+import { Download, Plus } from "lucide-react";
 
 interface ResidentsHeaderProps {
   totalCount: number;
   isLoading: boolean;
   onAddResident: () => void;
-  onDeleteAll: () => void;
+  onDownloadCsv: () => void;
 }
 
 const ResidentsHeader = ({
   totalCount,
   isLoading,
   onAddResident,
-  onDeleteAll,
+  onDownloadCsv,
 }: ResidentsHeaderProps) => {
   return (
     <div className="flex justify-between items-center">
@@ -23,11 +23,11 @@ const ResidentsHeader = ({
       </div>
       <div className="flex space-x-2">
         <Button 
-          variant="destructive"
-          onClick={onDeleteAll}
+          variant="outline"
+          onClick={onDownloadCsv}
           disabled={totalCount === 0 || isLoading}
         >
-          <AlertTriangle className="mr-2 h-4 w-4" /> Delete All
+          <Download className="mr-2 h-4 w-4" /> Download CSV
         </Button>
         <Button 
           className="bg-syndicate-600 hover:bg-syndicate-700"
