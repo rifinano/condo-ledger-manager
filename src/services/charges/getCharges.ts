@@ -22,10 +22,11 @@ export const getCharges = async (): Promise<Charge[]> => {
 
     console.log("Successfully retrieved charges from Supabase:", data);
     
-    // Transform the data to include the category property
+    // Now that we have the category column in the database, we can just return the data
+    // but provide a fallback for any unexpected missing category values
     const transformedData = data?.map(charge => ({
       ...charge,
-      category: charge.category || "In" // Default to "In" if category is not set
+      category: charge.category || "In" // This is just a safety fallback
     })) || [];
     
     return transformedData;

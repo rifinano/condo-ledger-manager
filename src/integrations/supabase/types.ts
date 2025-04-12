@@ -68,6 +68,7 @@ export type Database = {
       charges: {
         Row: {
           amount: number
+          category: string
           charge_type: string
           created_at: string
           description: string | null
@@ -78,6 +79,7 @@ export type Database = {
         }
         Insert: {
           amount: number
+          category?: string
           charge_type: string
           created_at?: string
           description?: string | null
@@ -88,6 +90,7 @@ export type Database = {
         }
         Update: {
           amount?: number
+          category?: string
           charge_type?: string
           created_at?: string
           description?: string | null
