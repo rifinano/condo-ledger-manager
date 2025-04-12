@@ -82,16 +82,30 @@ export const useResidentImport = ({
               continue;
             }
             
-            // Find the month value that matches the name
+            // Find the month value that matches the name - with enhanced matching
             let moveInMonth: string | undefined;
             
             if (moveInMonthName) {
-              // First try to find it by label
-              moveInMonth = months.find(m => m.label.toLowerCase() === moveInMonthName.toLowerCase())?.value;
+              // First try to find it by label (case-insensitive)
+              moveInMonth = months.find(m => 
+                m.label.toLowerCase() === moveInMonthName.toLowerCase())?.value;
               
               if (!moveInMonth) {
-                // Try to find by direct number match
+                // Try to find by direct value match
                 moveInMonth = months.find(m => m.value === moveInMonthName)?.value;
+                
+                // Check for common month abbreviations (Jan, Feb, etc.)
+                if (!moveInMonth) {
+                  const monthAbbreviations = {
+                    'jan': '01', 'feb': '02', 'mar': '03', 'apr': '04', 
+                    'may': '05', 'jun': '06', 'jul': '07', 'aug': '08', 
+                    'sep': '09', 'oct': '10', 'nov': '11', 'dec': '12'
+                  };
+                  const abbr = moveInMonthName.toLowerCase().substring(0, 3);
+                  if (abbr in monthAbbreviations) {
+                    moveInMonth = monthAbbreviations[abbr as keyof typeof monthAbbreviations];
+                  }
+                }
                 
                 // If still not found, try to parse it as a number
                 if (!moveInMonth && !isNaN(parseInt(moveInMonthName))) {
