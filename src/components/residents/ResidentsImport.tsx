@@ -56,9 +56,12 @@ const ResidentsImport = ({
           <AlertDescription className="text-amber-700">
             <p>The following locations are already occupied:</p>
             <ul className="list-disc pl-5 mt-2 space-y-1">
-              {locationErrors.map((error, index) => (
-                <li key={`location-${index}`}>{error.replace("Location already occupied: ", "")}</li>
-              ))}
+              {locationErrors.map((error, index) => {
+                const locationInfo = error.replace("Location already occupied: ", "");
+                return (
+                  <li key={`location-conflict-${index}`}>{locationInfo}</li>
+                );
+              })}
             </ul>
           </AlertDescription>
         </Alert>
@@ -72,7 +75,7 @@ const ResidentsImport = ({
             <p>The following errors occurred during import:</p>
             <ul className="list-disc pl-5 mt-2 space-y-1">
               {otherErrors.map((error, index) => (
-                <li key={`error-${index}`}>{error}</li>
+                <li key={`import-error-${index}`}>{error}</li>
               ))}
             </ul>
           </AlertDescription>
