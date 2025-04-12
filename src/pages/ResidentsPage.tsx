@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 import { useResidentsPage } from "@/hooks/useResidentsPage";
@@ -59,22 +58,19 @@ const ResidentsPage = () => {
     handleRetry
   } = useResidentRefresh(fetchResidents, refreshData);
 
-  // Set fetch error from the hook's error
   useEffect(() => {
     if (residentsError) {
       setFetchError(residentsError);
     }
   }, [residentsError]);
 
-  // Fetch residents data when the component mounts
   useEffect(() => {
-    // Only fetch if we haven't already attempted a fetch
     if (!hasAttemptedFetch && !isFetching) {
       const loadData = async () => {
         try {
           setFetchError(null);
           await fetchResidents();
-          refreshData(); // Also refresh property data to ensure sync
+          refreshData();
           setHasAttemptedFetch(true);
         } catch (error) {
           console.error("Error loading resident data:", error);
@@ -87,7 +83,6 @@ const ResidentsPage = () => {
     }
   }, [fetchResidents, refreshData, hasAttemptedFetch, isFetching, setHasAttemptedFetch]);
 
-  // Custom handlers that also refresh property data
   const handleAddResidentWithRefresh = async () => {
     const result = await handleAddResident();
     if (result) {
@@ -113,11 +108,9 @@ const ResidentsPage = () => {
   };
 
   const handleDownloadCsv = () => {
-    // Use all filtered residents, not just paginated ones
     const residents = filteredResidents;
     if (residents.length === 0) return;
 
-    // Create CSV content with separate month and year columns
     const headers = ["Name", "Phone", "Block", "Apartment", "Move-in Month", "Move-in Year"];
     const csvContent = [
       headers.join(","),
@@ -131,7 +124,6 @@ const ResidentsPage = () => {
       ].join(","))
     ].join("\n");
 
-    // Create and download the file
     const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
@@ -143,7 +135,6 @@ const ResidentsPage = () => {
   };
 
   const handleImportClick = () => {
-    // Create a file input element
     const fileInput = document.createElement("input");
     fileInput.type = "file";
     fileInput.accept = ".csv";
@@ -167,13 +158,11 @@ const ResidentsPage = () => {
         const content = e.target?.result as string;
         const rows = content.split('\n');
         
-        // Skip header row, process each data row
         const dataRows = rows.slice(1).filter(row => row.trim() !== '');
         const errors: string[] = [];
         let successCount = 0;
         
         for (const row of dataRows) {
-          // Handle quoted CSV values properly
           const values: string[] = [];
           let inQuotes = false;
           let currentValue = '';
@@ -190,9 +179,8 @@ const ResidentsPage = () => {
               currentValue += char;
             }
           }
-          values.push(currentValue); // Add the last value
+          values.push(currentValue);
           
-          // Remove quotes from values
           const cleanValues = values.map(val => val.replace(/^"(.*)"$/, '$1'));
           
           if (cleanValues.length < 4) {
@@ -202,19 +190,16 @@ const ResidentsPage = () => {
           
           const [fullName, phoneNumber, blockNumber, apartmentNumber, moveInMonthName, moveInYear] = cleanValues;
           
-          // Check if the location is already occupied
           if (isApartmentOccupied(blockNumber, apartmentNumber)) {
-            errors.push(`Location ${blockNumber}, ${apartmentNumber} is already occupied by a resident.`);
+            errors.push(`Location Block ${blockNumber}, Apartment ${apartmentNumber} is already occupied by a resident.`);
             continue;
           }
           
-          // Convert month name to month number
           const moveInMonth = months.find(m => m.label === moveInMonthName)?.value || 
                              (moveInMonthName && !isNaN(parseInt(moveInMonthName)) ? 
                               (parseInt(moveInMonthName) < 10 ? `0${parseInt(moveInMonthName)}` : `${parseInt(moveInMonthName)}`) : 
                               undefined);
           
-          // Prepare resident data
           const residentData = {
             full_name: fullName,
             phone_number: phoneNumber,
@@ -224,17 +209,15 @@ const ResidentsPage = () => {
             move_in_year: moveInYear
           };
           
-          // Add resident
           try {
+            resetForm();
+            setCurrentResident(residentData);
             const result = await handleAddResidentWithRefresh();
             if (result) {
               successCount++;
             } else {
-              errors.push(`Failed to add resident: ${fullName} at ${blockNumber}, ${apartmentNumber}`);
+              errors.push(`Failed to add resident: ${fullName} at Block ${blockNumber}, Apartment ${apartmentNumber}`);
             }
-            // Reset form for next resident
-            resetForm();
-            setCurrentResident(residentData);
           } catch (error) {
             errors.push(`Error adding resident: ${fullName}. ${error instanceof Error ? error.message : String(error)}`);
           }
@@ -244,7 +227,6 @@ const ResidentsPage = () => {
         setImportErrors(errors);
         
         if (errors.length === 0) {
-          // All imported successfully
           await fetchResidents();
           refreshData();
         }
@@ -302,8 +284,8 @@ const ResidentsPage = () => {
         setIsEditingResident={setIsEditingResident}
         isDeletingResident={isDeletingResident}
         setIsDeletingResident={setIsDeletingResident}
-        isDeleteAllOpen={false} // We're removing the delete all functionality
-        setIsDeleteAllOpen={() => {}} // Empty function as we're not using it anymore
+        isDeleteAllOpen={false}
+        setIsDeleteAllOpen={() => {}}
         currentResident={currentResident}
         setCurrentResident={setCurrentResident}
         blockNames={blockNames}
