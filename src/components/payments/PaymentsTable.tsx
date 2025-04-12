@@ -23,9 +23,11 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { deletePayment } from "@/services/payments";
+import EditPaymentForm from "./EditPaymentForm";
 
 interface PaymentsTableProps {
   payments: Payment[];
@@ -37,6 +39,7 @@ const PaymentsTable = ({ payments, refetchPayments, filter }: PaymentsTableProps
   const { toast } = useToast();
   const [isDeleting, setIsDeleting] = useState(false);
   const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
 
   const handleDelete = async (paymentId: string) => {
     setIsDeleting(true);
@@ -68,6 +71,15 @@ const PaymentsTable = ({ payments, refetchPayments, filter }: PaymentsTableProps
       setIsDeleting(false);
       setSelectedPayment(null);
     }
+  };
+
+  const handleEditSuccess = () => {
+    setEditDialogOpen(false);
+    refetchPayments();
+    toast({
+      title: "Payment updated",
+      description: "The payment has been successfully updated",
+    });
   };
 
   return (
@@ -103,22 +115,39 @@ const PaymentsTable = ({ payments, refetchPayments, filter }: PaymentsTableProps
               <TableCell>{payment.payment_type}</TableCell>
               <TableCell>
                 <div className="flex space-x-2">
-                  <Dialog>
+                  <Dialog open={editDialogOpen && selectedPayment?.id === payment.id} onOpenChange={(open) => {
+                    if (!open) {
+                      setEditDialogOpen(false);
+                    }
+                  }}>
                     <DialogTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-8 w-8" aria-label="Edit payment">
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="h-8 w-8" 
+                        aria-label="Edit payment"
+                        onClick={() => {
+                          setSelectedPayment(payment);
+                          setEditDialogOpen(true);
+                        }}
+                      >
                         <Edit className="h-4 w-4" />
                       </Button>
                     </DialogTrigger>
-                    <DialogContent className="sm:max-w-[425px]">
+                    <DialogContent className="sm:max-w-[500px]">
                       <DialogHeader>
-                        <DialogTitle>Edit payment</DialogTitle>
+                        <DialogTitle>Edit Payment</DialogTitle>
+                        <DialogDescription>
+                          Update the payment information below
+                        </DialogDescription>
                       </DialogHeader>
-                      <div className="py-4">
-                        {/* EditPaymentForm would be imported from the external component */}
-                        <p className="text-sm text-muted-foreground">
-                          The edit form is handled by an external component
-                        </p>
-                      </div>
+                      {selectedPayment && (
+                        <EditPaymentForm 
+                          payment={selectedPayment} 
+                          onSuccess={handleEditSuccess} 
+                          onCancel={() => setEditDialogOpen(false)} 
+                        />
+                      )}
                     </DialogContent>
                   </Dialog>
 
