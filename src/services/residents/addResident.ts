@@ -8,9 +8,12 @@ import { Database } from "@/integrations/supabase/types";
  */
 export const addResident = async (resident: Omit<ResidentFormData, 'id'>): Promise<ServiceResult> => {
   try {
-    // Format the data for the API
+    // Convert the full name to uppercase
+    const capitalizedName = resident.full_name.toUpperCase();
+    
+    // Format the data for the API with the capitalized name
     const formattedResident: Database['public']['Tables']['residents']['Insert'] = {
-      full_name: resident.full_name,
+      full_name: capitalizedName,
       phone_number: resident.phone_number || null,
       block_number: resident.block_number,
       apartment_number: resident.apartment_number,
