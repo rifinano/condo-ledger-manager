@@ -1,5 +1,4 @@
-
-import React, { memo, useState } from "react";
+import React, { memo, useState, useEffect } from "react";
 import { Building2, Home, Trash2, User, Edit, ChevronDown, ChevronUp, Pencil, Check, X } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -7,6 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Block, Apartment } from "@/services/properties";
 import { useToast } from "@/hooks/use-toast";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface BlockCardProps {
   block: Block & { apartments: Apartment[] };
@@ -27,8 +27,22 @@ const BlockCard: React.FC<BlockCardProps> = memo(({
 }) => {
   const [showAllApartments, setShowAllApartments] = useState(false);
   const [isEditingName, setIsEditingName] = useState(false);
-  const [newBlockName, setNewBlockName] = useState(block.name);
+  const [blockLetter, setBlockLetter] = useState("");
+  const [blockNumber, setBlockNumber] = useState("");
   const { toast } = useToast();
+  
+  const blockLetters = Array.from({ length: 26 }, (_, i) => String.fromCharCode(65 + i));
+  const blockNumbers = Array.from({ length: 10 }, (_, i) => `${i + 1}`);
+  
+  useEffect(() => {
+    if (block.name) {
+      const matches = block.name.match(/Block ([A-Z])(?:(\d+))?/);
+      if (matches) {
+        setBlockLetter(matches[1] || "");
+        setBlockNumber(matches[2] || "");
+      }
+    }
+  }, [block.name]);
 
   const sortedApartments = React.useMemo(() => {
     return [...block.apartments].sort((a, b) => {
@@ -53,7 +67,6 @@ const BlockCard: React.FC<BlockCardProps> = memo(({
   };
 
   const handleDeleteBlock = () => {
-    // Check if any apartments are occupied
     const hasOccupiedApartments = block.apartments.some(apt => 
       isApartmentOccupied(block.name, apt.number)
     );
@@ -71,31 +84,38 @@ const BlockCard: React.FC<BlockCardProps> = memo(({
   };
 
   const startEditingName = () => {
-    setNewBlockName(block.name);
     setIsEditingName(true);
   };
 
   const cancelEditingName = () => {
+    const matches = block.name.match(/Block ([A-Z])(?:(\d+))?/);
+    if (matches) {
+      setBlockLetter(matches[1] || "");
+      setBlockNumber(matches[2] || "");
+    }
     setIsEditingName(false);
-    setNewBlockName(block.name);
   };
 
   const saveBlockName = async () => {
-    if (!newBlockName.trim()) {
+    if (!blockLetter) {
       toast({
         title: "Invalid name",
-        description: "Block name cannot be empty",
+        description: "Block letter is required",
         variant: "destructive"
       });
       return;
     }
 
-    const success = await onUpdateBlockName(block.id, newBlockName);
+    const newName = blockNumber 
+      ? `Block ${blockLetter}${blockNumber}` 
+      : `Block ${blockLetter}`;
+    
+    const success = await onUpdateBlockName(block.id, newName);
     if (success) {
       setIsEditingName(false);
       toast({
         title: "Block updated",
-        description: `Block name has been updated to "${newBlockName}"`,
+        description: `Block name has been updated to "${newName}"`,
       });
     }
   };
@@ -112,13 +132,37 @@ const BlockCard: React.FC<BlockCardProps> = memo(({
             <Building2 className="h-5 w-5 mr-2 text-syndicate-600" />
             {isEditingName ? (
               <div className="flex items-center gap-2">
-                <Input 
-                  value={newBlockName}
-                  onChange={(e) => setNewBlockName(e.target.value)}
-                  className="h-8 w-48"
-                  placeholder="Block name"
-                  autoFocus
-                />
+                <div className="flex space-x-2">
+                  <div className="w-24">
+                    <Select value={blockLetter} onValueChange={setBlockLetter}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Letter" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {blockLetters.map(letter => (
+                          <SelectItem key={letter} value={letter}>
+                            {letter}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="w-32">
+                    <Select value={blockNumber} onValueChange={setBlockNumber}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Number (Optional)" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem key="no-number" value="">None</SelectItem>
+                        {blockNumbers.map(number => (
+                          <SelectItem key={number} value={number}>
+                            {number}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
                 <Button 
                   size="sm" 
                   variant="ghost" 
