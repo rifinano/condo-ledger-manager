@@ -39,7 +39,6 @@ const PaymentForm = ({
   paymentMethods
 }: PaymentFormProps) => {
   const [charges, setCharges] = useState<Charge[]>([]);
-  const [filteredPaymentTypes, setFilteredPaymentTypes] = useState<string[]>(paymentTypes);
   const [isLoadingCharges, setIsLoadingCharges] = useState(false);
   
   // Fetch charges from the database
@@ -49,14 +48,6 @@ const PaymentForm = ({
       try {
         const chargesData = await getCharges();
         setCharges(chargesData);
-        
-        // Filter payment types based on charges of Resident type
-        const residentChargeNames = chargesData
-          .filter(charge => charge.charge_type === 'Resident')
-          .map(charge => charge.name);
-        
-        // Combine existing payment types with resident charge names
-        setFilteredPaymentTypes([...new Set([...paymentTypes, ...residentChargeNames])]);
       } catch (error) {
         console.error('Error fetching charges:', error);
       } finally {
@@ -65,7 +56,15 @@ const PaymentForm = ({
     };
     
     fetchCharges();
-  }, [paymentTypes]);
+  }, []);
+  
+  // Filter payment types to only include Resident charges
+  const residentChargeNames = charges
+    .filter(charge => charge.charge_type === 'Resident')
+    .map(charge => charge.name);
+  
+  // Combined payment types list (keep standard types and add resident charges)
+  const filteredPaymentTypes = [...new Set([...paymentTypes, ...residentChargeNames])];
   
   // When payment type changes to a charge, update the amount
   useEffect(() => {

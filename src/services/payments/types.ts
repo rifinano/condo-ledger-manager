@@ -13,6 +13,7 @@ export interface Payment {
   created_at: string;
   updated_at: string;
   created_by?: string | null;
+  charge_id?: string | null; // Added charge_id field
   residentName?: string; // Added after join
   block?: string; // Added after join
   apartment?: string; // Added after join

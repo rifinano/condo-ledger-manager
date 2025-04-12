@@ -2,6 +2,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { AddPaymentResult, PaymentFormData } from "./types";
 import { Database } from "@/integrations/supabase/types";
+import { getCharges } from "@/services/charges";
 
 export const addPayment = async (
   payment: PaymentFormData
@@ -31,6 +32,20 @@ export const addPayment = async (
       throw new Error("Selected resident does not exist or could not be verified");
     }
     
+    // Check if the payment type matches a charge name in the charges table
+    let chargeId = null;
+    
+    // Fetch charges to check if payment type matches a charge
+    const charges = await getCharges();
+    const matchingCharge = charges.find(charge => 
+      charge.name === payment.payment_type && charge.charge_type === 'Resident'
+    );
+    
+    if (matchingCharge) {
+      console.log("Found matching charge:", matchingCharge);
+      chargeId = matchingCharge.id;
+    }
+    
     // Create a complete payment object with all required fields
     const paymentRecord: Database['public']['Tables']['payments']['Insert'] = {
       resident_id: payment.resident_id,
@@ -42,7 +57,8 @@ export const addPayment = async (
       payment_method: payment.payment_method,
       notes: payment.notes,
       payment_status: "paid",
-      created_by: user.id
+      created_by: user.id,
+      charge_id: chargeId // Add the charge ID if found
     };
     
     console.log("Adding payment with data:", paymentRecord);

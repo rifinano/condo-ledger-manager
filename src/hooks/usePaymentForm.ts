@@ -66,6 +66,8 @@ export const usePaymentForm = (
         notes: newPayment.notes || null
       };
 
+      console.log("Submitting payment form with data:", formattedPayment);
+      
       const result = await addPayment(formattedPayment);
       
       if (result.success) {
