@@ -89,10 +89,14 @@ export const useDashboardData = () => {
         const blockResidents = residents ? residents.filter(r => r.block_number === block.name) : [];
         
         // Count apartments in this block
-        const { count: blockApartments } = await supabase
+        const { count: blockApartments, error: blockApartmentsError } = await supabase
           .from('apartments')
           .select('*', { count: 'exact', head: true })
           .eq('block_id', block.id);
+        
+        if (blockApartmentsError) {
+          console.error(`Error fetching apartments for block ${block.name}:`, blockApartmentsError);
+        }
         
         // Get all payments for residents in this block
         const blockResidentIds = blockResidents.map(r => r.id);
