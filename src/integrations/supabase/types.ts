@@ -65,6 +65,39 @@ export type Database = {
         }
         Relationships: []
       }
+      charges: {
+        Row: {
+          amount: number
+          charge_type: string
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          period: string
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          charge_type: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          period: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          charge_type?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          period?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       credentials: {
         Row: {
           created_at: string
@@ -119,6 +152,7 @@ export type Database = {
       payments: {
         Row: {
           amount: number
+          charge_id: string | null
           created_at: string
           created_by: string | null
           id: string
@@ -134,6 +168,7 @@ export type Database = {
         }
         Insert: {
           amount: number
+          charge_id?: string | null
           created_at?: string
           created_by?: string | null
           id?: string
@@ -149,6 +184,7 @@ export type Database = {
         }
         Update: {
           amount?: number
+          charge_id?: string | null
           created_at?: string
           created_by?: string | null
           id?: string
@@ -163,6 +199,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "payments_charge_id_fkey"
+            columns: ["charge_id"]
+            isOneToOne: false
+            referencedRelation: "charges"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "payments_resident_id_fkey"
             columns: ["resident_id"]
@@ -252,6 +295,10 @@ export type Database = {
           p_apartment_number: string
         }
         Returns: undefined
+      }
+      get_charge_types: {
+        Args: Record<PropertyKey, never>
+        Returns: string[]
       }
       get_resident_apartments: {
         Args: Record<PropertyKey, never>

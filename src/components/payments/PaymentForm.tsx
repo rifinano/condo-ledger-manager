@@ -1,4 +1,3 @@
-
 import { Dispatch, SetStateAction, useEffect, useState } from 'react';
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -6,6 +5,8 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue 
 } from "@/components/ui/select";
 import { Resident, Payment } from "@/services/payments/types";
+import { getCharges } from '@/services/charges';
+import { Charge } from '@/services/charges/types';
 
 interface PaymentFormState {
   resident_id: string;
@@ -16,13 +17,6 @@ interface PaymentFormState {
   payment_type: string;
   payment_method: string;
   notes: string;
-}
-
-interface Charge {
-  id: string;
-  name: string;
-  amount: number;
-  chargeType: string;
 }
 
 interface PaymentFormProps {
@@ -46,25 +40,31 @@ const PaymentForm = ({
 }: PaymentFormProps) => {
   const [charges, setCharges] = useState<Charge[]>([]);
   const [filteredPaymentTypes, setFilteredPaymentTypes] = useState<string[]>(paymentTypes);
+  const [isLoadingCharges, setIsLoadingCharges] = useState(false);
   
-  // Simulate fetching charges - in a real app, this would come from a database
+  // Fetch charges from the database
   useEffect(() => {
-    const mockCharges = [
-      { id: '1', name: 'Maintenance Fee', amount: 100, chargeType: 'Resident' },
-      { id: '2', name: 'Water Fee', amount: 50, chargeType: 'Resident' },
-      { id: '3', name: 'Security Fee', amount: 75, chargeType: 'Syndicate' },
-      { id: '4', name: 'Special Assessment', amount: 200, chargeType: 'Syndicate' },
-    ];
+    const fetchCharges = async () => {
+      setIsLoadingCharges(true);
+      try {
+        const chargesData = await getCharges();
+        setCharges(chargesData);
+        
+        // Filter payment types based on charges of Resident type
+        const residentChargeNames = chargesData
+          .filter(charge => charge.charge_type === 'Resident')
+          .map(charge => charge.name);
+        
+        // Combine existing payment types with resident charge names
+        setFilteredPaymentTypes([...new Set([...paymentTypes, ...residentChargeNames])]);
+      } catch (error) {
+        console.error('Error fetching charges:', error);
+      } finally {
+        setIsLoadingCharges(false);
+      }
+    };
     
-    setCharges(mockCharges);
-    
-    // Filter payment types based on the mock charges that are Resident type
-    const residentChargeNames = mockCharges
-      .filter(charge => charge.chargeType === 'Resident')
-      .map(charge => charge.name);
-    
-    // Combine existing payment types with resident charge names
-    setFilteredPaymentTypes([...new Set([...paymentTypes, ...residentChargeNames])]);
+    fetchCharges();
   }, [paymentTypes]);
   
   // When payment type changes to a charge, update the amount
@@ -116,12 +116,16 @@ const PaymentForm = ({
           onValueChange={(value) => setNewPayment({...newPayment, payment_type: value})}
         >
           <SelectTrigger className="col-span-3">
-            <SelectValue placeholder="Select payment type" />
+            <SelectValue placeholder={isLoadingCharges ? "Loading charge types..." : "Select payment type"} />
           </SelectTrigger>
           <SelectContent>
-            {filteredPaymentTypes.map((type) => (
-              <SelectItem key={type} value={type}>{type}</SelectItem>
-            ))}
+            {isLoadingCharges ? (
+              <SelectItem value="loading" disabled>Loading charge types...</SelectItem>
+            ) : (
+              filteredPaymentTypes.map((type) => (
+                <SelectItem key={type} value={type}>{type}</SelectItem>
+              ))
+            )}
           </SelectContent>
         </Select>
       </div>

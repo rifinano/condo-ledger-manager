@@ -17,12 +17,13 @@ export interface ChargeFormData {
 }
 
 interface AddChargeDialogProps {
-  onAddCharge: (charge: ChargeFormData) => void;
+  onAddCharge: (charge: ChargeFormData) => Promise<boolean>;
 }
 
 const AddChargeDialog = ({ onAddCharge }: AddChargeDialogProps) => {
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState<ChargeFormData>({
     name: "",
     amount: "",
@@ -31,7 +32,7 @@ const AddChargeDialog = ({ onAddCharge }: AddChargeDialogProps) => {
     chargeType: "Resident"
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!formData.name || !formData.amount) {
@@ -43,20 +44,24 @@ const AddChargeDialog = ({ onAddCharge }: AddChargeDialogProps) => {
       return;
     }
 
-    onAddCharge(formData);
-    setFormData({
-      name: "",
-      amount: "",
-      description: "",
-      period: "Monthly",
-      chargeType: "Resident"
-    });
-    setOpen(false);
-
-    toast({
-      title: "Charge added",
-      description: "The new charge has been added successfully"
-    });
+    setIsSubmitting(true);
+    
+    try {
+      const success = await onAddCharge(formData);
+      
+      if (success) {
+        setFormData({
+          name: "",
+          amount: "",
+          description: "",
+          period: "Monthly",
+          chargeType: "Resident"
+        });
+        setOpen(false);
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -154,7 +159,9 @@ const AddChargeDialog = ({ onAddCharge }: AddChargeDialogProps) => {
             </div>
           </div>
           <DialogFooter>
-            <Button type="submit">Add Charge</Button>
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? "Adding..." : "Add Charge"}
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>
