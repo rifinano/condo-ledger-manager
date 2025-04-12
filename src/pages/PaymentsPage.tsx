@@ -1,8 +1,6 @@
 
 import { useEffect } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
-import { Button } from "@/components/ui/button";
-import { Download } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { usePaymentData } from "@/hooks/usePaymentData";
 import PaymentLedger from "@/components/payments/PaymentLedger";
@@ -40,21 +38,6 @@ const PaymentsPage = () => {
     // The data is automatically fetched by the useQuery hooks
   }, []);
 
-  const handleExportReport = () => {
-    toast({
-      title: "Export initiated",
-      description: "Your payment report is being generated"
-    });
-    
-    // In a real implementation, this would trigger a download of a CSV or PDF
-    setTimeout(() => {
-      toast({
-        title: "Report ready",
-        description: "Payment report has been exported"
-      });
-    }, 1500);
-  };
-
   if (isLoadingPayments || isLoadingResidents) {
     return (
       <DashboardLayout>
@@ -80,10 +63,6 @@ const PaymentsPage = () => {
             <p className="text-gray-500 mt-1">Track and manage resident payments</p>
           </div>
           <div className="flex space-x-2">
-            <Button variant="outline" onClick={handleExportReport}>
-              <Download className="mr-2 h-4 w-4" /> Export Report
-            </Button>
-            
             <AddPaymentDialog 
               residents={residents} 
               refetchPayments={refetchPayments}
