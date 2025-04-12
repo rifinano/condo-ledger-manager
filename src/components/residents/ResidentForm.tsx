@@ -183,7 +183,7 @@ const ResidentForm = ({
                 <SelectTrigger className="flex-1">
                   <SelectValue placeholder="Year" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="max-h-[200px]">
                   {years.map(year => (
                     <SelectItem key={year} value={year}>{year}</SelectItem>
                   ))}
