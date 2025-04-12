@@ -1,4 +1,3 @@
-
 import { Resident } from "@/services/residents/types";
 import { 
   Table, TableBody, TableCell, TableHead, 
@@ -7,7 +6,6 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { User, Phone, Building2, Home, Edit, Trash2, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { format } from "date-fns";
 
 interface ResidentsTableProps {
   residents: Resident[];
@@ -35,18 +33,7 @@ const ResidentsTable = ({
   }
 
   const formatMoveInDate = (resident: Resident) => {
-    if (!resident.move_in_month || !resident.move_in_year) return "—";
-    
-    // Get month name from month number
-    const monthNames = [
-      "January", "February", "March", "April", "May", "June",
-      "July", "August", "September", "October", "November", "December"
-    ];
-    
-    const monthIndex = parseInt(resident.move_in_month, 10) - 1;
-    const monthName = monthNames[monthIndex] || '';
-    
-    return `${monthName} ${resident.move_in_year}`;
+    return "Not available";
   };
 
   return (

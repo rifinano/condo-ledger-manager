@@ -8,14 +8,12 @@ import { Database } from "@/integrations/supabase/types";
  */
 export const updateResident = async (id: string, resident: Omit<ResidentFormData, 'id'>): Promise<ServiceResult> => {
   try {
-    // Create a type-safe update object
+    // Create a type-safe update object - remove move_in_month and move_in_year
     const residentUpdate = {
       full_name: resident.full_name,
       phone_number: resident.phone_number || null,
       block_number: resident.block_number,
       apartment_number: resident.apartment_number,
-      move_in_month: resident.move_in_month,
-      move_in_year: resident.move_in_year,
       updated_at: new Date().toISOString()
     };
 

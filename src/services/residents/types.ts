@@ -15,8 +15,6 @@ export interface Resident {
   block_number: string;  // Primary apartment block
   apartment_number: string;  // Primary apartment number
   apartments?: ResidentApartment[];  // All apartments
-  move_in_month?: string;
-  move_in_year?: string;
   created_at: string;
   updated_at: string;
 }
@@ -26,8 +24,10 @@ export interface ResidentFormData {
   phone_number?: string;
   block_number: string;
   apartment_number: string;
-  move_in_month: string;
-  move_in_year: string;
+  // Including these fields in the form data even though they're not stored
+  // This allows the UI to still collect this info if needed in the future
+  move_in_month?: string;
+  move_in_year?: string;
 }
 
 export interface ServiceResult<T = any> {
