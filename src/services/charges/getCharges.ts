@@ -1,6 +1,5 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "@/hooks/use-toast";
 import { Charge } from "./types";
 
 export const getCharges = async (): Promise<Charge[]> => {
@@ -8,6 +7,7 @@ export const getCharges = async (): Promise<Charge[]> => {
   const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
   
   try {
+    console.log("Calling Supabase to get charges");
     const { data, error } = await supabase
       .from('charges')
       .select('*')
@@ -16,34 +16,21 @@ export const getCharges = async (): Promise<Charge[]> => {
     clearTimeout(timeoutId);
 
     if (error) {
-      console.error("Error fetching charges:", error);
-      toast({
-        title: "Error fetching charges",
-        description: error.message,
-        variant: "destructive",
-      });
-      return [];
+      console.error("Supabase error fetching charges:", error);
+      throw new Error(error.message);
     }
 
+    console.log("Successfully retrieved charges from Supabase:", data);
     return data || [];
   } catch (error: any) {
     clearTimeout(timeoutId);
     
     if (error.name === 'AbortError') {
       console.error("Request timed out fetching charges");
-      toast({
-        title: "Request timed out",
-        description: "The server took too long to respond. Please try again.",
-        variant: "destructive",
-      });
+      throw new Error("The server took too long to respond. Please try again.");
     } else {
       console.error("Unexpected error fetching charges:", error);
-      toast({
-        title: "Unexpected error",
-        description: "Failed to fetch charges. Please try again.",
-        variant: "destructive",
-      });
+      throw new Error("Failed to fetch charges. Please try again.");
     }
-    return [];
   }
 };

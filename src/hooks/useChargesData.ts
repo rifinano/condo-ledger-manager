@@ -13,9 +13,12 @@ export const useChargesData = () => {
     setIsLoading(true);
     setError(null);
     try {
+      console.log("Fetching charges from database...");
       const data = await getCharges();
+      console.log("Charges data retrieved:", data);
       setCharges(data);
     } catch (err: any) {
+      console.error("Error fetching charges:", err);
       setError(err.message || "Failed to load charges");
       toast({
         title: "Error loading charges",
@@ -29,9 +32,11 @@ export const useChargesData = () => {
 
   const handleAddCharge = async (chargeData: ChargeFormData) => {
     try {
+      console.log("Adding new charge:", chargeData);
       const result = await addCharge(chargeData);
       
       if (result.success) {
+        console.log("Charge added successfully, refreshing charges list");
         await fetchCharges(); // Immediately refresh the charges list after adding
         toast({
           title: "Charge added",
@@ -39,6 +44,7 @@ export const useChargesData = () => {
         });
         return true;
       } else {
+        console.error("Failed to add charge:", result.error);
         toast({
           title: "Error adding charge",
           description: result.error || "Failed to add charge",
@@ -47,6 +53,7 @@ export const useChargesData = () => {
         return false;
       }
     } catch (err: any) {
+      console.error("Exception when adding charge:", err);
       toast({
         title: "Error adding charge",
         description: err.message || "An unexpected error occurred",
@@ -58,9 +65,12 @@ export const useChargesData = () => {
 
   const handleDeleteCharge = async (id: string) => {
     try {
+      console.log("Deleting charge with ID:", id);
       const result = await deleteCharge(id);
       
       if (result.success) {
+        console.log("Charge deleted successfully");
+        // Update local state to reflect the deletion
         setCharges(charges.filter(charge => charge.id !== id));
         toast({
           title: "Charge deleted",
@@ -68,6 +78,7 @@ export const useChargesData = () => {
         });
         return true;
       } else {
+        console.error("Failed to delete charge:", result.error);
         toast({
           title: "Error deleting charge",
           description: result.error || "Failed to delete charge",
@@ -76,6 +87,7 @@ export const useChargesData = () => {
         return false;
       }
     } catch (err: any) {
+      console.error("Exception when deleting charge:", err);
       toast({
         title: "Error deleting charge",
         description: err.message || "An unexpected error occurred",
@@ -87,6 +99,7 @@ export const useChargesData = () => {
 
   // Fetch charges when component mounts
   useEffect(() => {
+    console.log("Initial charge data fetch");
     fetchCharges();
   }, [fetchCharges]);
 

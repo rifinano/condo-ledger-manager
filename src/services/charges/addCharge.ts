@@ -1,19 +1,12 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { AddChargeResult, ChargeFormData } from "./types";
-import { Database } from "@/integrations/supabase/types";
 
 export const addCharge = async (
   charge: ChargeFormData
 ): Promise<AddChargeResult> => {
   try {
-    // Get the current authenticated user
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
-    
-    if (userError) {
-      console.error("Authentication error:", userError);
-      throw new Error("You must be logged in to add a charge");
-    }
+    console.log("Preparing to add charge to database:", charge);
     
     // Create a complete charge object with all required fields
     const chargeRecord = {
@@ -26,20 +19,24 @@ export const addCharge = async (
     
     console.log("Adding charge with data:", chargeRecord);
     
-    // Insert the complete charge object into the database
+    // Insert the charge into Supabase
     const { data, error } = await supabase
       .from('charges')
       .insert(chargeRecord)
       .select();
 
     if (error) {
-      console.error("Error adding charge:", error);
-      throw error;
+      console.error("Supabase error adding charge:", error);
+      return { 
+        success: false, 
+        error: error.message 
+      };
     }
     
+    console.log("Charge successfully added to Supabase:", data);
     return { success: true, data };
   } catch (error: any) {
-    console.error("Error adding charge:", error);
+    console.error("Exception when adding charge:", error);
     return { 
       success: false, 
       error: error.message || "Failed to add charge" 
