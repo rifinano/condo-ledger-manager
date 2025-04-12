@@ -4,43 +4,43 @@ import { Pencil, Check, X } from "lucide-react";
 import { CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Block, Apartment } from "@/services/properties";
 import { useToast } from "@/hooks/use-toast";
 
 interface BlockNameEditorProps {
-  block: Block & { apartments: Apartment[] };
+  blockId: string;
+  blockName: string;
   onUpdateBlockName: (blockId: string, newName: string) => Promise<boolean>;
 }
 
 const BlockNameEditor: React.FC<BlockNameEditorProps> = ({
-  block,
+  blockId,
+  blockName,
   onUpdateBlockName
 }) => {
   const [isEditingName, setIsEditingName] = useState(false);
   const [blockLetter, setBlockLetter] = useState("");
   const [blockNumber, setBlockNumber] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
   
   const blockLetters = Array.from({ length: 26 }, (_, i) => String.fromCharCode(65 + i));
   const blockNumbers = Array.from({ length: 10 }, (_, i) => `${i + 1}`);
   
   useEffect(() => {
-    if (block.name) {
-      const matches = block.name.match(/Block ([A-Z])(?:(\d+))?/);
+    if (blockName) {
+      const matches = blockName.match(/Block ([A-Z])(?:(\d+))?/);
       if (matches) {
         setBlockLetter(matches[1] || "");
         setBlockNumber(matches[2] || "");
       }
     }
-  }, [block.name]);
+  }, [blockName]);
 
   const startEditingName = () => {
     setIsEditingName(true);
   };
 
   const cancelEditingName = () => {
-    const matches = block.name.match(/Block ([A-Z])(?:(\d+))?/);
+    const matches = blockName.match(/Block ([A-Z])(?:(\d+))?/);
     if (matches) {
       setBlockLetter(matches[1] || "");
       setBlockNumber(matches[2] || "");
@@ -62,21 +62,13 @@ const BlockNameEditor: React.FC<BlockNameEditorProps> = ({
       ? `Block ${blockLetter}${blockNumber}` 
       : `Block ${blockLetter}`;
     
-    // Don't update if the name hasn't changed
-    if (newName === block.name) {
+    const success = await onUpdateBlockName(blockId, newName);
+    if (success) {
       setIsEditingName(false);
-      return;
-    }
-    
-    setIsSubmitting(true);
-    
-    try {
-      const success = await onUpdateBlockName(block.id, newName);
-      if (success) {
-        setIsEditingName(false);
-      }
-    } finally {
-      setIsSubmitting(false);
+      toast({
+        title: "Block updated",
+        description: `Block name has been updated to "${newName}"`,
+      });
     }
   };
 
@@ -104,7 +96,7 @@ const BlockNameEditor: React.FC<BlockNameEditorProps> = ({
                 <SelectValue placeholder="Number (Optional)" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem key="none" value="none">None</SelectItem>
+                <SelectItem key="none" value="">None</SelectItem>
                 {blockNumbers.map(number => (
                   <SelectItem key={number} value={number}>
                     {number}
@@ -119,7 +111,6 @@ const BlockNameEditor: React.FC<BlockNameEditorProps> = ({
           variant="ghost" 
           onClick={saveBlockName}
           className="p-1 h-8 w-8"
-          disabled={isSubmitting}
         >
           <Check className="h-4 w-4 text-green-600" />
         </Button>
@@ -128,7 +119,6 @@ const BlockNameEditor: React.FC<BlockNameEditorProps> = ({
           variant="ghost" 
           onClick={cancelEditingName}
           className="p-1 h-8 w-8"
-          disabled={isSubmitting}
         >
           <X className="h-4 w-4 text-red-600" />
         </Button>
@@ -138,7 +128,7 @@ const BlockNameEditor: React.FC<BlockNameEditorProps> = ({
 
   return (
     <div className="flex items-center">
-      <CardTitle>{block.name}</CardTitle>
+      <CardTitle>{blockName}</CardTitle>
       <Button 
         variant="ghost" 
         size="sm" 
