@@ -16,11 +16,11 @@ const ResidentsImport = ({
 }: ResidentsImportProps) => {
   const { locationErrors, otherErrors } = useMemo(() => {
     const locationErrors = importErrors.filter(error => 
-      error.startsWith("Location already occupied:")
+      error.includes("Location already occupied:")
     );
     
     const otherErrors = importErrors.filter(error => 
-      !error.startsWith("Location already occupied:")
+      !error.includes("Location already occupied:")
     );
     
     return { locationErrors, otherErrors };
