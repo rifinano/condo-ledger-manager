@@ -4,8 +4,7 @@ import ResidentsTable from "./ResidentsTable";
 import ResidentsSearch from "./ResidentsSearch";
 import { Resident } from "@/services/residents/types";
 import ResidentsPagination from "./ResidentsPagination";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { CheckCircle, AlertCircle } from "lucide-react";
+import ResidentsImport from "./ResidentsImport";
 
 interface ResidentsContentProps {
   residents: Resident[];
@@ -45,37 +44,11 @@ const ResidentsContent = ({
         onSearchChange={onSearchChange} 
       />
       
-      {isImporting && (
-        <div className="flex items-center justify-center p-4 bg-blue-50 rounded-md">
-          <Loader2 className="h-5 w-5 mr-2 animate-spin text-blue-500" />
-          <span className="text-blue-700">Importing residents, please wait...</span>
-        </div>
-      )}
-      
-      {importSuccess > 0 && (
-        <Alert className="bg-green-50 border-green-200">
-          <CheckCircle className="h-4 w-4 text-green-600" />
-          <AlertTitle className="text-green-800">Import Successful</AlertTitle>
-          <AlertDescription className="text-green-700">
-            Successfully imported {importSuccess} resident{importSuccess !== 1 ? 's' : ''}.
-          </AlertDescription>
-        </Alert>
-      )}
-      
-      {importErrors.length > 0 && (
-        <Alert className="bg-red-50 border-red-200">
-          <AlertCircle className="h-4 w-4 text-red-600" />
-          <AlertTitle className="text-red-800">Import Errors</AlertTitle>
-          <AlertDescription className="text-red-700">
-            <p>The following errors occurred during import:</p>
-            <ul className="list-disc pl-5 mt-2 space-y-1">
-              {importErrors.map((error, index) => (
-                <li key={index}>{error}</li>
-              ))}
-            </ul>
-          </AlertDescription>
-        </Alert>
-      )}
+      <ResidentsImport 
+        isImporting={isImporting}
+        importErrors={importErrors}
+        importSuccess={importSuccess}
+      />
       
       {isLoading ? (
         <div className="flex justify-center items-center h-64">
