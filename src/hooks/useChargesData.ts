@@ -70,8 +70,7 @@ export const useChargesData = () => {
       
       if (result.success) {
         console.log("Charge deleted successfully");
-        // Update local state to reflect the deletion
-        setCharges(charges.filter(charge => charge.id !== id));
+        await fetchCharges(); // Refresh the list after deleting
         toast({
           title: "Charge deleted",
           description: "The charge has been removed"

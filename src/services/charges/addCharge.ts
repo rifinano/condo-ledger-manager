@@ -34,7 +34,7 @@ export const addCharge = async (
     }
     
     console.log("Charge successfully added to Supabase:", data);
-    return { success: true, data };
+    return { success: true, data: data[0] };
   } catch (error: any) {
     console.error("Exception when adding charge:", error);
     return { 

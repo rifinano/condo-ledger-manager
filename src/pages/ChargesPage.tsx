@@ -13,7 +13,7 @@ import {
   TableHeader, 
   TableRow 
 } from "@/components/ui/table";
-import AddChargeDialog, { ChargeFormData } from "@/components/charges/AddChargeDialog";
+import AddChargeDialog from "@/components/charges/AddChargeDialog";
 import { Badge } from "@/components/ui/badge";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useChargesData } from "@/hooks/useChargesData";
