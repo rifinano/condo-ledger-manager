@@ -11,10 +11,10 @@ export const addCharge = async (
     // Create a complete charge object with all required fields
     const chargeRecord = {
       name: charge.name,
-      amount: parseFloat(charge.amount),
+      amount: charge.amount,
       description: charge.description || null,
       period: charge.period,
-      charge_type: charge.chargeType
+      charge_type: charge.charge_type
     };
     
     console.log("Adding charge with data:", chargeRecord);

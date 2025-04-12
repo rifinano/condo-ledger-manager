@@ -7,14 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-
-export interface ChargeFormData {
-  name: string;
-  amount: string;
-  description: string;
-  period: string;
-  chargeType: string;
-}
+import { ChargeFormData } from "@/services/charges/types";
 
 interface AddChargeDialogProps {
   onAddCharge: (charge: ChargeFormData) => Promise<boolean>;
@@ -26,26 +19,26 @@ const AddChargeDialog = ({ onAddCharge }: AddChargeDialogProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState<ChargeFormData>({
     name: "",
-    amount: "",
+    amount: 0,
     description: "",
     period: "Monthly",
-    chargeType: "Resident"
+    charge_type: "Resident"
   });
 
   const resetForm = () => {
     setFormData({
       name: "",
-      amount: "",
+      amount: 0,
       description: "",
       period: "Monthly",
-      chargeType: "Resident"
+      charge_type: "Resident"
     });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.name || !formData.amount) {
+    if (!formData.name || formData.amount <= 0) {
       toast({
         title: "Missing fields",
         description: "Please fill out all required fields",
@@ -90,12 +83,12 @@ const AddChargeDialog = ({ onAddCharge }: AddChargeDialogProps) => {
         <form onSubmit={handleSubmit}>
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="chargeType" className="text-right">
+              <Label htmlFor="charge_type" className="text-right">
                 Charge Type
               </Label>
               <Select 
-                value={formData.chargeType} 
-                onValueChange={(value) => setFormData({...formData, chargeType: value})}
+                value={formData.charge_type} 
+                onValueChange={(value) => setFormData({...formData, charge_type: value})}
               >
                 <SelectTrigger className="col-span-3">
                   <SelectValue placeholder="Select charge type" />
@@ -126,8 +119,8 @@ const AddChargeDialog = ({ onAddCharge }: AddChargeDialogProps) => {
               <Input
                 id="amount"
                 type="number"
-                value={formData.amount}
-                onChange={(e) => setFormData({...formData, amount: e.target.value})}
+                value={formData.amount.toString()}
+                onChange={(e) => setFormData({...formData, amount: parseFloat(e.target.value) || 0})}
                 placeholder="0.00"
                 min="0"
                 step="0.01"
