@@ -1,4 +1,3 @@
-
 import { useCallback } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { 
@@ -77,7 +76,6 @@ export const useResidentActions = (
     }
 
     try {
-      // Call the updated updateResident function which handles both the resident record and apartment assignment
       const result = await updateResident(selectedResidentId, currentResident as ResidentFormData);
       
       if (result.success) {
@@ -163,10 +161,8 @@ export const useResidentActions = (
       phone_number: resident.phone_number || "",
       block_number: resident.block_number,
       apartment_number: resident.apartment_number,
-      // Since move_in_month and move_in_year are not part of Resident type anymore,
-      // use current date values as defaults for the form
-      move_in_month: new Date().getMonth() + 1 < 10 ? `0${new Date().getMonth() + 1}` : `${new Date().getMonth() + 1}`,
-      move_in_year: new Date().getFullYear().toString()
+      move_in_month: resident.move_in_month || (new Date().getMonth() + 1 < 10 ? `0${new Date().getMonth() + 1}` : `${new Date().getMonth() + 1}`),
+      move_in_year: resident.move_in_year || new Date().getFullYear().toString()
     });
     setIsEditingResident(true);
   }, []);

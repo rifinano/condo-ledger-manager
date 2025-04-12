@@ -1,3 +1,4 @@
+
 import { Resident } from "@/services/residents/types";
 import { 
   Table, TableBody, TableCell, TableHead, 
@@ -33,7 +34,22 @@ const ResidentsTable = ({
   }
 
   const formatMoveInDate = (resident: Resident) => {
-    return "Not available";
+    if (!resident.move_in_month || !resident.move_in_year) {
+      return "Not available";
+    }
+    
+    const months = [
+      "January", "February", "March", "April", "May", "June",
+      "July", "August", "September", "October", "November", "December"
+    ];
+    
+    // Convert string month to number (1-based) and adjust for array indexing (0-based)
+    const monthIndex = parseInt(resident.move_in_month, 10) - 1;
+    if (monthIndex < 0 || monthIndex >= 12) {
+      return "Invalid date";
+    }
+    
+    return `${months[monthIndex]} ${resident.move_in_year}`;
   };
 
   return (

@@ -261,6 +261,8 @@ export type Database = {
           created_by: string | null
           full_name: string
           id: string
+          move_in_month: string | null
+          move_in_year: string | null
           phone_number: string | null
           updated_at: string
         }
@@ -271,6 +273,8 @@ export type Database = {
           created_by?: string | null
           full_name: string
           id?: string
+          move_in_month?: string | null
+          move_in_year?: string | null
           phone_number?: string | null
           updated_at?: string
         }
@@ -281,6 +285,8 @@ export type Database = {
           created_by?: string | null
           full_name?: string
           id?: string
+          move_in_month?: string | null
+          move_in_year?: string | null
           phone_number?: string | null
           updated_at?: string
         }
@@ -318,6 +324,18 @@ export type Database = {
           p_apartment_number: string
         }
         Returns: undefined
+      }
+      update_resident_with_apartment: {
+        Args: {
+          p_resident_id: string
+          p_full_name: string
+          p_phone_number: string
+          p_block_number: string
+          p_apartment_number: string
+          p_move_in_month: string
+          p_move_in_year: string
+        }
+        Returns: Json
       }
     }
     Enums: {
