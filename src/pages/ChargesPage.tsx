@@ -15,7 +15,6 @@ import {
 } from "@/components/ui/table";
 import AddChargeDialog from "@/components/charges/AddChargeDialog";
 import { Badge } from "@/components/ui/badge";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useChargesData } from "@/hooks/useChargesData";
 import { ErrorMessage } from "@/components/ui/error-message";
 
@@ -108,24 +107,23 @@ const ChargesPage = () => {
                       <TableCell>{charge.description || "-"}</TableCell>
                       <TableCell>{charge.period}</TableCell>
                       <TableCell className="text-right">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="sm">
-                              Actions
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent>
-                            <DropdownMenuItem className="flex items-center">
-                              <Edit className="mr-2 h-4 w-4" /> Edit
-                            </DropdownMenuItem>
-                            <DropdownMenuItem 
-                              className="flex items-center text-red-500"
-                              onClick={() => handleDeleteCharge(charge.id)}
-                            >
-                              <Trash2 className="mr-2 h-4 w-4" /> Delete
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
+                        <div className="flex justify-end space-x-2">
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="h-8 px-2"
+                          >
+                            <Edit className="h-4 w-4 text-blue-600" />
+                          </Button>
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            onClick={() => handleDeleteCharge(charge.id)}
+                            className="h-8 px-2"
+                          >
+                            <Trash2 className="h-4 w-4 text-red-600" />
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))

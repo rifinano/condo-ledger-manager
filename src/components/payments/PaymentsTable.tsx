@@ -13,7 +13,6 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger
 } from "@/components/ui/dialog";
 import EditPaymentForm from "./EditPaymentForm";
 
@@ -71,13 +70,16 @@ const PaymentsTable = ({ payments, refetchPayments, filter }: PaymentsTableProps
                 <TableCell>{payment.payment_method}</TableCell>
                 <TableCell>{payment.payment_type}</TableCell>
                 <TableCell className="text-right">
-                  <Button 
-                    variant="ghost" 
-                    size="sm"
-                    onClick={() => handleEditPayment(payment)}
-                  >
-                    <Edit className="h-4 w-4 mr-1" /> Edit
-                  </Button>
+                  <div className="flex justify-end space-x-2">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => handleEditPayment(payment)}
+                      className="h-8 px-2"
+                    >
+                      <Edit className="h-4 w-4 text-blue-600" />
+                    </Button>
+                  </div>
                 </TableCell>
               </TableRow>
             ))
