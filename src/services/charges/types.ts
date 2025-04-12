@@ -12,10 +12,10 @@ export interface Charge {
 
 export interface ChargeFormData {
   name: string;
-  amount: string;
+  amount: number;
   description: string;
   period: string;
-  chargeType: string;
+  charge_type: string;
 }
 
 export interface AddChargeResult {
