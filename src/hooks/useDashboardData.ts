@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -92,7 +91,7 @@ export const useDashboardData = () => {
         const { count: blockApartments, error: blockApartmentsError } = await supabase
           .from('apartments')
           .select('*', { count: 'exact', head: true })
-          .eq('block_id', block.id.toString()); // Convert block.id to string explicitly
+          .eq('block_id', String(block.id)); // Convert block.id to string explicitly
         
         if (blockApartmentsError) {
           console.error(`Error fetching apartments for block ${block.name}:`, blockApartmentsError);

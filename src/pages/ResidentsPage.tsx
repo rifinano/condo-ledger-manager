@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 import { useResidentsPage } from "@/hooks/useResidentsPage";
@@ -9,6 +8,7 @@ import ResidentsDialogs from "@/components/residents/ResidentsDialogs";
 import ResidentsErrorState from "@/components/residents/ResidentsErrorState";
 import { useResidentRefresh } from "@/hooks/residents/useResidentRefresh";
 import { useResidentImport } from "@/hooks/residents/useResidentImport";
+import { downloadResidentsCsv } from "@/utils/residents/csvUtils";
 
 const ResidentsPage = () => {
   const { refreshData } = usePropertyData();
@@ -56,11 +56,11 @@ const ResidentsPage = () => {
     handleRetry
   } = useResidentRefresh(fetchResidents, refreshData);
 
-  // Import-related functionality
   const {
     isImporting,
     importErrors,
-    importSuccess
+    importSuccess,
+    handleImportClick
   } = useResidentImport({
     months,
     isApartmentOccupied,
@@ -70,6 +70,10 @@ const ResidentsPage = () => {
     refreshData,
     fetchResidents
   });
+
+  const handleDownloadCsv = () => {
+    downloadResidentsCsv(filteredResidents, months);
+  };
 
   useEffect(() => {
     if (residentsError) {
@@ -96,7 +100,6 @@ const ResidentsPage = () => {
     }
   }, [fetchResidents, refreshData, hasAttemptedFetch, isFetching, setHasAttemptedFetch]);
 
-  // Wrapped functions that include data refresh
   async function handleAddResidentWithRefresh() {
     const result = await handleAddResident();
     if (result) {
@@ -128,6 +131,8 @@ const ResidentsPage = () => {
           totalCount={totalCount}
           isLoading={isLoading}
           onAddResident={() => setIsAddingResident(true)}
+          onImport={handleImportClick}
+          onDownload={handleDownloadCsv}
         />
 
         {fetchError ? (
