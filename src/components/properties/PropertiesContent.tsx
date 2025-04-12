@@ -1,7 +1,7 @@
 
 import React from "react";
 import { Apartment, Block } from "@/services/properties";
-import BlockCard from "@/components/properties/BlockCard";
+import BlockCard from "@/components/properties/blocks/BlockCard";
 import EmptyBlocksState from "@/components/properties/EmptyBlocksState";
 import BlocksLoadingSkeleton from "@/components/properties/BlocksLoadingSkeleton";
 
