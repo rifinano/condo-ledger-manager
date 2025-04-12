@@ -1,7 +1,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { getCharges, Charge, addCharge, ChargeFormData, deleteCharge } from "@/services/charges";
+import { getCharges, Charge, addCharge, ChargeFormData, deleteCharge, updateCharge } from "@/services/charges";
 
 export const useChargesData = () => {
   const { toast } = useToast();
@@ -63,6 +63,39 @@ export const useChargesData = () => {
     }
   };
 
+  const handleUpdateCharge = async (id: string, chargeData: ChargeFormData) => {
+    try {
+      console.log("Updating charge with ID:", id, chargeData);
+      const result = await updateCharge(id, chargeData);
+      
+      if (result.success) {
+        console.log("Charge updated successfully");
+        await fetchCharges(); // Refresh the list after updating
+        toast({
+          title: "Charge updated",
+          description: "The charge has been updated successfully"
+        });
+        return true;
+      } else {
+        console.error("Failed to update charge:", result.error);
+        toast({
+          title: "Error updating charge",
+          description: result.error || "Failed to update charge",
+          variant: "destructive"
+        });
+        return false;
+      }
+    } catch (err: any) {
+      console.error("Exception when updating charge:", err);
+      toast({
+        title: "Error updating charge",
+        description: err.message || "An unexpected error occurred",
+        variant: "destructive"
+      });
+      return false;
+    }
+  };
+
   const handleDeleteCharge = async (id: string) => {
     try {
       console.log("Deleting charge with ID:", id);
@@ -108,6 +141,7 @@ export const useChargesData = () => {
     error,
     fetchCharges,
     handleAddCharge,
+    handleUpdateCharge,
     handleDeleteCharge
   };
 };

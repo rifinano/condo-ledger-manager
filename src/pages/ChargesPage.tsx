@@ -13,10 +13,30 @@ import {
   TableHeader, 
   TableRow 
 } from "@/components/ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter
+} from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import AddChargeDialog from "@/components/charges/AddChargeDialog";
 import { Badge } from "@/components/ui/badge";
 import { useChargesData } from "@/hooks/useChargesData";
 import { ErrorMessage } from "@/components/ui/error-message";
+import { Charge } from "@/services/charges";
+import EditChargeForm from "@/components/charges/EditChargeForm";
 
 const ChargesPage = () => {
   const { toast } = useToast();
@@ -26,8 +46,14 @@ const ChargesPage = () => {
     error, 
     fetchCharges, 
     handleAddCharge, 
-    handleDeleteCharge 
+    handleDeleteCharge,
+    handleUpdateCharge 
   } = useChargesData();
+
+  const [selectedCharge, setSelectedCharge] = useState<Charge | null>(null);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [chargeToDelete, setChargeToDelete] = useState<string | null>(null);
 
   const handleExportReport = () => {
     toast({
@@ -41,6 +67,24 @@ const ChargesPage = () => {
         description: "Charges report has been exported"
       });
     }, 1500);
+  };
+
+  const handleEditClick = (charge: Charge) => {
+    setSelectedCharge(charge);
+    setIsEditDialogOpen(true);
+  };
+
+  const handleDeleteClick = (id: string) => {
+    setChargeToDelete(id);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (chargeToDelete) {
+      await handleDeleteCharge(chargeToDelete);
+      setIsDeleteDialogOpen(false);
+      setChargeToDelete(null);
+    }
   };
 
   return (
@@ -111,6 +155,7 @@ const ChargesPage = () => {
                           <Button 
                             variant="outline" 
                             size="sm" 
+                            onClick={() => handleEditClick(charge)}
                             className="h-8 px-2"
                           >
                             <Edit className="h-4 w-4 text-blue-600" />
@@ -118,7 +163,7 @@ const ChargesPage = () => {
                           <Button 
                             variant="outline" 
                             size="sm" 
-                            onClick={() => handleDeleteCharge(charge.id)}
+                            onClick={() => handleDeleteClick(charge.id)}
                             className="h-8 px-2"
                           >
                             <Trash2 className="h-4 w-4 text-red-600" />
@@ -133,6 +178,51 @@ const ChargesPage = () => {
           </div>
         )}
       </div>
+
+      {/* Edit Charge Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Edit Charge</DialogTitle>
+            <DialogDescription>
+              Update the charge details below
+            </DialogDescription>
+          </DialogHeader>
+          
+          {selectedCharge && (
+            <EditChargeForm 
+              charge={selectedCharge}
+              onSuccess={() => {
+                setIsEditDialogOpen(false);
+                toast({
+                  title: "Charge updated",
+                  description: "The charge has been updated successfully"
+                });
+              }}
+              onCancel={() => setIsEditDialogOpen(false)}
+              onUpdate={handleUpdateCharge}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Charge Dialog */}
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirm Deletion</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this charge? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} className="bg-red-600 hover:bg-red-700">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </DashboardLayout>
   );
 };

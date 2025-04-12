@@ -4,3 +4,4 @@ export * from "./types";
 export * from "./getCharges";
 export * from "./addCharge";
 export * from "./deleteCharge";
+export * from "./updateCharge";
