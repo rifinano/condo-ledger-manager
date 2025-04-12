@@ -85,6 +85,7 @@ const ResidentsContent = ({
         <>
           <ResidentsTable 
             residents={residents} 
+            isLoading={isLoading}
             onEdit={onEdit}
             onDelete={onDelete}
           />
