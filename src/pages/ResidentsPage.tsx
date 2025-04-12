@@ -9,7 +9,6 @@ import ResidentsDialogs from "@/components/residents/ResidentsDialogs";
 import ResidentsErrorState from "@/components/residents/ResidentsErrorState";
 import { useResidentRefresh } from "@/hooks/residents/useResidentRefresh";
 import { useResidentImport } from "@/hooks/residents/useResidentImport";
-import { downloadResidentsCsv } from "@/utils/residents/csvUtils";
 
 const ResidentsPage = () => {
   const { refreshData } = usePropertyData();
@@ -61,8 +60,7 @@ const ResidentsPage = () => {
   const {
     isImporting,
     importErrors,
-    importSuccess,
-    handleImportClick
+    importSuccess
   } = useResidentImport({
     months,
     isApartmentOccupied,
@@ -123,10 +121,6 @@ const ResidentsPage = () => {
     return result;
   }
 
-  const handleDownloadCsv = () => {
-    downloadResidentsCsv(filteredResidents, months);
-  };
-
   return (
     <DashboardLayout>
       <div className="space-y-6">
@@ -134,8 +128,6 @@ const ResidentsPage = () => {
           totalCount={totalCount}
           isLoading={isLoading}
           onAddResident={() => setIsAddingResident(true)}
-          onDownloadCsv={handleDownloadCsv}
-          onImport={handleImportClick}
         />
 
         {fetchError ? (
