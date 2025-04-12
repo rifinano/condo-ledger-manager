@@ -22,11 +22,13 @@ export const getCharges = async (): Promise<Charge[]> => {
 
     console.log("Successfully retrieved charges from Supabase:", data);
     
-    // Now that we have the category column in the database, we can just return the data
-    // but provide a fallback for any unexpected missing category values
+    // Transform the data to ensure the category is either "In" or "Out"
     const transformedData = data?.map(charge => ({
       ...charge,
-      category: charge.category || "In" // This is just a safety fallback
+      // Ensure category is one of the allowed values in the Charge interface
+      category: (charge.category === "In" || charge.category === "Out") 
+        ? charge.category as "In" | "Out" 
+        : "In" // Default to "In" if the category is invalid
     })) || [];
     
     return transformedData;
