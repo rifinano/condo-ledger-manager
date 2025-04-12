@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { Block } from "./types";
@@ -100,6 +99,33 @@ export const addBlock = async (name: string, apartmentCount: number): Promise<Bl
   } catch (error) {
     console.error("Error adding block:", error);
     return null;
+  }
+};
+
+export const updateBlockName = async (blockId: string, newName: string): Promise<boolean> => {
+  try {
+    const { error } = await supabase
+      .from("blocks")
+      .update({ name: newName })
+      .eq('id', blockId as any);
+
+    if (error) {
+      console.error("Error updating block name:", error);
+      toast({
+        title: "Error updating block name",
+        description: error.message,
+        variant: "destructive",
+      });
+      return false;
+    }
+
+    // Invalidate blocks cache
+    cache.blocks = null;
+
+    return true;
+  } catch (error) {
+    console.error("Error updating block name:", error);
+    return false;
   }
 };
 

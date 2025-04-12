@@ -10,6 +10,7 @@ interface PropertiesContentProps {
   blocks: (Block & { apartments: Apartment[] })[];
   onDeleteBlock: (blockId: string) => void;
   onEditApartment: (apartment: Apartment) => void;
+  onUpdateBlockName: (blockId: string, newName: string) => Promise<boolean>;
   isApartmentOccupied: (blockName: string, apartmentNumber: string) => boolean;
   getResidentName: (blockName: string, apartmentNumber: string) => string | null;
 }
@@ -19,6 +20,7 @@ const PropertiesContent: React.FC<PropertiesContentProps> = ({
   blocks,
   onDeleteBlock,
   onEditApartment,
+  onUpdateBlockName,
   isApartmentOccupied,
   getResidentName
 }) => {
@@ -38,6 +40,7 @@ const PropertiesContent: React.FC<PropertiesContentProps> = ({
           block={block} 
           onDeleteBlock={onDeleteBlock}
           onEditApartment={onEditApartment}
+          onUpdateBlockName={onUpdateBlockName}
           isApartmentOccupied={isApartmentOccupied}
           getResidentName={getResidentName}
         />

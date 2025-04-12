@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useEffect } from "react";
 import { Home, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetClose, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet";
@@ -24,7 +24,18 @@ const EditApartmentSheet: React.FC<EditApartmentSheetProps> = ({
   onEditDetails,
   onManageResidents,
 }) => {
-  if (!apartment) return null;
+  // Debug logs to identify issues
+  useEffect(() => {
+    if (isOpen) {
+      console.log("EditApartmentSheet opened with apartment:", apartment);
+      console.log("Available blocks:", blocks);
+    }
+  }, [isOpen, apartment, blocks]);
+
+  // Make sure we have the data we need
+  if (!apartment) {
+    return null;
+  }
 
   const block = blocks.find(b => b.id === apartment.block_id);
   const blockName = block ? block.name : "Unknown Block";

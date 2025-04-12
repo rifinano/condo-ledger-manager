@@ -1,16 +1,18 @@
 
 import React, { memo, useState } from "react";
-import { Building2, Home, Trash2, User, Edit, ChevronDown, ChevronUp } from "lucide-react";
+import { Building2, Home, Trash2, User, Edit, ChevronDown, ChevronUp, Pencil, Check, X } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Block, Apartment } from "@/services/properties";
 import { useToast } from "@/hooks/use-toast";
+import { Input } from "@/components/ui/input";
 
 interface BlockCardProps {
   block: Block & { apartments: Apartment[] };
   onDeleteBlock: (blockId: string) => void;
   onEditApartment: (apartment: Apartment) => void;
+  onUpdateBlockName: (blockId: string, newName: string) => Promise<boolean>;
   isApartmentOccupied: (blockName: string, apartmentNumber: string) => boolean;
   getResidentName: (blockName: string, apartmentNumber: string) => string | null;
 }
@@ -19,10 +21,13 @@ const BlockCard: React.FC<BlockCardProps> = memo(({
   block,
   onDeleteBlock,
   onEditApartment,
+  onUpdateBlockName,
   isApartmentOccupied,
   getResidentName
 }) => {
   const [showAllApartments, setShowAllApartments] = useState(false);
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [newBlockName, setNewBlockName] = useState(block.name);
   const { toast } = useToast();
 
   const sortedApartments = React.useMemo(() => {
@@ -56,7 +61,7 @@ const BlockCard: React.FC<BlockCardProps> = memo(({
     if (hasOccupiedApartments) {
       toast({
         title: "Cannot delete block",
-        description: "This block has occupied apartments. Please reassign residents before deleting.",
+        description: "This block has occupied apartments. Please reassign or delete all residents before deleting this block.",
         variant: "destructive"
       });
       return;
@@ -65,13 +70,85 @@ const BlockCard: React.FC<BlockCardProps> = memo(({
     onDeleteBlock(block.id);
   };
 
+  const startEditingName = () => {
+    setNewBlockName(block.name);
+    setIsEditingName(true);
+  };
+
+  const cancelEditingName = () => {
+    setIsEditingName(false);
+    setNewBlockName(block.name);
+  };
+
+  const saveBlockName = async () => {
+    if (!newBlockName.trim()) {
+      toast({
+        title: "Invalid name",
+        description: "Block name cannot be empty",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const success = await onUpdateBlockName(block.id, newBlockName);
+    if (success) {
+      setIsEditingName(false);
+      toast({
+        title: "Block updated",
+        description: `Block name has been updated to "${newBlockName}"`,
+      });
+    }
+  };
+
+  const handleApartmentEdit = (apt: Apartment) => {
+    onEditApartment(apt);
+  };
+
   return (
     <Card>
       <CardHeader>
         <div className="flex justify-between items-center">
           <div className="flex items-center">
             <Building2 className="h-5 w-5 mr-2 text-syndicate-600" />
-            <CardTitle>{block.name}</CardTitle>
+            {isEditingName ? (
+              <div className="flex items-center gap-2">
+                <Input 
+                  value={newBlockName}
+                  onChange={(e) => setNewBlockName(e.target.value)}
+                  className="h-8 w-48"
+                  placeholder="Block name"
+                  autoFocus
+                />
+                <Button 
+                  size="sm" 
+                  variant="ghost" 
+                  onClick={saveBlockName}
+                  className="p-1 h-8 w-8"
+                >
+                  <Check className="h-4 w-4 text-green-600" />
+                </Button>
+                <Button 
+                  size="sm" 
+                  variant="ghost" 
+                  onClick={cancelEditingName}
+                  className="p-1 h-8 w-8"
+                >
+                  <X className="h-4 w-4 text-red-600" />
+                </Button>
+              </div>
+            ) : (
+              <div className="flex items-center">
+                <CardTitle>{block.name}</CardTitle>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={startEditingName}
+                  className="ml-2 p-1 h-7 w-7"
+                >
+                  <Pencil className="h-4 w-4 text-gray-500" />
+                </Button>
+              </div>
+            )}
           </div>
           <div className="flex space-x-2">
             <Button 
@@ -134,7 +211,7 @@ const BlockCard: React.FC<BlockCardProps> = memo(({
                     <Button 
                       variant="ghost" 
                       size="sm"
-                      onClick={() => onEditApartment(apt)}
+                      onClick={() => handleApartmentEdit(apt)}
                     >
                       <Edit className="h-4 w-4" />
                     </Button>

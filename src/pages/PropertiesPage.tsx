@@ -5,7 +5,8 @@ import { useToast } from "@/hooks/use-toast";
 import { 
   Apartment, 
   addBlock, 
-  deleteBlock
+  deleteBlock,
+  updateBlockName 
 } from "@/services/properties";
 import { usePropertyData } from "@/hooks/usePropertyData";
 import DeleteBlockAlert from "@/components/properties/DeleteBlockAlert";
@@ -114,6 +115,25 @@ const PropertiesPage = () => {
     }
   };
 
+  const handleUpdateBlockName = async (blockId: string, newName: string): Promise<boolean> => {
+    try {
+      const success = await updateBlockName(blockId, newName);
+      if (success) {
+        refreshData();
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error("Error updating block name:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update block name.",
+        variant: "destructive",
+      });
+      return false;
+    }
+  };
+
   const openEditApartment = (apartment: Apartment) => {
     setCurrentApartment(apartment);
     setIsEditingApartment(true);
@@ -171,6 +191,7 @@ const PropertiesPage = () => {
             blocks={blocks}
             onDeleteBlock={confirmDeleteBlock}
             onEditApartment={openEditApartment}
+            onUpdateBlockName={handleUpdateBlockName}
             isApartmentOccupied={isApartmentOccupied}
             getResidentName={getResidentName}
           />
