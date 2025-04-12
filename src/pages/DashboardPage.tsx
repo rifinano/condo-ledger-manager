@@ -1,46 +1,48 @@
 
-import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Building2, Users, AlertCircle, CheckCircle2, DollarSign } from "lucide-react";
+import { Building2, Users, AlertCircle, CheckCircle2, DollarSign, RefreshCw } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import DashboardLayout from "@/components/DashboardLayout";
-import { useToast } from "@/components/ui/use-toast";
+import { Button } from "@/components/ui/button";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { useDashboardData } from "@/hooks/useDashboardData";
+import { format } from "date-fns";
 
 const DashboardPage = () => {
-  const { toast } = useToast();
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    // Simulate loading data
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-      toast({
-        title: "Dashboard updated",
-        description: "Latest data has been loaded",
-      });
-    }, 1000);
-
-    return () => clearTimeout(timer);
-  }, [toast]);
-
-  // Mock data
-  const stats = {
-    totalBlocks: 5,
-    totalApartments: 45,
-    totalResidents: 72,
-    pendingPayments: 12,
-    collectionRate: 82,
-    monthlyRevenue: 15400,
-  };
+  const { stats, isLoading, error, refreshData } = useDashboardData();
+  
+  // Format the current month name
+  const currentMonthName = format(new Date(), "MMMM yyyy");
 
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-          <p className="text-gray-500 mt-1">Welcome to your Condo Ledger management panel</p>
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
+            <p className="text-gray-500 mt-1">Welcome to your Condo Ledger management panel</p>
+          </div>
+          <Button 
+            variant="outline" 
+            onClick={refreshData} 
+            disabled={isLoading}
+            className="flex items-center gap-2"
+          >
+            <RefreshCw className="h-4 w-4" />
+            Refresh Data
+          </Button>
         </div>
+
+        {error && (
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Error</AlertTitle>
+            <AlertDescription>
+              {error}
+            </AlertDescription>
+          </Alert>
+        )}
 
         <div className="grid gap-6 md:grid-cols-3">
           <Card>
@@ -53,6 +55,7 @@ const DashboardPage = () => {
               <p className="text-xs text-muted-foreground">
                 {stats.totalApartments} apartments in total
               </p>
+              {isLoading && <Progress className="h-1 mt-1" value={80} />}
             </CardContent>
           </Card>
 
@@ -66,6 +69,7 @@ const DashboardPage = () => {
               <p className="text-xs text-muted-foreground">
                 Across all blocks and apartments
               </p>
+              {isLoading && <Progress className="h-1 mt-1" value={80} />}
             </CardContent>
           </Card>
 
@@ -109,7 +113,7 @@ const DashboardPage = () => {
                 <div className="flex justify-between items-center">
                   <div>
                     <h3 className="font-semibold">Current Month</h3>
-                    <p className="text-sm text-muted-foreground">April 2025</p>
+                    <p className="text-sm text-muted-foreground">{currentMonthName}</p>
                   </div>
                   <div className="flex items-center">
                     <DollarSign className="h-5 w-5 text-green-500 mr-1" />
@@ -117,22 +121,41 @@ const DashboardPage = () => {
                   </div>
                 </div>
                 <div className="space-y-2">
-                  {Array.from({ length: 3 }).map((_, i) => (
-                    <div key={i} className="flex justify-between items-center p-3 bg-gray-50 rounded">
-                      <div>
-                        <h4 className="font-medium">Block {i + 1}</h4>
-                        <p className="text-xs text-muted-foreground">{10 + i} apartments</p>
-                      </div>
-                      <div className="flex space-x-2">
-                        <div className="text-sm">
-                          <span className="font-semibold text-green-600">{8 + i}</span> Paid
+                  {isLoading ? (
+                    Array.from({ length: 3 }).map((_, i) => (
+                      <div key={i} className="flex justify-between items-center p-3 bg-gray-50 rounded animate-pulse">
+                        <div>
+                          <div className="h-4 w-16 bg-gray-200 rounded"></div>
+                          <div className="h-3 w-24 bg-gray-200 rounded mt-1"></div>
                         </div>
-                        <div className="text-sm">
-                          <span className="font-semibold text-orange-600">{2}</span> Pending
+                        <div className="flex space-x-2">
+                          <div className="h-4 w-12 bg-gray-200 rounded"></div>
+                          <div className="h-4 w-12 bg-gray-200 rounded"></div>
                         </div>
                       </div>
+                    ))
+                  ) : stats.paymentsByBlock.length > 0 ? (
+                    stats.paymentsByBlock.map((block, i) => (
+                      <div key={i} className="flex justify-between items-center p-3 bg-gray-50 rounded">
+                        <div>
+                          <h4 className="font-medium">{block.blockName}</h4>
+                          <p className="text-xs text-muted-foreground">{block.totalApartments} apartments</p>
+                        </div>
+                        <div className="flex space-x-2">
+                          <div className="text-sm">
+                            <span className="font-semibold text-green-600">{block.paidCount}</span> Paid
+                          </div>
+                          <div className="text-sm">
+                            <span className="font-semibold text-orange-600">{block.pendingCount}</span> Pending
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-center py-6 text-gray-500">
+                      No payment data available for this month
                     </div>
-                  ))}
+                  )}
                 </div>
               </TabsContent>
               <TabsContent value="yearly">
