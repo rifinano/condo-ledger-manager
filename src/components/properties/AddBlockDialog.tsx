@@ -61,9 +61,7 @@ const AddBlockDialog: React.FC<AddBlockDialogProps> = ({
                   </SelectTrigger>
                   <SelectContent>
                     {blockLetters.map(letter => (
-                      <SelectItem key={letter} value={letter}>
-                        {letter}
-                      </SelectItem>
+                      <SelectItem key={letter} value={letter}>{letter}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -74,11 +72,9 @@ const AddBlockDialog: React.FC<AddBlockDialogProps> = ({
                     <SelectValue placeholder="Number (Optional)" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem key="no-number" value="none">None</SelectItem>
+                    <SelectItem key="no-number" value="none-value">None</SelectItem>
                     {blockNumbers.map(number => (
-                      <SelectItem key={number} value={number}>
-                        {number}
-                      </SelectItem>
+                      <SelectItem key={number} value={number}>{number}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
