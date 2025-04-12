@@ -93,11 +93,19 @@ export const parseResidentsCsv = (csvText: string): {
         return trimmed.replace(/^"(.*)"$/, '$1');
       });
       
-      // Check if we have enough columns
-      if (cleanValues.length < 4) {
-        errors.push(`Row ${i + 2}: Missing required columns. Found ${cleanValues.length} columns, need at least 4.`);
+      // Ensure we have at least the minimum required fields (name, block, apartment)
+      if (cleanValues.length < 3) {
+        errors.push(`Row ${i + 2}: Missing required columns. Found ${cleanValues.length} columns, need at least 3.`);
         continue;
       }
+      
+      // Make sure we have an array with exactly 6 elements (padding with empty strings if needed)
+      while (cleanValues.length < 6) {
+        cleanValues.push('');
+      }
+      
+      // Log the parsed values for debugging
+      console.log(`Parsed CSV row ${i + 1}:`, cleanValues);
       
       parsedValues.push(cleanValues);
     }

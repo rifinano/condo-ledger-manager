@@ -83,10 +83,25 @@ export const useResidentImport = ({
             }
             
             // Find the month value that matches the name
-            const moveInMonth = months.find(m => m.label === moveInMonthName)?.value || 
-                              (moveInMonthName && !isNaN(parseInt(moveInMonthName)) ? 
-                                (parseInt(moveInMonthName) < 10 ? `0${parseInt(moveInMonthName)}` : `${parseInt(moveInMonthName)}`) : 
-                                undefined);
+            let moveInMonth: string | undefined;
+            
+            if (moveInMonthName) {
+              // First try to find it by label
+              moveInMonth = months.find(m => m.label.toLowerCase() === moveInMonthName.toLowerCase())?.value;
+              
+              if (!moveInMonth) {
+                // Try to find by direct number match
+                moveInMonth = months.find(m => m.value === moveInMonthName)?.value;
+                
+                // If still not found, try to parse it as a number
+                if (!moveInMonth && !isNaN(parseInt(moveInMonthName))) {
+                  const monthNum = parseInt(moveInMonthName);
+                  if (monthNum >= 1 && monthNum <= 12) {
+                    moveInMonth = monthNum < 10 ? `0${monthNum}` : `${monthNum}`;
+                  }
+                }
+              }
+            }
             
             const residentData = {
               full_name: fullName,
@@ -96,6 +111,8 @@ export const useResidentImport = ({
               move_in_month: moveInMonth,
               move_in_year: moveInYear
             };
+            
+            console.log("Importing resident data:", residentData);
             
             resetForm();
             setCurrentResident(residentData);
