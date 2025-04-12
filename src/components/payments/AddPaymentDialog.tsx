@@ -6,7 +6,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
-import { Resident } from "@/services/paymentsService";
+import { Resident } from "@/services/payments/types";
 import { useToast } from "@/hooks/use-toast";
 import PaymentForm from "./PaymentForm";
 import PaymentFormActions from "./PaymentFormActions";
