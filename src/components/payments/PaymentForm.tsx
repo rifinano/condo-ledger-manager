@@ -1,12 +1,14 @@
-import { Dispatch, SetStateAction, useEffect, useState } from 'react';
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import { 
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue 
-} from "@/components/ui/select";
+import { useState, useEffect } from 'react';
 import { Resident, Payment } from "@/services/payments/types";
 import { getCharges } from '@/services/charges';
 import { Charge } from '@/services/charges/types';
+import ResidentSelect from './form/ResidentSelect';
+import PaymentTypeSelect from './form/PaymentTypeSelect';
+import AmountInput from './form/AmountInput';
+import DateInput from './form/DateInput';
+import PeriodSelects from './form/PeriodSelects';
+import PaymentMethodSelect from './form/PaymentMethodSelect';
+import NotesInput from './form/NotesInput';
 
 interface PaymentFormState {
   resident_id: string;
@@ -21,7 +23,7 @@ interface PaymentFormState {
 
 interface PaymentFormProps {
   newPayment: PaymentFormState;
-  setNewPayment: Dispatch<SetStateAction<PaymentFormState>>;
+  setNewPayment: React.Dispatch<React.SetStateAction<PaymentFormState>>;
   residents: Resident[];
   years: string[];
   months: { value: string; label: string }[];
@@ -77,156 +79,85 @@ const PaymentForm = ({
     }
   }, [newPayment.payment_type, charges]);
 
+  // Handler functions for updating form state
+  const handleResidentChange = (value: string) => {
+    setNewPayment({...newPayment, resident_id: value});
+  };
+
+  const handlePaymentTypeChange = (value: string) => {
+    setNewPayment({...newPayment, payment_type: value});
+  };
+
+  const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setNewPayment({...newPayment, amount: e.target.value});
+  };
+
+  const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setNewPayment({...newPayment, payment_date: e.target.value});
+  };
+
+  const handleYearChange = (value: string) => {
+    setNewPayment({...newPayment, payment_for_year: value});
+  };
+
+  const handleMonthChange = (value: string) => {
+    setNewPayment({...newPayment, payment_for_month: value});
+  };
+
+  const handleMethodChange = (value: string) => {
+    setNewPayment({...newPayment, payment_method: value});
+  };
+
+  const handleNotesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setNewPayment({...newPayment, notes: e.target.value});
+  };
+
   return (
     <div className="grid gap-4 py-4">
-      <div className="grid grid-cols-4 items-center gap-4">
-        <Label htmlFor="resident" className="text-right">
-          Resident
-        </Label>
-        <Select 
-          value={newPayment.resident_id} 
-          onValueChange={(value) => setNewPayment({...newPayment, resident_id: value})}
-        >
-          <SelectTrigger className="col-span-3">
-            <SelectValue placeholder="Select a resident" />
-          </SelectTrigger>
-          <SelectContent className="max-h-[300px] overflow-y-auto z-50 bg-white">
-            {residents && residents.length > 0 ? (
-              residents.map((resident) => (
-                <SelectItem key={resident.id} value={resident.id}>
-                  {resident.full_name} ({resident.block_number}, Apt {resident.apartment_number})
-                </SelectItem>
-              ))
-            ) : (
-              <SelectItem value="no-residents" disabled>
-                No residents found
-              </SelectItem>
-            )}
-          </SelectContent>
-        </Select>
-      </div>
+      <ResidentSelect 
+        value={newPayment.resident_id}
+        onChange={handleResidentChange}
+        residents={residents}
+      />
       
-      <div className="grid grid-cols-4 items-center gap-4">
-        <Label htmlFor="payment_type" className="text-right">
-          Payment Type
-        </Label>
-        <Select 
-          value={newPayment.payment_type} 
-          onValueChange={(value) => setNewPayment({...newPayment, payment_type: value})}
-        >
-          <SelectTrigger className="col-span-3">
-            <SelectValue placeholder={isLoadingCharges ? "Loading charge types..." : "Select payment type"} />
-          </SelectTrigger>
-          <SelectContent>
-            {isLoadingCharges ? (
-              <SelectItem value="loading" disabled>Loading charge types...</SelectItem>
-            ) : (
-              filteredPaymentTypes.map((type) => (
-                <SelectItem key={type} value={type}>{type}</SelectItem>
-              ))
-            )}
-          </SelectContent>
-        </Select>
-      </div>
+      <PaymentTypeSelect 
+        value={newPayment.payment_type}
+        onChange={handlePaymentTypeChange}
+        paymentTypes={filteredPaymentTypes}
+        isLoading={isLoadingCharges}
+      />
       
-      <div className="grid grid-cols-4 items-center gap-4">
-        <Label htmlFor="amount" className="text-right">
-          Amount ($)
-        </Label>
-        <Input
-          id="amount"
-          type="number"
-          value={newPayment.amount}
-          onChange={(e) => setNewPayment({...newPayment, amount: e.target.value})}
-          placeholder="0.00"
-          min="0"
-          step="0.01"
-          className="col-span-3"
-        />
-      </div>
+      <AmountInput 
+        value={newPayment.amount}
+        onChange={handleAmountChange}
+      />
       
-      <div className="grid grid-cols-4 items-center gap-4">
-        <Label htmlFor="payment_date" className="text-right">
-          Payment Date
-        </Label>
-        <Input
-          id="payment_date"
-          type="date"
-          value={newPayment.payment_date}
-          onChange={(e) => setNewPayment({...newPayment, payment_date: e.target.value})}
-          className="col-span-3"
-        />
-      </div>
+      <DateInput 
+        label="Payment Date"
+        id="payment_date"
+        value={newPayment.payment_date}
+        onChange={handleDateChange}
+      />
       
-      <div className="grid grid-cols-4 items-center gap-4">
-        <Label htmlFor="payment_for_year" className="text-right">
-          For Year
-        </Label>
-        <Select 
-          value={newPayment.payment_for_year} 
-          onValueChange={(value) => setNewPayment({...newPayment, payment_for_year: value})}
-        >
-          <SelectTrigger className="col-span-3">
-            <SelectValue placeholder="Select year" />
-          </SelectTrigger>
-          <SelectContent>
-            {years.map((year) => (
-              <SelectItem key={year} value={year}>{year}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+      <PeriodSelects 
+        yearValue={newPayment.payment_for_year}
+        onYearChange={handleYearChange}
+        monthValue={newPayment.payment_for_month}
+        onMonthChange={handleMonthChange}
+        years={years}
+        months={months}
+      />
       
-      <div className="grid grid-cols-4 items-center gap-4">
-        <Label htmlFor="payment_for_month" className="text-right">
-          For Month
-        </Label>
-        <Select 
-          value={newPayment.payment_for_month} 
-          onValueChange={(value) => setNewPayment({...newPayment, payment_for_month: value})}
-        >
-          <SelectTrigger className="col-span-3">
-            <SelectValue placeholder="Select month" />
-          </SelectTrigger>
-          <SelectContent>
-            {months.map((month) => (
-              <SelectItem key={month.value} value={month.value}>{month.label}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+      <PaymentMethodSelect 
+        value={newPayment.payment_method}
+        onChange={handleMethodChange}
+        paymentMethods={paymentMethods}
+      />
       
-      <div className="grid grid-cols-4 items-center gap-4">
-        <Label htmlFor="payment_method" className="text-right">
-          Payment Method
-        </Label>
-        <Select 
-          value={newPayment.payment_method} 
-          onValueChange={(value) => setNewPayment({...newPayment, payment_method: value})}
-        >
-          <SelectTrigger className="col-span-3">
-            <SelectValue placeholder="Select payment method" />
-          </SelectTrigger>
-          <SelectContent>
-            {paymentMethods.map((method) => (
-              <SelectItem key={method} value={method}>{method}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-      
-      <div className="grid grid-cols-4 items-center gap-4">
-        <Label htmlFor="notes" className="text-right">
-          Notes
-        </Label>
-        <Input
-          id="notes"
-          value={newPayment.notes}
-          onChange={(e) => setNewPayment({...newPayment, notes: e.target.value})}
-          className="col-span-3"
-          placeholder="Optional notes"
-        />
-      </div>
+      <NotesInput 
+        value={newPayment.notes}
+        onChange={handleNotesChange}
+      />
     </div>
   );
 };
