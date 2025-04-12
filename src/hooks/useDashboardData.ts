@@ -92,7 +92,7 @@ export const useDashboardData = () => {
         const { count: blockApartments, error: blockApartmentsError } = await supabase
           .from('apartments')
           .select('*', { count: 'exact', head: true })
-          .eq('block_id', block.id.toString()); // Convert block.id to string to fix type error
+          .eq('block_id', String(block.id)); // Explicitly convert block.id to string
         
         if (blockApartmentsError) {
           console.error(`Error fetching apartments for block ${block.name}:`, blockApartmentsError);
