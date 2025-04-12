@@ -1,6 +1,6 @@
 
-import React, { memo, useState, useMemo } from "react";
-import { Card, CardContent, CardDescription, CardHeader } from "@/components/ui/card";
+import React, { memo } from "react";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Block, Apartment } from "@/services/properties";
 import BlockHeader from "./BlockHeader";
 import ApartmentsList from "./ApartmentsList";
@@ -23,10 +23,10 @@ const BlockCard: React.FC<BlockCardProps> = memo(({
   isApartmentOccupied,
   getResidentName
 }) => {
-  const [showAllApartments, setShowAllApartments] = useState(false);
+  const [showAllApartments, setShowAllApartments] = React.useState(false);
 
   // Sort apartments by number
-  const sortedApartments = useMemo(() => {
+  const sortedApartments = React.useMemo(() => {
     return [...block.apartments].sort((a, b) => {
       const numA = parseInt(a.number.replace(/\D/g, ''), 10);
       const numB = parseInt(b.number.replace(/\D/g, ''), 10);
@@ -35,7 +35,7 @@ const BlockCard: React.FC<BlockCardProps> = memo(({
   }, [block.apartments]);
 
   // Count occupied apartments
-  const occupiedCount = useMemo(() => {
+  const occupiedCount = React.useMemo(() => {
     return block.apartments.filter(apt => 
       isApartmentOccupied(block.name, apt.number)
     ).length;
@@ -60,9 +60,6 @@ const BlockCard: React.FC<BlockCardProps> = memo(({
           isApartmentOccupied={isApartmentOccupied}
           occupiedCount={occupiedCount}
         />
-        <CardDescription>
-          {block.apartments.length} apartments | {occupiedCount} occupied
-        </CardDescription>
       </CardHeader>
       <CardContent>
         <ApartmentsList 

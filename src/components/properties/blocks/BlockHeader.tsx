@@ -1,7 +1,7 @@
 
 import React from "react";
-import { Building2 } from "lucide-react";
-import { CardTitle, CardDescription } from "@/components/ui/card";
+import { Building2, Trash2 } from "lucide-react";
+import { CardDescription } from "@/components/ui/card";
 import { Block, Apartment } from "@/services/properties";
 import BlockNameEditor from "./BlockNameEditor";
 import DeleteBlockButton from "./DeleteBlockButton";
@@ -30,18 +30,23 @@ const BlockHeader: React.FC<BlockHeaderProps> = ({
   };
 
   return (
-    <div className="flex justify-between items-center">
-      <div className="flex items-center">
-        <Building2 className="h-5 w-5 mr-2 text-syndicate-600" />
-        <BlockNameEditor 
-          block={block}
-          onUpdateBlockName={onUpdateBlockName}
-        />
+    <>
+      <div className="flex justify-between items-center">
+        <div className="flex items-center">
+          <Building2 className="h-5 w-5 mr-2 text-syndicate-600" />
+          <BlockNameEditor 
+            block={block}
+            onUpdateBlockName={onUpdateBlockName}
+          />
+        </div>
+        <div className="flex space-x-2">
+          <DeleteBlockButton onDelete={handleDeleteBlock} />
+        </div>
       </div>
-      <div className="flex space-x-2">
-        <DeleteBlockButton onDelete={handleDeleteBlock} />
-      </div>
-    </div>
+      <CardDescription>
+        {block.apartments.length} apartments | {occupiedCount} occupied
+      </CardDescription>
+    </>
   );
 };
 
