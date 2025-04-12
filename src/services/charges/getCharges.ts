@@ -21,7 +21,14 @@ export const getCharges = async (): Promise<Charge[]> => {
     }
 
     console.log("Successfully retrieved charges from Supabase:", data);
-    return data || [];
+    
+    // Transform the data to include the category property
+    const transformedData = data?.map(charge => ({
+      ...charge,
+      category: charge.category || "In" // Default to "In" if category is not set
+    })) || [];
+    
+    return transformedData;
   } catch (error: any) {
     clearTimeout(timeoutId);
     
