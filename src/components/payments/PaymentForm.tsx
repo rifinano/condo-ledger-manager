@@ -1,11 +1,11 @@
 
-import { Dispatch, SetStateAction } from 'react';
+import { Dispatch, SetStateAction, useEffect, useState } from 'react';
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { 
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue 
 } from "@/components/ui/select";
-import { Resident } from "@/services/paymentsService";
+import { Resident, Payment } from "@/services/payments/types";
 
 interface PaymentFormState {
   resident_id: string;
@@ -16,6 +16,13 @@ interface PaymentFormState {
   payment_type: string;
   payment_method: string;
   notes: string;
+}
+
+interface Charge {
+  id: string;
+  name: string;
+  amount: number;
+  chargeType: string;
 }
 
 interface PaymentFormProps {
@@ -37,6 +44,40 @@ const PaymentForm = ({
   paymentTypes,
   paymentMethods
 }: PaymentFormProps) => {
+  const [charges, setCharges] = useState<Charge[]>([]);
+  const [filteredPaymentTypes, setFilteredPaymentTypes] = useState<string[]>(paymentTypes);
+  
+  // Simulate fetching charges - in a real app, this would come from a database
+  useEffect(() => {
+    const mockCharges = [
+      { id: '1', name: 'Maintenance Fee', amount: 100, chargeType: 'Resident' },
+      { id: '2', name: 'Water Fee', amount: 50, chargeType: 'Resident' },
+      { id: '3', name: 'Security Fee', amount: 75, chargeType: 'Syndicate' },
+      { id: '4', name: 'Special Assessment', amount: 200, chargeType: 'Syndicate' },
+    ];
+    
+    setCharges(mockCharges);
+    
+    // Filter payment types based on the mock charges that are Resident type
+    const residentChargeNames = mockCharges
+      .filter(charge => charge.chargeType === 'Resident')
+      .map(charge => charge.name);
+    
+    // Combine existing payment types with resident charge names
+    setFilteredPaymentTypes([...new Set([...paymentTypes, ...residentChargeNames])]);
+  }, [paymentTypes]);
+  
+  // When payment type changes to a charge, update the amount
+  useEffect(() => {
+    const selectedCharge = charges.find(charge => charge.name === newPayment.payment_type);
+    if (selectedCharge) {
+      setNewPayment(prev => ({
+        ...prev,
+        amount: selectedCharge.amount.toString()
+      }));
+    }
+  }, [newPayment.payment_type, charges]);
+
   return (
     <div className="grid gap-4 py-4">
       <div className="grid grid-cols-4 items-center gap-4">
@@ -62,6 +103,25 @@ const PaymentForm = ({
                 No residents found
               </SelectItem>
             )}
+          </SelectContent>
+        </Select>
+      </div>
+      
+      <div className="grid grid-cols-4 items-center gap-4">
+        <Label htmlFor="payment_type" className="text-right">
+          Payment Type
+        </Label>
+        <Select 
+          value={newPayment.payment_type} 
+          onValueChange={(value) => setNewPayment({...newPayment, payment_type: value})}
+        >
+          <SelectTrigger className="col-span-3">
+            <SelectValue placeholder="Select payment type" />
+          </SelectTrigger>
+          <SelectContent>
+            {filteredPaymentTypes.map((type) => (
+              <SelectItem key={type} value={type}>{type}</SelectItem>
+            ))}
           </SelectContent>
         </Select>
       </div>
@@ -128,25 +188,6 @@ const PaymentForm = ({
           <SelectContent>
             {months.map((month) => (
               <SelectItem key={month.value} value={month.value}>{month.label}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-      
-      <div className="grid grid-cols-4 items-center gap-4">
-        <Label htmlFor="payment_type" className="text-right">
-          Payment Type
-        </Label>
-        <Select 
-          value={newPayment.payment_type} 
-          onValueChange={(value) => setNewPayment({...newPayment, payment_type: value})}
-        >
-          <SelectTrigger className="col-span-3">
-            <SelectValue placeholder="Select payment type" />
-          </SelectTrigger>
-          <SelectContent>
-            {paymentTypes.map((type) => (
-              <SelectItem key={type} value={type}>{type}</SelectItem>
             ))}
           </SelectContent>
         </Select>
