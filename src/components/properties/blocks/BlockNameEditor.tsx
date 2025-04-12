@@ -104,7 +104,7 @@ const BlockNameEditor: React.FC<BlockNameEditorProps> = ({
                 <SelectValue placeholder="Number (Optional)" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem key="empty" value="">None</SelectItem>
+                <SelectItem key="none" value="none">None</SelectItem>
                 {blockNumbers.map(number => (
                   <SelectItem key={number} value={number}>
                     {number}

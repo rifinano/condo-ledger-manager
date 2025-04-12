@@ -72,7 +72,7 @@ const AddBlockDialog: React.FC<AddBlockDialogProps> = ({
                     <SelectValue placeholder="Number (Optional)" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem key="no-number" value="none-value">None</SelectItem>
+                    <SelectItem key="none" value="none">None</SelectItem>
                     {blockNumbers.map(number => (
                       <SelectItem key={number} value={number}>{number}</SelectItem>
                     ))}

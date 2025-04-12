@@ -1,3 +1,4 @@
+
 import React, { memo, useState, useEffect } from "react";
 import { Building2, Home, Trash2, User, Edit, ChevronDown, ChevronUp, Pencil, Check, X } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -153,7 +154,7 @@ const BlockCard: React.FC<BlockCardProps> = memo(({
                         <SelectValue placeholder="Number (Optional)" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem key="no-number" value="">None</SelectItem>
+                        <SelectItem key="none" value="none">None</SelectItem>
                         {blockNumbers.map(number => (
                           <SelectItem key={number} value={number}>
                             {number}
