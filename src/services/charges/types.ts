@@ -6,6 +6,7 @@ export interface Charge {
   description: string | null;
   period: string;
   charge_type: string;
+  category: "In" | "Out";
   created_at: string;
   updated_at: string;
 }
@@ -16,6 +17,7 @@ export interface ChargeFormData {
   description: string;
   period: string;
   charge_type: string;
+  category: "In" | "Out";
 }
 
 export interface AddChargeResult {

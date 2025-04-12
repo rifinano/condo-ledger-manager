@@ -14,7 +14,8 @@ export const addCharge = async (
       amount: charge.amount,
       description: charge.description || null,
       period: charge.period,
-      charge_type: charge.charge_type
+      charge_type: charge.charge_type,
+      category: charge.category || "In" // Default to "In" if not specified
     };
     
     console.log("Adding charge with data:", chargeRecord);

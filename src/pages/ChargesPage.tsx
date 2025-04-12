@@ -2,7 +2,7 @@
 import { useState } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Button } from "@/components/ui/button";
-import { Download, Edit, Trash2 } from "lucide-react";
+import { Download, Edit, Trash2, ArrowUpCircle, ArrowDownCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { 
   Table, 
@@ -123,6 +123,7 @@ const ChargesPage = () => {
               <TableCaption>A list of property charges and fees.</TableCaption>
               <TableHeader>
                 <TableRow>
+                  <TableHead>Category</TableHead>
                   <TableHead>Name</TableHead>
                   <TableHead>Amount</TableHead>
                   <TableHead>Type</TableHead>
@@ -134,13 +135,26 @@ const ChargesPage = () => {
               <TableBody>
                 {charges.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center py-10">
+                    <TableCell colSpan={7} className="text-center py-10">
                       <p className="text-gray-500">No charges found. Create a new charge to get started.</p>
                     </TableCell>
                   </TableRow>
                 ) : (
                   charges.map((charge) => (
                     <TableRow key={charge.id}>
+                      <TableCell>
+                        {charge.category === "In" ? (
+                          <div className="flex items-center text-green-600">
+                            <ArrowUpCircle className="h-4 w-4 mr-1" />
+                            <span>In</span>
+                          </div>
+                        ) : (
+                          <div className="flex items-center text-red-600">
+                            <ArrowDownCircle className="h-4 w-4 mr-1" />
+                            <span>Out</span>
+                          </div>
+                        )}
+                      </TableCell>
                       <TableCell className="font-medium">{charge.name}</TableCell>
                       <TableCell>${charge.amount.toFixed(2)}</TableCell>
                       <TableCell>

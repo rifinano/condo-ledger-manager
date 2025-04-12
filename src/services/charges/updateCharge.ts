@@ -19,6 +19,7 @@ export const updateCharge = async (id: string, chargeData: ChargeFormData): Prom
         description: chargeData.description || null,
         charge_type: chargeData.charge_type,
         period: chargeData.period,
+        category: chargeData.category || "In", // Default to "In" if not specified
         updated_at: new Date().toISOString()
       })
       .eq('id', id);

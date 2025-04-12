@@ -20,7 +20,8 @@ const EditChargeForm = ({ charge, onSuccess, onCancel, onUpdate }: EditChargeFor
     amount: charge.amount,
     description: charge.description || "",
     charge_type: charge.charge_type,
-    period: charge.period
+    period: charge.period,
+    category: charge.category || "In" // Default to "In" if not present in existing charge
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -38,10 +39,30 @@ const EditChargeForm = ({ charge, onSuccess, onCancel, onUpdate }: EditChargeFor
 
   const chargeTypes = ["Resident", "Syndicate", "Maintenance"];
   const periodTypes = ["Monthly", "Quarterly", "Annual", "One-time"];
+  const categories = ["In", "Out"];
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4 py-4">
       <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label htmlFor="category">Category</Label>
+          <Select
+            value={formData.category}
+            onValueChange={(value) => setFormData({ ...formData, category: value as "In" | "Out" })}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select category" />
+            </SelectTrigger>
+            <SelectContent>
+              {categories.map((cat) => (
+                <SelectItem key={cat} value={cat}>
+                  {cat}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        
         <div className="space-y-2">
           <Label htmlFor="name">Charge Name</Label>
           <Input
@@ -51,7 +72,9 @@ const EditChargeForm = ({ charge, onSuccess, onCancel, onUpdate }: EditChargeFor
             required
           />
         </div>
-        
+      </div>
+      
+      <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
           <Label htmlFor="amount">Amount</Label>
           <Input
@@ -64,9 +87,7 @@ const EditChargeForm = ({ charge, onSuccess, onCancel, onUpdate }: EditChargeFor
             required
           />
         </div>
-      </div>
-      
-      <div className="grid grid-cols-2 gap-4">
+        
         <div className="space-y-2">
           <Label htmlFor="charge_type">Charge Type</Label>
           <Select
@@ -85,7 +106,9 @@ const EditChargeForm = ({ charge, onSuccess, onCancel, onUpdate }: EditChargeFor
             </SelectContent>
           </Select>
         </div>
-        
+      </div>
+      
+      <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
           <Label htmlFor="period">Period</Label>
           <Select

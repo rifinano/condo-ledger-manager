@@ -22,7 +22,8 @@ const AddChargeDialog = ({ onAddCharge }: AddChargeDialogProps) => {
     amount: 0,
     description: "",
     period: "Monthly",
-    charge_type: "Resident"
+    charge_type: "Resident",
+    category: "In"
   });
 
   const resetForm = () => {
@@ -31,7 +32,8 @@ const AddChargeDialog = ({ onAddCharge }: AddChargeDialogProps) => {
       amount: 0,
       description: "",
       period: "Monthly",
-      charge_type: "Resident"
+      charge_type: "Resident",
+      category: "In"
     });
   };
 
@@ -82,6 +84,24 @@ const AddChargeDialog = ({ onAddCharge }: AddChargeDialogProps) => {
         </DialogHeader>
         <form onSubmit={handleSubmit}>
           <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="category" className="text-right">
+                Category
+              </Label>
+              <Select 
+                value={formData.category} 
+                onValueChange={(value) => setFormData({...formData, category: value as "In" | "Out"})}
+              >
+                <SelectTrigger className="col-span-3">
+                  <SelectValue placeholder="Select category" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="In">In</SelectItem>
+                  <SelectItem value="Out">Out</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="charge_type" className="text-right">
                 Charge Type

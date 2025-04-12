@@ -16,7 +16,14 @@ export const useChargesData = () => {
       console.log("Fetching charges from database...");
       const data = await getCharges();
       console.log("Charges data retrieved:", data);
-      setCharges(data);
+      
+      // Transform data to ensure all charges have a category
+      const transformedData = data.map((charge: Charge) => ({
+        ...charge,
+        category: charge.category || "In" // Default to "In" if not set
+      }));
+      
+      setCharges(transformedData);
     } catch (err: any) {
       console.error("Error fetching charges:", err);
       setError(err.message || "Failed to load charges");
