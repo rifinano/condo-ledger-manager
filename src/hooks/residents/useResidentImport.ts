@@ -64,7 +64,7 @@ export const useResidentImport = ({
           
           // Check if this exact location (block AND apartment) is already occupied
           if (isApartmentOccupied(blockNumber, apartmentNumber)) {
-            importErrors.push(`Location Block ${blockNumber}, Apartment ${apartmentNumber} is already occupied by a resident.`);
+            importErrors.push(`Location already occupied: Block ${blockNumber}, Apartment ${apartmentNumber} is already assigned to another resident.`);
             continue;
           }
           
@@ -92,14 +92,25 @@ export const useResidentImport = ({
               importErrors.push(`Failed to add resident: ${fullName} at Block ${blockNumber}, Apartment ${apartmentNumber}`);
             }
           } catch (error) {
-            importErrors.push(`Error adding resident: ${fullName}. ${error instanceof Error ? error.message : String(error)}`);
+            console.error("Error adding resident:", error);
+            const errorMsg = error instanceof Error ? error.message : String(error);
+            let errorDisplay = `Error adding resident: ${fullName} at Block ${blockNumber}, Apartment ${apartmentNumber}`;
+            
+            // Check for specific database constraint error messages
+            if (errorMsg.includes("duplicate key") && errorMsg.includes("residents_block_number_apartment_number_key")) {
+              errorDisplay = `Location already occupied: Block ${blockNumber}, Apartment ${apartmentNumber} is already assigned to another resident.`;
+            } else {
+              errorDisplay += ` - ${errorMsg}`;
+            }
+            
+            importErrors.push(errorDisplay);
           }
         }
         
         setImportSuccess(successCount);
         setImportErrors(importErrors);
         
-        if (importErrors.length === 0) {
+        if (successCount > 0) {
           await fetchResidents();
           refreshData();
         }

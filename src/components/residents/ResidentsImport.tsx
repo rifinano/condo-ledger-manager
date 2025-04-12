@@ -1,6 +1,7 @@
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { CheckCircle, AlertCircle, Loader2 } from "lucide-react";
+import { CheckCircle, AlertCircle, Loader2, HomeIcon, XOctagon } from "lucide-react";
+import { useMemo } from "react";
 
 interface ResidentsImportProps {
   isImporting: boolean;
@@ -13,6 +14,18 @@ const ResidentsImport = ({
   importErrors,
   importSuccess
 }: ResidentsImportProps) => {
+  const { locationErrors, otherErrors } = useMemo(() => {
+    const locationErrors = importErrors.filter(error => 
+      error.startsWith("Location already occupied:")
+    );
+    
+    const otherErrors = importErrors.filter(error => 
+      !error.startsWith("Location already occupied:")
+    );
+    
+    return { locationErrors, otherErrors };
+  }, [importErrors]);
+  
   if (!isImporting && importErrors.length === 0 && importSuccess === 0) {
     return null;
   }
@@ -36,15 +49,30 @@ const ResidentsImport = ({
         </Alert>
       )}
       
-      {importErrors.length > 0 && (
+      {locationErrors.length > 0 && (
+        <Alert className="bg-amber-50 border-amber-200">
+          <HomeIcon className="h-4 w-4 text-amber-600" />
+          <AlertTitle className="text-amber-800">Location Conflicts</AlertTitle>
+          <AlertDescription className="text-amber-700">
+            <p>The following locations are already occupied:</p>
+            <ul className="list-disc pl-5 mt-2 space-y-1">
+              {locationErrors.map((error, index) => (
+                <li key={`location-${index}`}>{error.replace("Location already occupied: ", "")}</li>
+              ))}
+            </ul>
+          </AlertDescription>
+        </Alert>
+      )}
+      
+      {otherErrors.length > 0 && (
         <Alert className="bg-red-50 border-red-200">
-          <AlertCircle className="h-4 w-4 text-red-600" />
+          <XOctagon className="h-4 w-4 text-red-600" />
           <AlertTitle className="text-red-800">Import Errors</AlertTitle>
           <AlertDescription className="text-red-700">
             <p>The following errors occurred during import:</p>
             <ul className="list-disc pl-5 mt-2 space-y-1">
-              {importErrors.map((error, index) => (
-                <li key={index}>{error}</li>
+              {otherErrors.map((error, index) => (
+                <li key={`error-${index}`}>{error}</li>
               ))}
             </ul>
           </AlertDescription>
