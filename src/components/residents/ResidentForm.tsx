@@ -17,6 +17,7 @@ interface ResidentFormProps {
   months: { value: string; label: string }[];
   years: string[];
   isEditing?: boolean;
+  showMoveInDate?: boolean;
 }
 
 const ResidentForm = ({
@@ -28,7 +29,8 @@ const ResidentForm = ({
   currentResidentId,
   months,
   years,
-  isEditing = false
+  isEditing = false,
+  showMoveInDate = false
 }: ResidentFormProps) => {
   const [apartmentError, setApartmentError] = useState<string | null>(null);
 
@@ -155,43 +157,41 @@ const ResidentForm = ({
         </div>
       </div>
 
-      {!isEditing && (
-        <>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label className="text-right">
-              Move-in Date*
-            </Label>
-            <div className="col-span-3 flex gap-2">
-              <Select 
-                value={resident.move_in_month || ''} 
-                onValueChange={(value) => handleChange('move_in_month', value)}
-              >
-                <SelectTrigger className="flex-1">
-                  <SelectValue placeholder="Month" />
-                </SelectTrigger>
-                <SelectContent>
-                  {months.map(month => (
-                    <SelectItem key={month.value} value={month.value}>{month.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+      {(!isEditing || showMoveInDate) && (
+        <div className="grid grid-cols-4 items-center gap-4">
+          <Label className="text-right">
+            Move-in Date*
+          </Label>
+          <div className="col-span-3 flex gap-2">
+            <Select 
+              value={resident.move_in_month || ''} 
+              onValueChange={(value) => handleChange('move_in_month', value)}
+            >
+              <SelectTrigger className="flex-1">
+                <SelectValue placeholder="Month" />
+              </SelectTrigger>
+              <SelectContent>
+                {months.map(month => (
+                  <SelectItem key={month.value} value={month.value}>{month.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
 
-              <Select 
-                value={resident.move_in_year || ''} 
-                onValueChange={(value) => handleChange('move_in_year', value)}
-              >
-                <SelectTrigger className="flex-1">
-                  <SelectValue placeholder="Year" />
-                </SelectTrigger>
-                <SelectContent className="max-h-[200px]">
-                  {years.map(year => (
-                    <SelectItem key={year} value={year}>{year}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            <Select 
+              value={resident.move_in_year || ''} 
+              onValueChange={(value) => handleChange('move_in_year', value)}
+            >
+              <SelectTrigger className="flex-1">
+                <SelectValue placeholder="Year" />
+              </SelectTrigger>
+              <SelectContent className="max-h-[200px] overflow-y-auto">
+                {years.map(year => (
+                  <SelectItem key={year} value={year}>{year}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
-        </>
+        </div>
       )}
       <div className="col-span-full text-xs text-gray-500 mt-1">* Required fields</div>
     </div>

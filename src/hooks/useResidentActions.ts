@@ -163,8 +163,8 @@ export const useResidentActions = (
       phone_number: resident.phone_number || "",
       block_number: resident.block_number,
       apartment_number: resident.apartment_number,
-      move_in_month: new Date().getMonth() + 1 < 10 ? `0${new Date().getMonth() + 1}` : `${new Date().getMonth() + 1}`,
-      move_in_year: new Date().getFullYear().toString()
+      move_in_month: resident.move_in_month || new Date().getMonth() + 1 < 10 ? `0${new Date().getMonth() + 1}` : `${new Date().getMonth() + 1}`,
+      move_in_year: resident.move_in_year || new Date().getFullYear().toString()
     });
     setIsEditingResident(true);
   }, []);

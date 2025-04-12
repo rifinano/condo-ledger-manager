@@ -15,6 +15,8 @@ export interface Resident {
   block_number: string;  // Primary apartment block
   apartment_number: string;  // Primary apartment number
   apartments?: ResidentApartment[];  // All apartments
+  move_in_month?: string;
+  move_in_year?: string;
   created_at: string;
   updated_at: string;
 }

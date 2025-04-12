@@ -103,6 +103,7 @@ const EditResidentDialog = ({
           months={months}
           years={years}
           isEditing={true}
+          showMoveInDate={true}
         />
         <DialogFooter>
           <Button 

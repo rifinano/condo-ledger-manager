@@ -14,6 +14,8 @@ export const updateResident = async (id: string, resident: Omit<ResidentFormData
       phone_number: resident.phone_number || null,
       block_number: resident.block_number,
       apartment_number: resident.apartment_number,
+      move_in_month: resident.move_in_month,
+      move_in_year: resident.move_in_year,
       updated_at: new Date().toISOString()
     };
 

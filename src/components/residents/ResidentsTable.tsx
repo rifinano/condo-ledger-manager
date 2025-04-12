@@ -5,8 +5,9 @@ import {
   TableHeader, TableRow 
 } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
-import { User, Phone, Building2, Home, Edit, Trash2 } from "lucide-react";
+import { User, Phone, Building2, Home, Edit, Trash2, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { format } from "date-fns";
 
 interface ResidentsTableProps {
   residents: Resident[];
@@ -33,14 +34,30 @@ const ResidentsTable = ({
     );
   }
 
+  const formatMoveInDate = (resident: Resident) => {
+    if (!resident.move_in_month || !resident.move_in_year) return "—";
+    
+    // Get month name from month number
+    const monthNames = [
+      "January", "February", "March", "April", "May", "June",
+      "July", "August", "September", "October", "November", "December"
+    ];
+    
+    const monthIndex = parseInt(resident.move_in_month, 10) - 1;
+    const monthName = monthNames[monthIndex] || '';
+    
+    return `${monthName} ${resident.move_in_year}`;
+  };
+
   return (
     <div className="border rounded-md overflow-hidden">
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead className="w-[30%]">Name</TableHead>
-            <TableHead className="w-[25%]">Phone</TableHead>
-            <TableHead className="w-[30%]">Location</TableHead>
+            <TableHead className="w-[25%]">Name</TableHead>
+            <TableHead className="w-[20%]">Phone</TableHead>
+            <TableHead className="w-[20%]">Location</TableHead>
+            <TableHead className="w-[20%]">Move-in Date</TableHead>
             <TableHead className="w-[15%] text-right">Actions</TableHead>
           </TableRow>
         </TableHeader>
@@ -82,6 +99,12 @@ const ResidentsTable = ({
                   )}
                 </div>
               </TableCell>
+              <TableCell>
+                <div className="flex items-center">
+                  <Calendar className="h-4 w-4 mr-2 text-gray-500 flex-shrink-0" />
+                  <span>{formatMoveInDate(resident)}</span>
+                </div>
+              </TableCell>
               <TableCell className="text-right">
                 <div className="flex justify-end space-x-2">
                   {onEdit && (
@@ -120,9 +143,10 @@ const ResidentsTableSkeleton = () => {
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead className="w-[30%]">Name</TableHead>
-            <TableHead className="w-[25%]">Phone</TableHead>
-            <TableHead className="w-[30%]">Location</TableHead>
+            <TableHead className="w-[25%]">Name</TableHead>
+            <TableHead className="w-[20%]">Phone</TableHead>
+            <TableHead className="w-[20%]">Location</TableHead>
+            <TableHead className="w-[20%]">Move-in Date</TableHead>
             <TableHead className="w-[15%] text-right">Actions</TableHead>
           </TableRow>
         </TableHeader>
@@ -147,6 +171,12 @@ const ResidentsTableSkeleton = () => {
                   <Skeleton className="h-4 w-8 mx-1" />
                   <Skeleton className="h-4 w-4 mx-1 rounded-full" />
                   <Skeleton className="h-4 w-8" />
+                </div>
+              </TableCell>
+              <TableCell>
+                <div className="flex items-center">
+                  <Skeleton className="h-4 w-4 mr-2 rounded-full" />
+                  <Skeleton className="h-4 w-[60%]" />
                 </div>
               </TableCell>
               <TableCell className="text-right">
