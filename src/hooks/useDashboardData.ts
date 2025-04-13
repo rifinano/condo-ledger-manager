@@ -80,8 +80,8 @@ export const useDashboardData = () => {
       const paymentsByBlock = blocks ? await Promise.all(blocks.map(async (block) => {
         const blockResidents = residents ? residents.filter(r => r.block_number === block.name) : [];
         
-        // Handle block.id as either a string or an object with toString method
-        const blockIdString = typeof block.id === 'string' ? block.id : String(block.id);
+        // Ensure block.id is converted to a string
+        const blockIdString = String(block.id);
         
         const { count: blockApartments, error: blockApartmentsError } = await supabase
           .from('apartments')
