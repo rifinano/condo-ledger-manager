@@ -1,5 +1,5 @@
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 import { useResidentsPage } from "@/hooks/useResidentsPage";
 import { usePropertyData } from "@/hooks/usePropertyData";
@@ -57,37 +57,27 @@ const ResidentsPage = () => {
     handleRetry
   } = useResidentRefresh(fetchResidents, refreshData);
 
-  // Memoize these handlers to prevent unnecessary re-renders
+  // Memoize handlers to prevent unnecessary re-renders
   const handleAddResidentWithRefresh = useCallback(async () => {
     const result = await handleAddResident();
-    if (result) {
-      refreshData();
-    }
+    if (result) refreshData();
     return result;
   }, [handleAddResident, refreshData]);
 
   const handleUpdateResidentWithRefresh = useCallback(async () => {
     const result = await handleUpdateResident();
-    if (result) {
-      refreshData();
-    }
+    if (result) refreshData();
     return result;
   }, [handleUpdateResident, refreshData]);
 
   const handleDeleteResidentWithRefresh = useCallback(async () => {
     const result = await handleDeleteResident();
-    if (result) {
-      refreshData();
-    }
+    if (result) refreshData();
     return result;
   }, [handleDeleteResident, refreshData]);
 
-  const {
-    isImporting,
-    importErrors,
-    importSuccess,
-    handleImportClick
-  } = useResidentImport({
+  // Memoize import handling to prevent unnecessary re-renders
+  const importProps = useMemo(() => ({
     months,
     isApartmentOccupied,
     resetForm,
@@ -95,7 +85,15 @@ const ResidentsPage = () => {
     handleAddResident: handleAddResidentWithRefresh,
     refreshData,
     fetchResidents
-  });
+  }), [months, isApartmentOccupied, resetForm, setCurrentResident, 
+       handleAddResidentWithRefresh, refreshData, fetchResidents]);
+
+  const {
+    isImporting,
+    importErrors,
+    importSuccess,
+    handleImportClick
+  } = useResidentImport(importProps);
 
   const handleDownloadCsv = useCallback(() => {
     downloadResidentsCsv(filteredResidents, months);
@@ -103,12 +101,10 @@ const ResidentsPage = () => {
 
   // Update error state when residentsError changes
   useEffect(() => {
-    if (residentsError) {
-      setFetchError(residentsError);
-    }
+    if (residentsError) setFetchError(residentsError);
   }, [residentsError]);
 
-  // Initial data loading
+  // Initial data loading with error handling
   useEffect(() => {
     if (!hasAttemptedFetch && !isFetching) {
       const loadData = async () => {

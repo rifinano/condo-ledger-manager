@@ -20,6 +20,7 @@ export const useResidentsFetch = (
   // Use a ref to track the last fetch attempt
   const lastFetchTime = useRef<number>(0);
   const fetchThrottleMs = 1000; // Minimum time between fetches
+  const maxRetries = 3; // Maximum number of retry attempts
   
   const fetchResidents = useCallback(async () => {
     // Prevent concurrent fetches and throttle requests
@@ -32,40 +33,20 @@ export const useResidentsFetch = (
     lastFetchTime.current = now;
     
     try {
-      // Add retry mechanism for network issues
-      const maxRetries = 3;
       let attempt = 0;
       let lastError = null;
+      let data = null;
       
-      while (attempt < maxRetries) {
+      // Retry loop with exponential backoff
+      while (attempt < maxRetries && !data) {
         try {
           console.log(`Attempt ${attempt + 1} to fetch residents data`);
-          const data = await getResidents();
-          
-          // If we succeeded, get the blocks as well
-          let blocksData = [];
-          try {
-            blocksData = await getBlocks();
-          } catch (blockError) {
-            console.error("Error fetching blocks, proceeding with residents only:", blockError);
-            // Continue with empty blocks list
-          }
-          
-          const blockNames = new Set(blocksData.map(block => block.name));
-          
-          // Use efficient filtering with Set lookup for better performance
-          const validResidents = blockNames.size === 0 ? 
-            data : 
-            data.filter(resident => blockNames.has(resident.block_number));
-          
-          setResidents(validResidents || []);
-          setAllResidents(validResidents || []);
-          setTotalCount(validResidents.length);
-          return;
+          data = await getResidents();
         } catch (err) {
           lastError = err;
           attempt++;
           console.log(`Residents fetch attempt ${attempt} failed, ${attempt < maxRetries ? "retrying..." : "giving up."}`);
+          
           // Wait before retrying (exponential backoff)
           if (attempt < maxRetries) {
             await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, attempt - 1)));
@@ -73,8 +54,29 @@ export const useResidentsFetch = (
         }
       }
       
-      // If we get here, all retries failed
-      throw lastError;
+      // If all retries failed, throw the last error
+      if (!data) throw lastError;
+      
+      // Fetch blocks for filtering
+      let blocksData = [];
+      try {
+        blocksData = await getBlocks();
+      } catch (blockError) {
+        console.error("Error fetching blocks, proceeding with residents only:", blockError);
+        // Continue with empty blocks list
+      }
+      
+      // Optimize filtering performance
+      const blockNames = new Set(blocksData.map(block => block.name));
+      
+      // Use Set for faster lookups
+      const validResidents = blockNames.size === 0 ? 
+        data : 
+        data.filter(resident => blockNames.has(resident.block_number));
+      
+      setResidents(validResidents || []);
+      setAllResidents(validResidents || []);
+      setTotalCount(validResidents.length);
     } catch (error: any) {
       console.error("Error fetching residents after all retries:", error);
       setError("Failed to fetch residents data. Please check your connection and try again.");
@@ -82,7 +84,7 @@ export const useResidentsFetch = (
       setAllResidents([]);
       setTotalCount(0);
       
-      // Show toast notification only once
+      // Show toast notification
       toast({
         title: "Connection Error",
         description: "Could not load resident data. Please try again later.",

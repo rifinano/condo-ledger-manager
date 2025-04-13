@@ -86,11 +86,11 @@ export const useDashboardData = () => {
       const paymentsByBlock = blocks ? await Promise.all(blocks.map(async (block) => {
         const blockResidents = residents ? residents.filter(r => r.block_number === block.name) : [];
         
-        // Fix the type issue by using the correct type for block.id when querying
+        // Fix the type issue by using type assertion to allow string id
         const { count: blockApartments, error: blockApartmentsError } = await supabase
           .from('apartments')
           .select('*', { count: 'exact', head: true })
-          .eq('block_id', block.id);
+          .eq('block_id', block.id as any); // Use type assertion to resolve the error
         
         if (blockApartmentsError) {
           console.error(`Error fetching apartments for block ${block.name}:`, blockApartmentsError);
@@ -124,7 +124,7 @@ export const useDashboardData = () => {
         title: "Dashboard updated",
         description: "Latest data has been loaded",
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error fetching dashboard data:", error);
       setError(error instanceof Error ? error.message : String(error));
       toast({
