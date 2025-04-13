@@ -51,7 +51,12 @@ const ResidentsContent = ({
 
       <Card className="p-4">
         <div className="mb-4">
-          <ResidentsSearch searchTerm={searchTerm} onSearchChange={onSearchChange} />
+          <ResidentsSearch 
+            searchTerm={searchTerm} 
+            onSearchChange={onSearchChange} 
+            disabled={isLoading || isImporting}
+            totalResults={residents.length}
+          />
         </div>
         
         {isLoading ? (
