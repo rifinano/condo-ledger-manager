@@ -51,7 +51,59 @@ export const prepareResidentData = (
   row: string[], 
   months: { value: string; label: string }[]
 ): Partial<ResidentFormData> => {
-  const [fullName, phoneNumber, blockNumber, apartmentNumber, moveInMonthName, moveInYear] = row;
+  // Default column mappings for normal CSV format
+  let fullName = row[0];
+  let phoneNumber = row[1];
+  let blockNumber = row[2];
+  let apartmentNumber = row[3];
+  let moveInMonthName = row[4];
+  let moveInYear = row[5];
+  
+  // Handle various CSV formats by trying to detect column positions
+  // If the file seems incorrectly formatted, try to identify column contents by patterns
+  if (!fullName && row.length > 1) {
+    // If the first column is empty, check other columns
+    for (let i = 1; i < row.length; i++) {
+      if (row[i] && !fullName) {
+        fullName = row[i];
+        break;
+      }
+    }
+  }
+  
+  if (!blockNumber && row.length > 2) {
+    // Look for "Block" in any field
+    for (let i = 0; i < row.length; i++) {
+      if (row[i] && row[i].toLowerCase().includes('block')) {
+        blockNumber = row[i];
+        break;
+      }
+    }
+  }
+  
+  // Try to parse month if it's not set
+  if (!moveInMonthName && row.length > 2) {
+    for (let i = 0; i < row.length; i++) {
+      // Check if column might be a month name
+      const possibleMonth = parseMonth(row[i], months);
+      if (possibleMonth && parseInt(possibleMonth) > 0) {
+        moveInMonthName = row[i];
+        break;
+      }
+    }
+  }
+  
+  // Try to parse year if it's not set
+  if (!moveInYear && row.length > 2) {
+    const currentYear = new Date().getFullYear();
+    for (let i = 0; i < row.length; i++) {
+      const yearValue = parseInt(row[i]);
+      if (!isNaN(yearValue) && yearValue > 1900 && yearValue <= currentYear + 5) {
+        moveInYear = row[i];
+        break;
+      }
+    }
+  }
   
   const moveInMonth = parseMonth(moveInMonthName, months);
   const currentYear = new Date().getFullYear().toString();

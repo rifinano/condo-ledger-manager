@@ -81,7 +81,6 @@ export const useFileHandler = ({
         const { importErrors, occupiedLocations } = await detectAllConflicts(validRows, isApartmentOccupied);
         
         // Update errors first to show conflicts
-        // FIX: Convert the function that updates state to use direct array assignment
         const combinedErrors = [...validationErrors, ...importErrors];
         setImportErrors(combinedErrors);
         
@@ -110,7 +109,6 @@ export const useFileHandler = ({
       } catch (conflictError) {
         console.error("Fatal error detecting conflicts:", conflictError);
         handleNetworkError(conflictError, "Failed to check for conflicts");
-        // FIX: Convert the function that updates state to use direct array assignment
         const errorMessage = "Failed to check for conflicts due to a connection error. Please try again.";
         setImportErrors([...validationErrors, errorMessage]);
         setImportSuccess(0);
@@ -152,11 +150,11 @@ export const useFileHandler = ({
         return;
       }
       
-      // Validate file type
-      if (!file.name.toLowerCase().endsWith('.csv')) {
+      // Validate file type - allow CSV and TSV
+      if (!file.name.toLowerCase().endsWith('.csv') && !file.name.toLowerCase().endsWith('.tsv')) {
         toast({
           title: "Import Error",
-          description: "Only CSV files are supported",
+          description: "Only CSV and TSV files are supported",
           variant: "destructive"
         });
         return;

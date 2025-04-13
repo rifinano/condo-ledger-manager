@@ -58,19 +58,22 @@ export const parseResidentsCsv = (csvText: string): {
     const parsedValues: string[][] = [];
     const errors: string[] = [];
     
+    // Check if file is tab-delimited
+    const isTabDelimited = rows[0].includes('\t');
+    const delimiter = isTabDelimited ? '\t' : ',';
+    
     for (let i = 0; i < dataRows.length; i++) {
       const row = dataRows[i];
-      
-      // Handle CSV parsing with or without quotes
       let values: string[] = [];
-      let inQuotes = false;
-      let currentValue = '';
       
-      // For tab-delimited files
-      if (row.includes('\t')) {
+      // Handle tab-delimited files directly
+      if (isTabDelimited) {
         values = row.split('\t').map(val => val.trim());
       } else {
         // For comma-delimited files with possible quotes
+        let inQuotes = false;
+        let currentValue = '';
+        
         for (let j = 0; j < row.length; j++) {
           const char = row[j];
           

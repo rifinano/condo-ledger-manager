@@ -11,21 +11,70 @@ export const useImportValidation = () => {
    * Validates a CSV row for required fields
    */
   const validateCsvRow = (row: string[]): string | null => {
-    if (row.length < 4) {
+    if (row.length < 3) {
       return `Invalid row format: ${row.join(', ')}. Not enough columns.`;
     }
     
-    const [fullName, , blockNumber, apartmentNumber] = row;
+    // Default position for expected columns
+    let fullNameIndex = 0;
+    let blockNumberIndex = 2;
+    let apartmentNumberIndex = 3;
     
-    if (!fullName?.trim()) {
+    // If row has exactly 3 columns, assume they are Name, Block, Apartment
+    if (row.length === 3) {
+      fullNameIndex = 0;
+      blockNumberIndex = 1;
+      apartmentNumberIndex = 2;
+    }
+    
+    // Try to detect which column is which if standard positions don't have values
+    if (!row[fullNameIndex]?.trim()) {
+      // Look for a non-empty column that doesn't look like a block or apartment
+      for (let i = 0; i < row.length; i++) {
+        if (row[i]?.trim() && 
+            !row[i].toLowerCase().includes('block') && 
+            !row[i].match(/^\d+$/) &&
+            i !== blockNumberIndex && 
+            i !== apartmentNumberIndex) {
+          fullNameIndex = i;
+          break;
+        }
+      }
+    }
+    
+    if (!row[blockNumberIndex]?.trim() || !row[blockNumberIndex].toLowerCase().includes('block')) {
+      // Look for a column containing "block"
+      for (let i = 0; i < row.length; i++) {
+        if (row[i]?.trim() && row[i].toLowerCase().includes('block')) {
+          blockNumberIndex = i;
+          break;
+        }
+      }
+    }
+    
+    if (!row[apartmentNumberIndex]?.trim() || isNaN(Number(row[apartmentNumberIndex]))) {
+      // Look for a column containing just numbers, likely to be apartment number
+      for (let i = 0; i < row.length; i++) {
+        if (row[i]?.trim() && row[i].match(/^\d+$/) && i !== blockNumberIndex) {
+          apartmentNumberIndex = i;
+          break;
+        }
+      }
+    }
+    
+    const fullName = row[fullNameIndex]?.trim();
+    const blockNumber = row[blockNumberIndex]?.trim();
+    const apartmentNumber = row[apartmentNumberIndex]?.trim();
+    
+    if (!fullName) {
       return `Missing resident name in row: ${row.join(', ')}`;
     }
     
-    if (!blockNumber?.trim()) {
+    if (!blockNumber) {
       return `Missing block number for resident ${fullName}`;
     }
     
-    if (!apartmentNumber?.trim()) {
+    if (!apartmentNumber) {
       return `Missing apartment number for resident ${fullName} in block ${blockNumber}`;
     }
     
