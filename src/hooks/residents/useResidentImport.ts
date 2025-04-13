@@ -1,9 +1,10 @@
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { ResidentFormData } from '@/services/residents/types';
 import { useImportFile } from '@/hooks/residents/useImportFile';
 import { useResidentProcessing } from '@/hooks/residents/useResidentProcessing';
 import { useApartmentCreation } from '@/hooks/residents/useApartmentCreation';
+import { useToast } from '@/hooks/use-toast';
 
 interface UseResidentImportProps {
   months: { value: string; label: string }[];
@@ -13,6 +14,11 @@ interface UseResidentImportProps {
   handleAddResident: () => Promise<boolean>;
   refreshData: () => void | Promise<void>;
   fetchResidents: () => Promise<void>;
+}
+
+interface FailedImport {
+  rowData: string[];
+  error: string;
 }
 
 export const useResidentImport = ({
@@ -25,12 +31,13 @@ export const useResidentImport = ({
   fetchResidents
 }: UseResidentImportProps) => {
   const [isImporting, setIsImporting] = useState(false);
-  
+  const [importErrors, setImportErrors] = useState<string[]>([]);
+  const [importSuccess, setImportSuccess] = useState(0);
+  const [failedImports, setFailedImports] = useState<FailedImport[]>([]);
+  const [isRetrying, setIsRetrying] = useState(false);
+  const { toast } = useToast();
+
   const {
-    importErrors,
-    setImportErrors,
-    importSuccess,
-    setImportSuccess,
     processImportedResidents,
     onImportStart
   } = useResidentProcessing({
@@ -47,7 +54,10 @@ export const useResidentImport = ({
         }
       }
     },
-    months
+    months,
+    onFailedImport: (rowData: string[], error: string) => {
+      setFailedImports(prev => [...prev, { rowData, error }]);
+    }
   });
 
   const { handleImportClick } = useImportFile({
@@ -55,7 +65,10 @@ export const useResidentImport = ({
     setIsImporting,
     setImportErrors,
     setImportSuccess,
-    onImportStart,
+    onImportStart: () => {
+      onImportStart();
+      setFailedImports([]);
+    },
     processImportedResidents
   });
 
@@ -76,12 +89,71 @@ export const useResidentImport = ({
     importErrors
   });
 
+  // New retry function for failed imports
+  const handleRetryFailedImports = useCallback(async () => {
+    if (failedImports.length === 0 || isRetrying) return;
+    
+    setIsRetrying(true);
+    
+    try {
+      // Get data rows from failed imports
+      const rowsToRetry = failedImports.map(item => item.rowData);
+      
+      // Clear previous failed imports
+      setFailedImports([]);
+      
+      // Create an empty object as we're retrying based on failed imports, not conflicts
+      const emptyOccupiedLocations: Record<string, string> = {};
+      
+      toast({
+        title: "Retry Started",
+        description: `Attempting to import ${rowsToRetry.length} failed resident(s)...`,
+      });
+      
+      // Process the previously failed imports
+      const successCount = await processImportedResidents(rowsToRetry, emptyOccupiedLocations);
+      
+      // Update success count
+      setImportSuccess(prev => prev + successCount);
+      
+      if (successCount > 0) {
+        toast({
+          title: "Retry Successful",
+          description: `Successfully imported ${successCount} of ${rowsToRetry.length} resident(s).`,
+          variant: successCount === rowsToRetry.length ? "default" : "destructive"
+        });
+      } else {
+        toast({
+          title: "Retry Failed",
+          description: "Failed to import any residents. Please check the error details.",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      console.error("Error retrying failed imports:", error);
+      toast({
+        title: "Retry Error",
+        description: "An unexpected error occurred while retrying imports.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsRetrying(false);
+    }
+  }, [failedImports, isRetrying, processImportedResidents, toast]);
+
+  const hasFailedImports = failedImports.length > 0;
+
   return {
     isImporting,
     importErrors,
     importSuccess,
     handleImportClick,
     handleCreateMissingApartments,
-    isCreatingApartments
+    isCreatingApartments,
+    // New retry functionality
+    hasFailedImports,
+    failedImports,
+    handleRetryFailedImports,
+    isRetrying
   };
 };

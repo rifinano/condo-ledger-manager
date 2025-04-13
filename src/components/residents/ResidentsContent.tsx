@@ -1,11 +1,15 @@
 
-import { Card } from "@/components/ui/card";
+import { Resident } from "@/services/residents/types";
 import { Skeleton } from "@/components/ui/skeleton";
 import ResidentsTable from "./ResidentsTable";
 import ResidentsSearch from "./ResidentsSearch";
 import ResidentsPagination from "./ResidentsPagination";
 import ResidentsImport from "./ResidentsImport";
-import { Resident } from "@/services/residents/types";
+
+interface FailedImport {
+  rowData: string[];
+  error: string;
+}
 
 interface ResidentsContentProps {
   residents: Resident[];
@@ -22,10 +26,15 @@ interface ResidentsContentProps {
   importSuccess: number;
   isImporting: boolean;
   onCreateMissingApartments?: (blockName: string, apartments: string[]) => void;
+  // New props for retry functionality
+  hasFailedImports?: boolean;
+  failedImports?: FailedImport[];
+  onRetryFailedImports?: () => void;
+  isRetrying?: boolean;
 }
 
-const ResidentsContent = ({
-  residents,
+const ResidentsContent = ({ 
+  residents, 
   isLoading,
   totalCount,
   searchTerm,
@@ -38,55 +47,54 @@ const ResidentsContent = ({
   importErrors,
   importSuccess,
   isImporting,
-  onCreateMissingApartments
+  onCreateMissingApartments,
+  // New props with defaults
+  hasFailedImports = false,
+  failedImports = [],
+  onRetryFailedImports,
+  isRetrying = false
 }: ResidentsContentProps) => {
   return (
     <div className="space-y-4">
+      <ResidentsSearch 
+        searchTerm={searchTerm} 
+        onSearchChange={onSearchChange} 
+        disabled={isLoading}
+        totalResults={residents.length}
+      />
+      
       <ResidentsImport 
         isImporting={isImporting} 
-        importErrors={importErrors} 
-        importSuccess={importSuccess} 
+        importErrors={importErrors}
+        importSuccess={importSuccess}
         onCreateMissingApartments={onCreateMissingApartments}
+        // Pass retry props to ResidentsImport
+        hasFailedImports={hasFailedImports}
+        failedImports={failedImports}
+        onRetryFailedImports={onRetryFailedImports}
+        isRetrying={isRetrying}
       />
-
-      <Card className="p-4">
-        <div className="mb-4">
-          <ResidentsSearch searchTerm={searchTerm} onSearchChange={onSearchChange} />
+      
+      {isLoading ? (
+        <div className="space-y-4">
+          <Skeleton className="h-[50px] w-full rounded-md" />
+          <Skeleton className="h-[400px] w-full rounded-md" />
         </div>
-        
-        {isLoading ? (
-          <div className="space-y-3">
-            <Skeleton className="h-12 w-full" />
-            <Skeleton className="h-12 w-full" />
-            <Skeleton className="h-12 w-full" />
-            <Skeleton className="h-12 w-full" />
-            <Skeleton className="h-12 w-full" />
-          </div>
-        ) : residents.length === 0 ? (
-          <div className="text-center py-8 text-muted-foreground">
-            {searchTerm ? "No residents match your search criteria." : "No residents found. Add some residents to get started."}
-          </div>
-        ) : (
-          <>
-            <ResidentsTable
-              residents={residents}
-              isLoading={isLoading}
-              onEdit={onEdit}
-              onDelete={onDelete}
-            />
-            
-            {totalPages > 1 && (
-              <div className="mt-4">
-                <ResidentsPagination
-                  currentPage={currentPage}
-                  totalPages={totalPages}
-                  onPageChange={onPageChange}
-                />
-              </div>
-            )}
-          </>
-        )}
-      </Card>
+      ) : (
+        <>
+          <ResidentsTable 
+            residents={residents} 
+            onEdit={onEdit} 
+            onDelete={onDelete}
+          />
+          
+          <ResidentsPagination 
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={onPageChange}
+          />
+        </>
+      )}
     </div>
   );
 };

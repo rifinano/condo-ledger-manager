@@ -1,21 +1,36 @@
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { CheckCircle, AlertCircle, Loader2, HomeIcon, XOctagon, AlertTriangle, InfoIcon, Plus } from "lucide-react";
+import { CheckCircle, AlertCircle, Loader2, HomeIcon, XOctagon, AlertTriangle, InfoIcon, Plus, RefreshCw } from "lucide-react";
 import { useMemo } from "react";
 import { Button } from "@/components/ui/button";
+
+interface FailedImport {
+  rowData: string[];
+  error: string;
+}
 
 interface ResidentsImportProps {
   isImporting: boolean;
   importErrors: string[];
   importSuccess: number;
   onCreateMissingApartments?: (blockName: string, apartments: string[]) => void;
+  // New props for retry functionality
+  hasFailedImports?: boolean;
+  failedImports?: FailedImport[];
+  onRetryFailedImports?: () => void;
+  isRetrying?: boolean;
 }
 
 const ResidentsImport = ({
   isImporting,
   importErrors,
   importSuccess,
-  onCreateMissingApartments
+  onCreateMissingApartments,
+  // New props with defaults
+  hasFailedImports = false,
+  failedImports = [],
+  onRetryFailedImports,
+  isRetrying = false
 }: ResidentsImportProps) => {
   const { 
     locationErrors, 
@@ -72,16 +87,18 @@ const ResidentsImport = ({
     return errorsByBlock;
   }, [apartmentErrors]);
   
-  if (!isImporting && importErrors.length === 0 && importSuccess === 0) {
+  if (!isImporting && !isRetrying && importErrors.length === 0 && importSuccess === 0 && !hasFailedImports) {
     return null;
   }
   
   return (
     <div className="space-y-4">
-      {isImporting && (
+      {(isImporting || isRetrying) && (
         <div className="flex items-center justify-center p-4 bg-blue-50 rounded-md">
           <Loader2 className="h-5 w-5 mr-2 animate-spin text-blue-500" />
-          <span className="text-blue-700">Importing residents, please wait...</span>
+          <span className="text-blue-700">
+            {isRetrying ? "Retrying failed imports..." : "Importing residents, please wait..."}
+          </span>
         </div>
       )}
       
@@ -91,6 +108,28 @@ const ResidentsImport = ({
           <AlertTitle className="text-green-800">Import Successful</AlertTitle>
           <AlertDescription className="text-green-700">
             Successfully imported {importSuccess} resident{importSuccess !== 1 ? 's' : ''}.
+          </AlertDescription>
+        </Alert>
+      )}
+      
+      {hasFailedImports && failedImports.length > 0 && onRetryFailedImports && (
+        <Alert className="bg-amber-50 border-amber-200">
+          <AlertTriangle className="h-4 w-4 text-amber-600" />
+          <AlertTitle className="text-amber-800">Failed Imports Available for Retry</AlertTitle>
+          <AlertDescription className="text-amber-700">
+            <div className="flex flex-col space-y-2">
+              <p>{failedImports.length} resident{failedImports.length !== 1 ? 's' : ''} failed to import.</p>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={onRetryFailedImports}
+                disabled={isRetrying}
+                className="self-start mt-2 bg-white hover:bg-amber-100 border-amber-300"
+              >
+                <RefreshCw className="mr-2 h-4 w-4" />
+                {isRetrying ? "Retrying..." : "Retry Failed Imports"}
+              </Button>
+            </div>
           </AlertDescription>
         </Alert>
       )}

@@ -94,7 +94,12 @@ const ResidentsPage = () => {
     importSuccess,
     handleImportClick,
     handleCreateMissingApartments,
-    isCreatingApartments
+    isCreatingApartments,
+    // New retry functionality
+    hasFailedImports,
+    failedImports,
+    handleRetryFailedImports,
+    isRetrying
   } = useResidentImport(importProps);
 
   const handleDownloadCsv = useCallback(() => {
@@ -157,8 +162,12 @@ const ResidentsPage = () => {
             onPageChange={handlePageChange}
             importErrors={importErrors}
             importSuccess={importSuccess}
-            isImporting={isImporting || isCreatingApartments}
+            isImporting={isImporting || isCreatingApartments || isRetrying}
             onCreateMissingApartments={handleCreateMissingApartments}
+            // New props for retry functionality
+            hasFailedImports={hasFailedImports}
+            failedImports={failedImports}
+            onRetryFailedImports={handleRetryFailedImports}
           />
         )}
       </div>
