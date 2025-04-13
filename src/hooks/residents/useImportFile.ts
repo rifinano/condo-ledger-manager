@@ -54,7 +54,7 @@ export const useImportFile = ({
     return null;
   };
 
-  const handleFileChange = (event: Event) => {
+  const handleFileChange = async (event: Event) => {
     const target = event.target as HTMLInputElement;
     if (!target.files || target.files.length === 0) return;
     
@@ -63,8 +63,8 @@ export const useImportFile = ({
     
     reader.onload = async (e) => {
       if (isProcessing) return;
-      setIsProcessing(true);
       
+      setIsProcessing(true);
       onImportStart();
       setIsImporting(true);
       
@@ -79,12 +79,17 @@ export const useImportFile = ({
           return;
         }
         
-        // Pre-validate all rows and collect validation errors
+        // Batch validation for better performance
         const validationErrors: string[] = [];
+        const validRows: string[][] = [];
+        
+        // First pass - validate all rows
         for (const row of values) {
           const validationError = validateCsvRow(row);
           if (validationError) {
             validationErrors.push(validationError);
+          } else {
+            validRows.push(row);
           }
         }
         
@@ -101,35 +106,46 @@ export const useImportFile = ({
         }
         
         // Detect conflicts in the import batch
-        const importErrors = detectImportConflicts(values);
+        const importErrors = detectImportConflicts(validRows);
         
-        // Check for existing residents in locations
+        // Efficiently check for occupied locations
         const occupiedLocations: Record<string, string> = {};
+        const locationCheckPromises: Promise<void>[] = [];
         
-        for (const row of values) {
-          if (row.length < 4) continue;
-          
+        for (const row of validRows) {
           const [, , blockNumber, apartmentNumber] = row;
-          if (!blockNumber || !apartmentNumber) continue;
           
           if (isApartmentOccupied(blockNumber, apartmentNumber)) {
             const locationKey = `${blockNumber}-${apartmentNumber}`;
-            const existingResidentDetails = await getExistingResidentDetails(blockNumber, apartmentNumber);
-            occupiedLocations[locationKey] = existingResidentDetails;
             
-            const locationError = `Location already occupied: Block ${blockNumber}, Apartment ${apartmentNumber} occupied by ${existingResidentDetails}`;
-            if (!importErrors.includes(locationError)) {
-              importErrors.push(locationError);
-            }
+            // Create a promise to get resident details
+            const checkPromise = async () => {
+              const existingResidentDetails = await getExistingResidentDetails(blockNumber, apartmentNumber);
+              occupiedLocations[locationKey] = existingResidentDetails;
+              
+              const locationError = `Location already occupied: Block ${blockNumber}, Apartment ${apartmentNumber} occupied by ${existingResidentDetails}`;
+              if (!importErrors.includes(locationError)) {
+                importErrors.push(locationError);
+              }
+            };
+            
+            locationCheckPromises.push(checkPromise());
           }
         }
+        
+        // Wait for all location checks to complete
+        await Promise.all(locationCheckPromises);
         
         // Update errors first to show conflicts
         setImportErrors(importErrors);
         
-        // Process the import
-        const successCount = await processImportedResidents(values, occupiedLocations);
-        setImportSuccess(successCount);
+        // Process the import if there are rows left to process
+        if (validRows.length > 0) {
+          const successCount = await processImportedResidents(validRows, occupiedLocations);
+          setImportSuccess(successCount);
+        } else {
+          setImportSuccess(0);
+        }
         
       } catch (error) {
         console.error("Error processing import:", error);

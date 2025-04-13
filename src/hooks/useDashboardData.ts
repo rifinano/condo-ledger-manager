@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -40,24 +41,28 @@ export const useDashboardData = () => {
     setError(null);
     
     try {
+      // Fetch blocks data
       const { data: blocks, error: blocksError } = await supabase
         .from('blocks')
         .select('id, name');
       
       if (blocksError) throw new Error(`Error fetching blocks: ${blocksError.message}`);
       
+      // Get total apartment count
       const { count: apartmentsCount, error: apartmentsError } = await supabase
         .from('apartments')
         .select('*', { count: 'exact', head: true });
         
       if (apartmentsError) throw new Error(`Error fetching apartments: ${apartmentsError.message}`);
       
+      // Fetch residents data
       const { data: residents, error: residentsError } = await supabase
         .from('residents')
         .select('*');
         
       if (residentsError) throw new Error(`Error fetching residents: ${residentsError.message}`);
       
+      // Get payment data for current month/year
       const { data: payments, error: paymentsError } = await supabase
         .from('payments')
         .select('*')
@@ -66,6 +71,7 @@ export const useDashboardData = () => {
         
       if (paymentsError) throw new Error(`Error fetching payments: ${paymentsError.message}`);
       
+      // Calculate payment statistics
       const pendingPayments = payments ? payments.filter(p => p.payment_status === 'unpaid').length : 0;
       const paidPayments = payments ? payments.filter(p => p.payment_status === 'paid').length : 0;
       const totalPayments = payments ? payments.length : 0;
@@ -76,15 +82,15 @@ export const useDashboardData = () => {
             .reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0)
         : 0;
       
+      // Get payment data by block
       const paymentsByBlock = blocks ? await Promise.all(blocks.map(async (block) => {
         const blockResidents = residents ? residents.filter(r => r.block_number === block.name) : [];
         
-        const blockId = block.id as any;
-        
+        // Fix the type issue by using the correct type for block.id when querying
         const { count: blockApartments, error: blockApartmentsError } = await supabase
           .from('apartments')
           .select('*', { count: 'exact', head: true })
-          .eq('block_id', blockId);
+          .eq('block_id', block.id);
         
         if (blockApartmentsError) {
           console.error(`Error fetching apartments for block ${block.name}:`, blockApartmentsError);

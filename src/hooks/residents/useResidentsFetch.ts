@@ -1,5 +1,5 @@
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import { getResidents, Resident } from "@/services/residents";
 import { getBlocks } from "@/services/propertiesService";
 import { useToast } from "@/hooks/use-toast";
@@ -17,13 +17,19 @@ export const useResidentsFetch = (
   const [totalCount, setTotalCount] = useState(0);
   const { toast } = useToast();
   
+  // Use a ref to track the last fetch attempt
+  const lastFetchTime = useRef<number>(0);
+  const fetchThrottleMs = 1000; // Minimum time between fetches
+  
   const fetchResidents = useCallback(async () => {
-    // Prevent concurrent fetches
-    if (isFetching) return;
+    // Prevent concurrent fetches and throttle requests
+    const now = Date.now();
+    if (isFetching || (now - lastFetchTime.current < fetchThrottleMs)) return;
     
     setIsLoading(true);
     setIsFetching(true);
     setError(null); // Reset error state
+    lastFetchTime.current = now;
     
     try {
       // Add retry mechanism for network issues
@@ -47,9 +53,7 @@ export const useResidentsFetch = (
           
           const blockNames = new Set(blocksData.map(block => block.name));
           
-          // Filter residents to show only those with valid blocks
-          // This prevents issues if blocks are deleted but residents still reference them
-          // If we don't have any blocks, show all residents
+          // Use efficient filtering with Set lookup for better performance
           const validResidents = blockNames.size === 0 ? 
             data : 
             data.filter(resident => blockNames.has(resident.block_number));

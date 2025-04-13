@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+
+import { useEffect, useState, useCallback } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 import { useResidentsPage } from "@/hooks/useResidentsPage";
 import { usePropertyData } from "@/hooks/usePropertyData";
@@ -56,6 +57,31 @@ const ResidentsPage = () => {
     handleRetry
   } = useResidentRefresh(fetchResidents, refreshData);
 
+  // Memoize these handlers to prevent unnecessary re-renders
+  const handleAddResidentWithRefresh = useCallback(async () => {
+    const result = await handleAddResident();
+    if (result) {
+      refreshData();
+    }
+    return result;
+  }, [handleAddResident, refreshData]);
+
+  const handleUpdateResidentWithRefresh = useCallback(async () => {
+    const result = await handleUpdateResident();
+    if (result) {
+      refreshData();
+    }
+    return result;
+  }, [handleUpdateResident, refreshData]);
+
+  const handleDeleteResidentWithRefresh = useCallback(async () => {
+    const result = await handleDeleteResident();
+    if (result) {
+      refreshData();
+    }
+    return result;
+  }, [handleDeleteResident, refreshData]);
+
   const {
     isImporting,
     importErrors,
@@ -71,16 +97,18 @@ const ResidentsPage = () => {
     fetchResidents
   });
 
-  const handleDownloadCsv = () => {
+  const handleDownloadCsv = useCallback(() => {
     downloadResidentsCsv(filteredResidents, months);
-  };
+  }, [filteredResidents, months]);
 
+  // Update error state when residentsError changes
   useEffect(() => {
     if (residentsError) {
       setFetchError(residentsError);
     }
   }, [residentsError]);
 
+  // Initial data loading
   useEffect(() => {
     if (!hasAttemptedFetch && !isFetching) {
       const loadData = async () => {
@@ -99,30 +127,6 @@ const ResidentsPage = () => {
       loadData();
     }
   }, [fetchResidents, refreshData, hasAttemptedFetch, isFetching, setHasAttemptedFetch]);
-
-  async function handleAddResidentWithRefresh() {
-    const result = await handleAddResident();
-    if (result) {
-      refreshData();
-    }
-    return result;
-  }
-
-  async function handleUpdateResidentWithRefresh() {
-    const result = await handleUpdateResident();
-    if (result) {
-      refreshData();
-    }
-    return result;
-  }
-
-  async function handleDeleteResidentWithRefresh() {
-    const result = await handleDeleteResident();
-    if (result) {
-      refreshData();
-    }
-    return result;
-  }
 
   return (
     <DashboardLayout>
