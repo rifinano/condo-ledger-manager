@@ -7,11 +7,11 @@ import { useApartmentCreation } from '@/hooks/residents/useApartmentCreation';
 
 interface UseResidentImportProps {
   months: { value: string; label: string }[];
-  isApartmentOccupied: (blockNumber: string, apartmentNumber: string) => boolean;
+  isApartmentOccupied: (blockNumber: string, apartmentNumber: string, excludeResidentId?: string) => boolean;
   resetForm: () => void;
   setCurrentResident: (resident: Partial<ResidentFormData>) => void;
   handleAddResident: () => Promise<boolean>;
-  refreshData: () => Promise<void>;
+  refreshData: () => void | Promise<void>;  // Updated to accept either void or Promise<void>
   fetchResidents: () => Promise<void>;
 }
 
