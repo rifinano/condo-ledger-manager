@@ -1,46 +1,52 @@
 
-import { useCallback } from 'react';
-import { toast } from '@/hooks/use-toast';
+import { useToast } from "@/hooks/use-toast";
 
+/**
+ * Hook for handling network errors in a consistent way
+ */
 export const useNetworkErrorHandler = () => {
-  const handleNetworkError = useCallback((error: any, fallbackMessage: string) => {
-    console.error("Network error:", error);
+  const { toast } = useToast();
+
+  /**
+   * Handle network errors with appropriate toast messages
+   */
+  const handleNetworkError = (error: unknown, context: string = "Operation") => {
+    console.error(`${context} error:`, error);
     
-    // Check if the error is a Firestore error and ignore it
-    if (error?.message?.includes('firestore') || 
-        error?.message?.includes('firebase') || 
-        error?.stack?.includes('firestore') || 
-        error?.stack?.includes('firebase')) {
-      console.log("Ignoring Firestore/Firebase error:", error.message);
-      return null;
-    }
+    // Try to determine if it's a network connectivity issue
+    let isConnectivityIssue = false;
+    let errorMessage = "An unexpected error occurred";
     
-    // Determine if it's a CORS error
-    const isCorsError = error instanceof Error && 
-      (error.message.includes('CORS') || 
-       error.message.includes('NetworkError') ||
-       error.message.includes('network request failed'));
-    
-    // Custom message based on error type
-    let errorMessage = fallbackMessage;
-    
-    if (isCorsError) {
-      errorMessage = "A network connection error occurred. Please check your internet connection.";
-    } else if (error?.response?.status === 429) {
-      errorMessage = "Too many requests. Please try again later.";
-    } else if (error?.message) {
+    if (error instanceof Error) {
       errorMessage = error.message;
+      isConnectivityIssue = error.message.toLowerCase().includes('network') || 
+                            error.message.toLowerCase().includes('connect') ||
+                            error.message.toLowerCase().includes('timeout') ||
+                            !navigator.onLine;
+    } else if (typeof error === 'string') {
+      errorMessage = error;
+      isConnectivityIssue = error.toLowerCase().includes('network') || 
+                            error.toLowerCase().includes('connect') ||
+                            error.toLowerCase().includes('timeout') ||
+                            !navigator.onLine;
     }
     
-    // Show toast notification
-    toast({
-      title: "Network Error",
-      description: errorMessage,
-      variant: "destructive",
-    });
-    
-    return null;
-  }, []);
-  
+    if (isConnectivityIssue) {
+      toast({
+        title: "Connection Error",
+        description: "Please check your internet connection and try again",
+        variant: "destructive"
+      });
+    } else {
+      toast({
+        title: `${context} Failed`,
+        description: errorMessage.length > 100 ? 
+          errorMessage.substring(0, 100) + "..." : 
+          errorMessage,
+        variant: "destructive"
+      });
+    }
+  };
+
   return { handleNetworkError };
 };

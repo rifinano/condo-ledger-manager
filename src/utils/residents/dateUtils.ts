@@ -25,10 +25,19 @@ export const parseMonth = (moveInMonthName: string | undefined, months: { value:
   const monthAbbreviations: Record<string, string> = {
     'jan': '01', 'feb': '02', 'mar': '03', 'apr': '04', 
     'may': '05', 'jun': '06', 'jul': '07', 'aug': '08', 
-    'sep': '09', 'oct': '10', 'nov': '11', 'dec': '12'
+    'sep': '09', 'oct': '10', 'nov': '11', 'dec': '12',
+    'january': '01', 'february': '02', 'march': '03', 'april': '04',
+    'june': '06', 'july': '07', 'august': '08', 'september': '09',
+    'october': '10', 'november': '11', 'december': '12'
   };
   
-  const abbr = trimmedMonth.toLowerCase().substring(0, 3);
+  const monthLower = trimmedMonth.toLowerCase();
+  if (monthLower in monthAbbreviations) {
+    return monthAbbreviations[monthLower];
+  }
+  
+  // Try to parse an abbreviation
+  const abbr = monthLower.substring(0, 3);
   if (abbr in monthAbbreviations) {
     return monthAbbreviations[abbr];
   }
@@ -38,6 +47,8 @@ export const parseMonth = (moveInMonthName: string | undefined, months: { value:
   if (!isNaN(parsedNum) && parsedNum >= 1 && parsedNum <= 12) {
     return parsedNum < 10 ? `0${parsedNum}` : `${parsedNum}`;
   }
+  
+  console.log(`Could not parse month: "${trimmedMonth}", defaulting to current month`);
   
   // Default to current month if no match
   const currentMonth = new Date().getMonth() + 1;
@@ -51,6 +62,8 @@ export const prepareResidentData = (
   row: string[], 
   months: { value: string; label: string }[]
 ): Partial<ResidentFormData> => {
+  console.log("Preparing resident data from row:", row);
+  
   // Default column mappings for normal CSV format
   let fullName = row[0];
   let phoneNumber = row[1];
@@ -59,54 +72,15 @@ export const prepareResidentData = (
   let moveInMonthName = row[4];
   let moveInYear = row[5];
   
-  // Handle various CSV formats by trying to detect column positions
-  // If the file seems incorrectly formatted, try to identify column contents by patterns
-  if (!fullName && row.length > 1) {
-    // If the first column is empty, check other columns
-    for (let i = 1; i < row.length; i++) {
-      if (row[i] && !fullName) {
-        fullName = row[i];
-        break;
-      }
-    }
-  }
-  
-  if (!blockNumber && row.length > 2) {
-    // Look for "Block" in any field
-    for (let i = 0; i < row.length; i++) {
-      if (row[i] && row[i].toLowerCase().includes('block')) {
-        blockNumber = row[i];
-        break;
-      }
-    }
-  }
-  
-  // Try to parse month if it's not set
-  if (!moveInMonthName && row.length > 2) {
-    for (let i = 0; i < row.length; i++) {
-      // Check if column might be a month name
-      const possibleMonth = parseMonth(row[i], months);
-      if (possibleMonth && parseInt(possibleMonth) > 0) {
-        moveInMonthName = row[i];
-        break;
-      }
-    }
-  }
-  
-  // Try to parse year if it's not set
-  if (!moveInYear && row.length > 2) {
-    const currentYear = new Date().getFullYear();
-    for (let i = 0; i < row.length; i++) {
-      const yearValue = parseInt(row[i]);
-      if (!isNaN(yearValue) && yearValue > 1900 && yearValue <= currentYear + 5) {
-        moveInYear = row[i];
-        break;
-      }
-    }
+  // Clean the block number if it contains "Block" prefix
+  if (blockNumber && blockNumber.toLowerCase().includes('block')) {
+    blockNumber = blockNumber.replace(/^block\s+/i, '').trim();
   }
   
   const moveInMonth = parseMonth(moveInMonthName, months);
   const currentYear = new Date().getFullYear().toString();
+  
+  console.log(`Parsed data: Name=${fullName}, Block=${blockNumber}, Apt=${apartmentNumber}, Month=${moveInMonth}, Year=${moveInYear || currentYear}`);
   
   return {
     full_name: fullName?.trim() || '',

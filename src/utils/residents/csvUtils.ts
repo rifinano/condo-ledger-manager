@@ -45,6 +45,8 @@ export const parseResidentsCsv = (csvText: string): {
   errors: string[]
 } => {
   try {
+    console.log("Parsing CSV text:", csvText.substring(0, 200)); // Log a preview
+    
     // Split the CSV content into rows
     const rows = csvText.split(/\r?\n/);
     
@@ -53,14 +55,17 @@ export const parseResidentsCsv = (csvText: string): {
       return { values: [], errors: ["Empty file"] };
     }
     
+    // Detect delimiters in the header row
+    const headerRow = rows[0];
+    const isTabDelimited = headerRow.includes('\t');
+    const delimiter = isTabDelimited ? '\t' : ',';
+    
+    console.log(`Detected delimiter: ${isTabDelimited ? 'tab' : 'comma'}`);
+    
     // Skip the header row and filter out empty rows
     const dataRows = rows.slice(1).filter(row => row.trim() !== '');
     const parsedValues: string[][] = [];
     const errors: string[] = [];
-    
-    // Check if file is tab-delimited
-    const isTabDelimited = rows[0].includes('\t');
-    const delimiter = isTabDelimited ? '\t' : ',';
     
     for (let i = 0; i < dataRows.length; i++) {
       const row = dataRows[i];
@@ -96,12 +101,6 @@ export const parseResidentsCsv = (csvText: string): {
         return trimmed.replace(/^"(.*)"$/, '$1');
       });
       
-      // Ensure we have at least the minimum required fields (name, block, apartment)
-      if (cleanValues.length < 3) {
-        errors.push(`Row ${i + 2}: Missing required columns. Found ${cleanValues.length} columns, need at least 3.`);
-        continue;
-      }
-      
       // Make sure we have an array with exactly 6 elements (padding with empty strings if needed)
       while (cleanValues.length < 6) {
         cleanValues.push('');
@@ -113,7 +112,8 @@ export const parseResidentsCsv = (csvText: string): {
       parsedValues.push(cleanValues);
     }
     
-    return { values: parsedValues, errors };
+    console.log(`Successfully parsed ${parsedValues.length} rows from CSV`);
+    return { values: parsedValues, errors: [] };
   } catch (error) {
     console.error("CSV parsing error:", error);
     return { 

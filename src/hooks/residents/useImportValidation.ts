@@ -11,6 +11,8 @@ export const useImportValidation = () => {
    * Validates a CSV row for required fields
    */
   const validateCsvRow = (row: string[]): string | null => {
+    console.log("Validating row:", row);
+    
     if (row.length < 3) {
       return `Invalid row format: ${row.join(', ')}. Not enough columns.`;
     }
@@ -42,23 +44,32 @@ export const useImportValidation = () => {
       }
     }
     
+    // Find block number column
     if (!row[blockNumberIndex]?.trim() || !row[blockNumberIndex].toLowerCase().includes('block')) {
-      // Look for a column containing "block"
       for (let i = 0; i < row.length; i++) {
-        if (row[i]?.trim() && row[i].toLowerCase().includes('block')) {
+        if (row[i]?.trim() && (
+          row[i].toLowerCase().includes('block') || 
+          (row[i].match(/^[a-zA-Z]+\s*\d*$/) && !isNaN(parseInt(row[apartmentNumberIndex] || "0")))
+        )) {
           blockNumberIndex = i;
           break;
         }
       }
     }
     
+    // Find apartment number column (usually a digit or after block column)
     if (!row[apartmentNumberIndex]?.trim() || isNaN(Number(row[apartmentNumberIndex]))) {
-      // Look for a column containing just numbers, likely to be apartment number
+      // First try to find a numeric column
       for (let i = 0; i < row.length; i++) {
         if (row[i]?.trim() && row[i].match(/^\d+$/) && i !== blockNumberIndex) {
           apartmentNumberIndex = i;
           break;
         }
+      }
+      
+      // If still not found, try column after block
+      if (isNaN(Number(row[apartmentNumberIndex])) && blockNumberIndex + 1 < row.length) {
+        apartmentNumberIndex = blockNumberIndex + 1;
       }
     }
     

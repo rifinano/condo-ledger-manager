@@ -1,13 +1,14 @@
 
 import { Button } from "@/components/ui/button";
-import { Download, Import, Plus } from "lucide-react";
+import { PlusIcon, DownloadIcon, UploadIcon, Trash2 } from "lucide-react";
 
 interface ResidentsHeaderProps {
   totalCount: number;
   isLoading: boolean;
   onAddResident: () => void;
-  onImport?: () => void;
-  onDownload?: () => void;
+  onImport: () => void;
+  onDownload: () => void;
+  onDeleteAll?: () => void;
 }
 
 const ResidentsHeader = ({
@@ -16,41 +17,56 @@ const ResidentsHeader = ({
   onAddResident,
   onImport,
   onDownload,
+  onDeleteAll
 }: ResidentsHeaderProps) => {
   return (
-    <div className="flex justify-between items-center">
+    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">Residents</h1>
-        <p className="text-gray-500 mt-1">
-          Manage resident information
-          {!isLoading && <span className="ml-2">({totalCount} total)</span>}
+        <h1 className="text-2xl font-bold tracking-tight">Residents</h1>
+        <p className="text-muted-foreground">
+          {isLoading ? (
+            "Loading residents..."
+          ) : (
+            `Total: ${totalCount} resident${totalCount !== 1 ? 's' : ''}`
+          )}
         </p>
       </div>
-      <div className="flex space-x-2">
-        {onDownload && (
+
+      <div className="flex flex-wrap gap-2">
+        <Button 
+          variant="outline" 
+          size="sm" 
+          onClick={onImport}
+        >
+          <UploadIcon className="mr-2 h-4 w-4" />
+          Import
+        </Button>
+        <Button 
+          variant="outline" 
+          size="sm" 
+          onClick={onDownload}
+          disabled={totalCount === 0}
+        >
+          <DownloadIcon className="mr-2 h-4 w-4" />
+          Export
+        </Button>
+        {onDeleteAll && (
           <Button 
-            variant="outline"
-            onClick={onDownload}
-            disabled={isLoading || totalCount === 0}
+            variant="destructive" 
+            size="sm" 
+            onClick={onDeleteAll}
+            disabled={totalCount === 0}
           >
-            <Download className="mr-2 h-4 w-4" /> Download
-          </Button>
-        )}
-        {onImport && (
-          <Button 
-            variant="outline"
-            onClick={onImport}
-            disabled={isLoading}
-          >
-            <Import className="mr-2 h-4 w-4" /> Import
+            <Trash2 className="mr-2 h-4 w-4" />
+            Delete All
           </Button>
         )}
         <Button 
-          className="bg-syndicate-600 hover:bg-syndicate-700"
+          size="sm" 
           onClick={onAddResident}
-          disabled={isLoading}
         >
-          <Plus className="mr-2 h-4 w-4" /> Add Resident
+          <PlusIcon className="mr-2 h-4 w-4" />
+          Add Resident
         </Button>
       </div>
     </div>

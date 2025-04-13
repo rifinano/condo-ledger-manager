@@ -7,14 +7,20 @@ import { ServiceResult } from "./types";
  */
 export const deleteResident = async (id: string): Promise<ServiceResult> => {
   try {
-    // Delete the resident record without deleting apartment associations
+    console.log("Deleting resident with ID:", id);
+    
+    // Delete the resident record
     const { error } = await supabase
       .from('residents')
       .delete()
-      .eq('id', id as any);
+      .eq('id', id);
 
-    if (error) throw error;
+    if (error) {
+      console.error("Supabase error deleting resident:", error);
+      throw error;
+    }
     
+    console.log("Resident deleted successfully");
     return { success: true };
   } catch (error: any) {
     console.error("Error deleting resident:", error);
@@ -30,14 +36,20 @@ export const deleteResident = async (id: string): Promise<ServiceResult> => {
  */
 export const deleteAllResidents = async (): Promise<ServiceResult> => {
   try {
-    // Delete all resident records without deleting apartment associations
+    console.log("Deleting all residents");
+    
+    // Delete all resident records
     const { error } = await supabase
       .from('residents')
       .delete()
-      .neq('id', '00000000-0000-0000-0000-000000000000' as any); // Delete all records
+      .gt('id', '00000000-0000-0000-0000-000000000000'); // Delete all records
     
-    if (error) throw error;
+    if (error) {
+      console.error("Supabase error deleting all residents:", error);
+      throw error;
+    }
     
+    console.log("All residents deleted successfully");
     return { success: true };
   } catch (error: any) {
     console.error("Error deleting all residents:", error);

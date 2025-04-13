@@ -1,4 +1,3 @@
-
 import { useEffect, useState, useCallback, useMemo } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 import { useResidentsPage } from "@/hooks/useResidentsPage";
@@ -14,6 +13,7 @@ import { downloadResidentsCsv } from "@/utils/residents/csvUtils";
 const ResidentsPage = () => {
   const { refreshData } = usePropertyData();
   const [fetchError, setFetchError] = useState<string | null>(null);
+  const [isDeleteAllOpen, setIsDeleteAllOpen] = useState(false);
   
   const {
     paginatedResidents,
@@ -57,7 +57,6 @@ const ResidentsPage = () => {
     handleRetry
   } = useResidentRefresh(fetchResidents, refreshData);
 
-  // Memoize handlers to prevent unnecessary re-renders
   const handleAddResidentWithRefresh = useCallback(async () => {
     const result = await handleAddResident();
     if (result) refreshData();
@@ -76,7 +75,6 @@ const ResidentsPage = () => {
     return result;
   }, [handleDeleteResident, refreshData]);
 
-  // Memoize import handling to prevent unnecessary re-renders
   const importProps = useMemo(() => ({
     months,
     isApartmentOccupied,
@@ -101,12 +99,10 @@ const ResidentsPage = () => {
     downloadResidentsCsv(filteredResidents, months);
   }, [filteredResidents, months]);
 
-  // Update error state when residentsError changes
   useEffect(() => {
     if (residentsError) setFetchError(residentsError);
   }, [residentsError]);
 
-  // Initial data loading with error handling
   useEffect(() => {
     if (!hasAttemptedFetch && !isFetching) {
       const loadData = async () => {
@@ -135,6 +131,7 @@ const ResidentsPage = () => {
           onAddResident={() => setIsAddingResident(true)}
           onImport={handleImportClick}
           onDownload={handleDownloadCsv}
+          onDeleteAll={() => setIsDeleteAllOpen(true)}
         />
 
         {fetchError ? (
@@ -170,8 +167,8 @@ const ResidentsPage = () => {
         setIsEditingResident={setIsEditingResident}
         isDeletingResident={isDeletingResident}
         setIsDeletingResident={setIsDeletingResident}
-        isDeleteAllOpen={false}
-        setIsDeleteAllOpen={() => {}}
+        isDeleteAllOpen={isDeleteAllOpen}
+        setIsDeleteAllOpen={setIsDeleteAllOpen}
         currentResident={currentResident}
         setCurrentResident={setCurrentResident}
         blockNames={blockNames}
