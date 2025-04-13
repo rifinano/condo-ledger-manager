@@ -12,7 +12,7 @@ interface DateInputProps {
 const DateInput = ({ label, id, value, onChange }: DateInputProps) => {
   // Format value to a string that the date input expects (YYYY-MM-DD)
   const getFormattedValue = (): string => {
-    if (typeof value === 'object' && value instanceof Date) {
+    if (value instanceof Date) {
       return value.toISOString().split('T')[0];
     }
     

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -80,13 +79,12 @@ export const useDashboardData = () => {
       const paymentsByBlock = blocks ? await Promise.all(blocks.map(async (block) => {
         const blockResidents = residents ? residents.filter(r => r.block_number === block.name) : [];
         
-        // Ensure block.id is converted to a string for the query
-        const blockIdString = String(block.id);
+        const blockId = typeof block.id === 'string' ? block.id : String(block.id);
         
         const { count: blockApartments, error: blockApartmentsError } = await supabase
           .from('apartments')
           .select('*', { count: 'exact', head: true })
-          .eq('block_id', blockIdString);
+          .eq('block_id', blockId);
         
         if (blockApartmentsError) {
           console.error(`Error fetching apartments for block ${block.name}:`, blockApartmentsError);
