@@ -68,3 +68,53 @@ export const getBlockId = async (blockName: string): Promise<string | null> => {
     return null;
   }
 };
+
+/**
+ * Get all apartments in a block
+ */
+export const getBlockApartments = async (blockName: string): Promise<string[]> => {
+  try {
+    // First get the block ID
+    const blockId = await getBlockId(blockName);
+    if (!blockId) return [];
+    
+    // Get all apartments in this block
+    const { data, error } = await supabase
+      .from('apartments')
+      .select('number')
+      .eq('block_id', blockId)
+      .order('number');
+      
+    if (error) throw error;
+    return (data || []).map(apt => apt.number);
+  } catch (error) {
+    console.error("Error getting block apartments:", error);
+    return [];
+  }
+};
+
+/**
+ * Check if a block has available apartments
+ */
+export const hasAvailableApartments = async (blockName: string): Promise<boolean> => {
+  try {
+    const apartments = await getBlockApartments(blockName);
+    return apartments.length > 0;
+  } catch (error) {
+    console.error("Error checking if block has available apartments:", error);
+    return false;
+  }
+};
+
+/**
+ * Get missing apartments for a block
+ */
+export const getMissingApartments = async (blockName: string, requiredApartments: string[]): Promise<string[]> => {
+  try {
+    const existingApartments = await getBlockApartments(blockName);
+    return requiredApartments.filter(apt => !existingApartments.includes(apt));
+  } catch (error) {
+    console.error("Error getting missing apartments:", error);
+    return requiredApartments;
+  }
+};

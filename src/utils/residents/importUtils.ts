@@ -13,6 +13,7 @@ export { getExistingResidentDetails, detectImportConflicts } from './conflictUti
 export { 
   doesBlockExist, 
   doesApartmentExist, 
+  getBlockId,
   getBlockApartments,
   hasAvailableApartments,
   getMissingApartments
