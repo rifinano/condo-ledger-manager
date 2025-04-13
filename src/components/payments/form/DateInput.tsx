@@ -5,20 +5,18 @@ import { Input } from "@/components/ui/input";
 interface DateInputProps {
   label: string;
   id: string;
-  value: string | Date | null;
+  value: string | Date;
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
 const DateInput = ({ label, id, value, onChange }: DateInputProps) => {
   // Format value to a string that the date input expects (YYYY-MM-DD)
   const getFormattedValue = (): string => {
-    if (!value) return "";
-    
-    if (typeof value === 'object' && 'toISOString' in value) {
+    if (typeof value === 'object' && value instanceof Date) {
       return value.toISOString().split('T')[0];
     }
     
-    return String(value);
+    return String(value || '');
   };
   
   const dateValue = getFormattedValue();

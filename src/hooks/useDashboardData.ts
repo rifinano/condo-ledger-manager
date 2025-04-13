@@ -80,7 +80,7 @@ export const useDashboardData = () => {
       const paymentsByBlock = blocks ? await Promise.all(blocks.map(async (block) => {
         const blockResidents = residents ? residents.filter(r => r.block_number === block.name) : [];
         
-        // Ensure block.id is converted to a string
+        // Ensure block.id is converted to a string for the query
         const blockIdString = String(block.id);
         
         const { count: blockApartments, error: blockApartmentsError } = await supabase
