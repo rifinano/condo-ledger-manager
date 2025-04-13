@@ -1,9 +1,15 @@
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { ResidentFormData } from '@/services/residents/types';
 import { useToast } from '@/hooks/use-toast';
 import { useImportFile } from '@/hooks/residents/useImportFile';
-import { prepareResidentData, doesBlockExist, doesApartmentExist } from '@/utils/residents/importUtils';
+import { 
+  prepareResidentData, 
+  doesBlockExist, 
+  doesApartmentExist, 
+  getMissingApartments 
+} from '@/utils/residents/importUtils';
+import { supabase } from '@/integrations/supabase/client';
 
 interface UseResidentImportProps {
   months: { value: string; label: string }[];
@@ -27,6 +33,7 @@ export const useResidentImport = ({
   const [isImporting, setIsImporting] = useState(false);
   const [importErrors, setImportErrors] = useState<string[]>([]);
   const [importSuccess, setImportSuccess] = useState(0);
+  const [isCreatingApartments, setIsCreatingApartments] = useState(false);
   const { toast } = useToast();
 
   const processImportedResidents = async (
@@ -125,10 +132,74 @@ export const useResidentImport = ({
     processImportedResidents
   });
 
+  // Function to create missing apartments
+  const handleCreateMissingApartments = useCallback(async (blockName: string, apartmentNumbers: string[]) => {
+    if (isCreatingApartments) return;
+    setIsCreatingApartments(true);
+
+    try {
+      // Get the block ID
+      const { data: block, error: blockError } = await supabase
+        .from('blocks')
+        .select('id')
+        .eq('name', blockName)
+        .maybeSingle();
+      
+      if (blockError || !block) {
+        throw new Error(`Block ${blockName} not found`);
+      }
+
+      // Create a batch of apartments
+      const newApartments = apartmentNumbers.map(number => ({
+        block_id: block.id.toString(),
+        number,
+        floor: 1, // Default floor
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      }));
+
+      const { data, error } = await supabase
+        .from('apartments')
+        .insert(newApartments)
+        .select();
+
+      if (error) {
+        throw error;
+      }
+
+      toast({
+        title: "Apartments Created",
+        description: `Successfully created ${data.length} apartments in Block ${blockName}`,
+      });
+
+      // Clear the errors related to these apartments
+      setImportErrors(prev => 
+        prev.filter(error => !apartmentNumbers.some(apt => 
+          error.includes(`Apartment ${apt} does not exist in Block ${blockName}`)
+        ))
+      );
+
+      // Refresh data
+      refreshData();
+
+    } catch (error) {
+      console.error("Error creating apartments:", error);
+      toast({
+        title: "Error Creating Apartments",
+        description: error instanceof Error ? error.message : "Failed to create apartments",
+        variant: "destructive"
+      });
+    } finally {
+      setIsCreatingApartments(false);
+    }
+  }, [isCreatingApartments, refreshData, toast]);
+
   return {
     isImporting,
     importErrors,
     importSuccess,
-    handleImportClick
+    handleImportClick,
+    handleCreateMissingApartments,
+    isCreatingApartments
   };
 };

@@ -1,18 +1,21 @@
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { CheckCircle, AlertCircle, Loader2, HomeIcon, XOctagon, AlertTriangle, InfoIcon } from "lucide-react";
+import { CheckCircle, AlertCircle, Loader2, HomeIcon, XOctagon, AlertTriangle, InfoIcon, Plus } from "lucide-react";
 import { useMemo } from "react";
+import { Button } from "@/components/ui/button";
 
 interface ResidentsImportProps {
   isImporting: boolean;
   importErrors: string[];
   importSuccess: number;
+  onCreateMissingApartments?: (blockName: string, apartments: string[]) => void;
 }
 
 const ResidentsImport = ({
   isImporting,
   importErrors,
-  importSuccess
+  importSuccess,
+  onCreateMissingApartments
 }: ResidentsImportProps) => {
   const { 
     locationErrors, 
@@ -49,6 +52,26 @@ const ResidentsImport = ({
     return { locationErrors, conflictErrors, apartmentErrors, blockErrors, otherErrors };
   }, [importErrors]);
   
+  // Organize apartment errors by block
+  const apartmentErrorsByBlock = useMemo(() => {
+    const errorsByBlock: Record<string, string[]> = {};
+    
+    apartmentErrors.forEach(error => {
+      const match = error.match(/Apartment\s+(\d+)\s+does not exist in Block\s+([^-]+)/);
+      if (match) {
+        const [, apartmentNumber, blockName] = match;
+        if (!errorsByBlock[blockName]) {
+          errorsByBlock[blockName] = [];
+        }
+        if (!errorsByBlock[blockName].includes(apartmentNumber)) {
+          errorsByBlock[blockName].push(apartmentNumber);
+        }
+      }
+    });
+    
+    return errorsByBlock;
+  }, [apartmentErrors]);
+  
   if (!isImporting && importErrors.length === 0 && importSuccess === 0) {
     return null;
   }
@@ -72,16 +95,28 @@ const ResidentsImport = ({
         </Alert>
       )}
       
-      {apartmentErrors.length > 0 && (
+      {Object.keys(apartmentErrorsByBlock).length > 0 && (
         <Alert className="bg-amber-50 border-amber-200">
           <InfoIcon className="h-4 w-4 text-amber-600" />
           <AlertTitle className="text-amber-800">Missing Apartments</AlertTitle>
           <AlertDescription className="text-amber-700">
             <p>The following apartments mentioned in your import file don't exist in the database:</p>
             <ul className="list-disc pl-5 mt-2 space-y-1">
-              {apartmentErrors.map((error, index) => (
-                <li key={`apartment-error-${index}`}>
-                  {error.replace("Failed to add resident: ", "")}
+              {Object.entries(apartmentErrorsByBlock).map(([blockName, apartments]) => (
+                <li key={`block-${blockName}`} className="mb-2">
+                  <div className="flex items-center justify-between">
+                    <span><strong>Block {blockName}:</strong> Apartments {apartments.join(', ')}</span>
+                    {onCreateMissingApartments && (
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        className="ml-2 text-xs bg-white"
+                        onClick={() => onCreateMissingApartments(blockName, apartments)}
+                      >
+                        <Plus className="h-3 w-3 mr-1" /> Create Missing Apartments
+                      </Button>
+                    )}
+                  </div>
                 </li>
               ))}
             </ul>

@@ -1,3 +1,4 @@
+
 import { ResidentFormData } from '@/services/residents/types';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -164,7 +165,7 @@ export const prepareResidentData = (
   };
 };
 
-// NEW FUNCTION: Get all valid apartments in a block
+// Get all valid apartments in a block
 export const getBlockApartments = async (blockName: string): Promise<string[]> => {
   try {
     // First get the block ID
@@ -194,5 +195,25 @@ export const getBlockApartments = async (blockName: string): Promise<string[]> =
   } catch (error) {
     console.error("Error getting block apartments:", error);
     return [];
+  }
+};
+
+// Check if there are any available apartments in a block
+export const hasAvailableApartments = async (blockName: string): Promise<boolean> => {
+  const apartments = await getBlockApartments(blockName);
+  return apartments.length > 0;
+};
+
+// Get list of missing apartments to create
+export const getMissingApartments = async (
+  blockName: string, 
+  requestedApartmentNumbers: string[]
+): Promise<string[]> => {
+  try {
+    const existingApartments = await getBlockApartments(blockName);
+    return requestedApartmentNumbers.filter(apt => !existingApartments.includes(apt));
+  } catch (error) {
+    console.error("Error getting missing apartments:", error);
+    return requestedApartmentNumbers;
   }
 };

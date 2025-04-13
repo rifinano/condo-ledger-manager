@@ -92,7 +92,9 @@ const ResidentsPage = () => {
     isImporting,
     importErrors,
     importSuccess,
-    handleImportClick
+    handleImportClick,
+    handleCreateMissingApartments,
+    isCreatingApartments
   } = useResidentImport(importProps);
 
   const handleDownloadCsv = useCallback(() => {
@@ -155,7 +157,8 @@ const ResidentsPage = () => {
             onPageChange={handlePageChange}
             importErrors={importErrors}
             importSuccess={importSuccess}
-            isImporting={isImporting}
+            isImporting={isImporting || isCreatingApartments}
+            onCreateMissingApartments={handleCreateMissingApartments}
           />
         )}
       </div>
