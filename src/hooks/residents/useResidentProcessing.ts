@@ -8,7 +8,7 @@ interface UseResidentProcessingProps {
   setCurrentResident: (resident: Partial<ResidentFormData>) => void;
   handleAddResident: () => Promise<boolean>;
   fetchResidents: () => Promise<void>;
-  refreshData: () => void;
+  refreshData: () => Promise<void>;
   months: { value: string; label: string }[];
 }
 
@@ -88,7 +88,7 @@ export const useResidentProcessing = ({
     
     if (successCount > 0) {
       await fetchResidents();
-      refreshData();
+      await refreshData();
       
       toast({
         title: "Import Summary",
@@ -121,9 +121,12 @@ export const useResidentProcessing = ({
   };
 };
 
-// Import these utility functions from the import utils file
+// Import these utility functions from the modular utils files
 import { 
-  prepareResidentData, 
+  prepareResidentData 
+} from '@/utils/residents/dateUtils';
+
+import {
   doesBlockExist, 
   doesApartmentExist 
-} from '@/utils/residents/importUtils';
+} from '@/utils/residents/apartmentUtils';

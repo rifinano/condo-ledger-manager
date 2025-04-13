@@ -11,7 +11,7 @@ interface UseResidentImportProps {
   resetForm: () => void;
   setCurrentResident: (resident: Partial<ResidentFormData>) => void;
   handleAddResident: () => Promise<boolean>;
-  refreshData: () => void | Promise<void>;  // Updated to accept either void or Promise<void>
+  refreshData: () => void | Promise<void>;
   fetchResidents: () => Promise<void>;
 }
 
@@ -38,7 +38,15 @@ export const useResidentImport = ({
     setCurrentResident,
     handleAddResident,
     fetchResidents,
-    refreshData,
+    refreshData: async () => {
+      // Convert void | Promise<void> to Promise<void>
+      if (refreshData) {
+        const result = refreshData();
+        if (result instanceof Promise) {
+          await result;
+        }
+      }
+    },
     months
   });
 
@@ -55,7 +63,15 @@ export const useResidentImport = ({
     isCreatingApartments,
     handleCreateMissingApartments
   } = useApartmentCreation({
-    refreshData,
+    refreshData: async () => {
+      // Convert void | Promise<void> to Promise<void>
+      if (refreshData) {
+        const result = refreshData();
+        if (result instanceof Promise) {
+          await result;
+        }
+      }
+    },
     fetchResidents,
     importErrors
   });

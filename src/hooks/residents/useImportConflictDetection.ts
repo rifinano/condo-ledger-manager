@@ -1,5 +1,5 @@
 
-import { detectImportConflicts, getExistingResidentDetails } from '@/utils/residents/importUtils';
+import { detectImportConflicts, getExistingResidentDetails } from '@/utils/residents/conflictUtils';
 
 /**
  * Hook for detecting conflicts in imported resident data
