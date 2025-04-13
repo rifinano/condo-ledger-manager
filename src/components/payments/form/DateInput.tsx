@@ -10,6 +10,11 @@ interface DateInputProps {
 }
 
 const DateInput = ({ label, id, value, onChange }: DateInputProps) => {
+  // Convert any Date objects to string format that the input field expects
+  const dateValue = typeof value === 'object' && value instanceof Date 
+    ? value.toISOString().split('T')[0] 
+    : String(value);
+    
   return (
     <div className="grid grid-cols-4 items-center gap-4">
       <Label htmlFor={id} className="text-right">
@@ -18,7 +23,7 @@ const DateInput = ({ label, id, value, onChange }: DateInputProps) => {
       <Input
         id={id}
         type="date"
-        value={value}
+        value={dateValue}
         onChange={onChange}
         className="col-span-3"
       />
