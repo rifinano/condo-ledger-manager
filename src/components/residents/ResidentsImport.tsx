@@ -1,6 +1,6 @@
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { CheckCircle, AlertCircle, Loader2, HomeIcon, XOctagon } from "lucide-react";
+import { CheckCircle, AlertCircle, Loader2, HomeIcon, XOctagon, AlertTriangle } from "lucide-react";
 import { useMemo } from "react";
 
 interface ResidentsImportProps {
@@ -14,16 +14,20 @@ const ResidentsImport = ({
   importErrors,
   importSuccess
 }: ResidentsImportProps) => {
-  const { locationErrors, otherErrors } = useMemo(() => {
+  const { locationErrors, conflictErrors, otherErrors } = useMemo(() => {
     const locationErrors = importErrors.filter(error => 
       error.includes("Location already occupied:")
     );
     
-    const otherErrors = importErrors.filter(error => 
-      !error.includes("Location already occupied:")
+    const conflictErrors = importErrors.filter(error => 
+      error.includes("Conflict in import:")
     );
     
-    return { locationErrors, otherErrors };
+    const otherErrors = importErrors.filter(error => 
+      !error.includes("Location already occupied:") && !error.includes("Conflict in import:")
+    );
+    
+    return { locationErrors, conflictErrors, otherErrors };
   }, [importErrors]);
   
   if (!isImporting && importErrors.length === 0 && importSuccess === 0) {
@@ -62,6 +66,21 @@ const ResidentsImport = ({
                   <li key={`location-conflict-${index}`}>{locationInfo}</li>
                 );
               })}
+            </ul>
+          </AlertDescription>
+        </Alert>
+      )}
+      
+      {conflictErrors.length > 0 && (
+        <Alert className="bg-amber-50 border-amber-200">
+          <AlertTriangle className="h-4 w-4 text-amber-600" />
+          <AlertTitle className="text-amber-800">Import Conflicts</AlertTitle>
+          <AlertDescription className="text-amber-700">
+            <p>The following conflicts were found in your import file:</p>
+            <ul className="list-disc pl-5 mt-2 space-y-1">
+              {conflictErrors.map((error, index) => (
+                <li key={`import-conflict-${index}`}>{error}</li>
+              ))}
             </ul>
           </AlertDescription>
         </Alert>

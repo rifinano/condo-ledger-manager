@@ -81,7 +81,7 @@ export const useDashboardData = () => {
         const blockResidents = residents ? residents.filter(r => r.block_number === block.name) : [];
         
         // Convert block.id to string to fix the type error
-        const blockId = String(block.id);
+        const blockId = typeof block.id === 'string' ? block.id : String(block.id);
         
         const { count: blockApartments, error: blockApartmentsError } = await supabase
           .from('apartments')
