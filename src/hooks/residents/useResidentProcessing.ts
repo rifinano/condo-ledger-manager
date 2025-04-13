@@ -11,7 +11,6 @@ interface UseResidentProcessingProps {
   fetchResidents: () => Promise<void>;
   refreshData: () => Promise<void>;
   months: { value: string; label: string }[];
-  onFailedImport?: (rowData: string[], error: string) => void;
 }
 
 export const useResidentProcessing = ({
@@ -20,8 +19,7 @@ export const useResidentProcessing = ({
   handleAddResident,
   fetchResidents,
   refreshData,
-  months,
-  onFailedImport
+  months
 }: UseResidentProcessingProps) => {
   const [importErrors, setImportErrors] = useState<string[]>([]);
   const [importSuccess, setImportSuccess] = useState(0);
@@ -43,53 +41,43 @@ export const useResidentProcessing = ({
       const batchPromises = batch.map(async (row) => {
         try {
           if (row.length < 4) {
-            const error = `Invalid row format: ${row.join(', ')}. Not enough columns.`;
-            if (onFailedImport) onFailedImport(row, error);
             return {
               success: false,
-              error
+              error: `Invalid row format: ${row.join(', ')}. Not enough columns.`
             };
           }
           
           const [fullName, , blockNumber, apartmentNumber] = row;
           
           if (!fullName || !blockNumber || !apartmentNumber) {
-            const error = `Missing required data for: ${fullName || 'Unknown'} at Block ${blockNumber || 'Unknown'}, Apartment ${apartmentNumber || 'Unknown'}`;
-            if (onFailedImport) onFailedImport(row, error);
             return {
               success: false,
-              error
+              error: `Missing required data for: ${fullName || 'Unknown'} at Block ${blockNumber || 'Unknown'}, Apartment ${apartmentNumber || 'Unknown'}`
             };
           }
 
           // Skip if this location is already marked as occupied
           const locationKey = `${blockNumber}-${apartmentNumber}`;
           if (locationKey in occupiedLocations) {
-            const error = `Failed to add resident: ${fullName} at Block ${blockNumber}, Apartment ${apartmentNumber} - Location already occupied by ${occupiedLocations[locationKey]}`;
-            if (onFailedImport) onFailedImport(row, error);
             return {
               success: false,
-              error
+              error: `Failed to add resident: ${fullName} at Block ${blockNumber}, Apartment ${apartmentNumber} - Location already occupied by ${occupiedLocations[locationKey]}`
             };
           }
           
           // Verify that the block exists with retry logic
           if (!(await doesBlockExist(blockNumber))) {
-            const error = `Failed to add resident: ${fullName} - Block "${blockNumber}" does not exist`;
-            if (onFailedImport) onFailedImport(row, error);
             return {
               success: false,
-              error
+              error: `Failed to add resident: ${fullName} - Block "${blockNumber}" does not exist`
             };
           }
           
           // Verify that the apartment exists in the block with retry logic
           if (!(await doesApartmentExist(blockNumber, apartmentNumber))) {
-            const error = `Failed to add resident: ${fullName} - Apartment ${apartmentNumber} does not exist in Block ${blockNumber}`;
-            if (onFailedImport) onFailedImport(row, error);
             return {
               success: false,
-              error
+              error: `Failed to add resident: ${fullName} - Apartment ${apartmentNumber} does not exist in Block ${blockNumber}`
             };
           }
           
@@ -121,31 +109,24 @@ export const useResidentProcessing = ({
               if (addAttempt < maxAddAttempts) {
                 await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, addAttempt - 1)));
               } else {
-                const errorMsg = error instanceof Error ? error.message : String(error);
-                const failedError = `Failed to add resident: ${fullName} - ${errorMsg}`;
-                if (onFailedImport) onFailedImport(row, failedError);
                 return {
                   success: false,
-                  error: failedError
+                  error: `Failed to add resident: ${fullName} - ${error instanceof Error ? error.message : String(error)}`
                 };
               }
             }
           }
           
-          const timeoutError = `Failed to add resident: ${fullName} at Block ${blockNumber}, Apartment ${apartmentNumber} after ${maxAddAttempts} attempts`;
-          if (onFailedImport) onFailedImport(row, timeoutError);
           return {
             success: false,
-            error: timeoutError
+            error: `Failed to add resident: ${fullName} at Block ${blockNumber}, Apartment ${apartmentNumber} after ${maxAddAttempts} attempts`
           };
         } catch (error) {
           console.error("Error processing row:", row, error);
           const errorMsg = error instanceof Error ? error.message : String(error);
-          const genericError = `Error processing resident: ${row[0] || 'Unknown'} - ${errorMsg}`;
-          if (onFailedImport) onFailedImport(row, genericError);
           return {
             success: false,
-            error: genericError
+            error: `Error processing resident: ${row[0] || 'Unknown'} - ${errorMsg}`
           };
         }
       });
