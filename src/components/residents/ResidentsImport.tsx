@@ -79,7 +79,7 @@ const ResidentsImport = ({
             <p>The following conflicts were found in your import file:</p>
             <ul className="list-disc pl-5 mt-2 space-y-1">
               {conflictErrors.map((error, index) => (
-                <li key={`import-conflict-${index}`}>{error}</li>
+                <li key={`import-conflict-${index}`}>{error.replace("Conflict in import: ", "")}</li>
               ))}
             </ul>
           </AlertDescription>
