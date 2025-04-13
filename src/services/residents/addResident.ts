@@ -7,6 +7,25 @@ import { ResidentFormData, ServiceResult } from "./types";
  */
 export const addResident = async (resident: ResidentFormData): Promise<ServiceResult> => {
   try {
+    // Check if this apartment is already occupied
+    const { data: existingResident, error: checkError } = await supabase
+      .from('residents')
+      .select('id')
+      .eq('block_number', resident.block_number)
+      .eq('apartment_number', resident.apartment_number)
+      .maybeSingle();
+    
+    if (checkError) {
+      console.error("Error checking existing resident:", checkError);
+    }
+    
+    if (existingResident) {
+      return { 
+        success: false, 
+        error: `Apartment ${resident.apartment_number} in ${resident.block_number} is already occupied.` 
+      };
+    }
+    
     // Insert new resident record
     const { data, error } = await supabase
       .from('residents')

@@ -61,9 +61,27 @@ export const useResidentImport = ({
         const importErrors: string[] = [];
         let successCount = 0;
         
+        // Process all rows upfront to identify location conflicts
+        const locationConflicts: Record<string, boolean> = {};
+        
+        for (const row of values) {
+          if (row.length < 4) continue;
+          
+          const [, , blockNumber, apartmentNumber] = row;
+          if (!blockNumber || !apartmentNumber) continue;
+          
+          // Check if this location is already occupied in the database
+          if (isApartmentOccupied(blockNumber, apartmentNumber)) {
+            const locationKey = `${blockNumber}-${apartmentNumber}`;
+            locationConflicts[locationKey] = true;
+            importErrors.push(`Location already occupied: Block ${blockNumber}, Apartment ${apartmentNumber} is already assigned to another resident.`);
+          }
+        }
+        
+        // Now process each row for import, skipping those with location conflicts
         for (const row of values) {
           try {
-            // Handle missing columns by ensuring we have data for all required fields
+            // Handle missing columns
             if (row.length < 4) {
               importErrors.push(`Invalid row format: ${row.join(', ')}. Not enough columns.`);
               continue;
@@ -76,25 +94,26 @@ export const useResidentImport = ({
               continue;
             }
             
-            // Check if this exact location (block AND apartment) is already occupied
-            if (isApartmentOccupied(blockNumber, apartmentNumber)) {
-              importErrors.push(`Location already occupied: Block ${blockNumber}, Apartment ${apartmentNumber} is already assigned to another resident.`);
+            // Skip if this location is in the conflicts list
+            const locationKey = `${blockNumber}-${apartmentNumber}`;
+            if (locationConflicts[locationKey]) {
+              // We already added the error message above, no need to add it again
               continue;
             }
             
-            // Find the month value that matches the name - with enhanced matching
+            // Find the month value
             let moveInMonth: string | undefined;
             
             if (moveInMonthName) {
-              // First try to find it by label (case-insensitive)
+              // First try label (case-insensitive)
               moveInMonth = months.find(m => 
                 m.label.toLowerCase() === moveInMonthName.toLowerCase())?.value;
               
               if (!moveInMonth) {
-                // Try to find by direct value match
+                // Try direct value match
                 moveInMonth = months.find(m => m.value === moveInMonthName)?.value;
                 
-                // Check for common month abbreviations (Jan, Feb, etc.)
+                // Check for month abbreviations
                 if (!moveInMonth) {
                   const monthAbbreviations = {
                     'jan': '01', 'feb': '02', 'mar': '03', 'apr': '04', 
@@ -107,7 +126,7 @@ export const useResidentImport = ({
                   }
                 }
                 
-                // If still not found, try to parse it as a number
+                // Try parsing as a number
                 if (!moveInMonth && !isNaN(parseInt(moveInMonthName))) {
                   const monthNum = parseInt(moveInMonthName);
                   if (monthNum >= 1 && monthNum <= 12) {
@@ -117,16 +136,32 @@ export const useResidentImport = ({
               }
             }
             
+            // Use current month if not specified
+            if (!moveInMonth) {
+              const currentMonth = new Date().getMonth() + 1;
+              moveInMonth = currentMonth < 10 ? `0${currentMonth}` : `${currentMonth}`;
+            }
+            
+            // Use current year if not specified
+            const currentYear = new Date().getFullYear().toString();
+            
             const residentData = {
               full_name: fullName,
               phone_number: phoneNumber || '',
               block_number: blockNumber,
               apartment_number: apartmentNumber,
               move_in_month: moveInMonth,
-              move_in_year: moveInYear
+              move_in_year: moveInYear || currentYear
             };
             
             console.log("Importing resident data:", residentData);
+            
+            // Check one more time just to be sure the apartment isn't occupied
+            // (could have been occupied by a previous row in this import)
+            if (isApartmentOccupied(blockNumber, apartmentNumber)) {
+              importErrors.push(`Location already occupied: Block ${blockNumber}, Apartment ${apartmentNumber} is already assigned to another resident.`);
+              continue;
+            }
             
             resetForm();
             setCurrentResident(residentData);
@@ -134,6 +169,8 @@ export const useResidentImport = ({
             
             if (result) {
               successCount++;
+              // Mark this location as taken to avoid duplicate imports
+              locationConflicts[locationKey] = true;
             } else {
               importErrors.push(`Failed to add resident: ${fullName} at Block ${blockNumber}, Apartment ${apartmentNumber}`);
             }
@@ -148,7 +185,7 @@ export const useResidentImport = ({
         setImportErrors(importErrors);
         
         if (successCount > 0) {
-          // Make sure to refresh the data after successful imports
+          // Refresh the data after successful imports
           await fetchResidents();
           refreshData();
           
