@@ -10,19 +10,20 @@ export const addResident = async (resident: ResidentFormData): Promise<ServiceRe
     // Check if this apartment is already occupied
     const { data: existingResident, error: checkError } = await supabase
       .from('residents')
-      .select('id')
+      .select('id, full_name')
       .eq('block_number', resident.block_number)
       .eq('apartment_number', resident.apartment_number)
       .maybeSingle();
     
     if (checkError) {
       console.error("Error checking existing resident:", checkError);
+      throw new Error(`Database error: ${checkError.message}`);
     }
     
     if (existingResident) {
       return { 
         success: false, 
-        error: `Apartment ${resident.apartment_number} in ${resident.block_number} is already occupied.` 
+        error: `Apartment ${resident.apartment_number} in ${resident.block_number} is already occupied by ${existingResident.full_name}.` 
       };
     }
     
@@ -42,7 +43,10 @@ export const addResident = async (resident: ResidentFormData): Promise<ServiceRe
       .select()
       .single();
 
-    if (error) throw error;
+    if (error) {
+      console.error("Error inserting resident:", error);
+      throw error;
+    }
     
     // Insert apartment association
     const { error: aptError } = await supabase
@@ -55,7 +59,12 @@ export const addResident = async (resident: ResidentFormData): Promise<ServiceRe
         updated_at: new Date().toISOString()
       } as any);
     
-    if (aptError) throw aptError;
+    if (aptError) {
+      console.error("Error inserting resident apartment:", aptError);
+      // If apartment association fails, clean up the resident record
+      await supabase.from('residents').delete().eq('id', data.id);
+      throw aptError;
+    }
     
     return { success: true, data };
   } catch (error: any) {
