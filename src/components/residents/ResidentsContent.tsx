@@ -51,7 +51,7 @@ const ResidentsContent = ({
 
       <Card className="p-4">
         <div className="mb-4">
-          <ResidentsSearch value={searchTerm} onChange={onSearchChange} />
+          <ResidentsSearch searchTerm={searchTerm} onSearchChange={onSearchChange} />
         </div>
         
         {isLoading ? (
@@ -70,6 +70,7 @@ const ResidentsContent = ({
           <>
             <ResidentsTable
               residents={residents}
+              isLoading={isLoading}
               onEdit={onEdit}
               onDelete={onDelete}
             />

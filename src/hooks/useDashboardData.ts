@@ -86,7 +86,7 @@ export const useDashboardData = () => {
       const paymentsByBlock = blocks ? await Promise.all(blocks.map(async (block) => {
         const blockResidents = residents ? residents.filter(r => r.block_number === block.name) : [];
         
-        // Fix: Convert block.id to string explicitly
+        // Fix: Convert block.id to string explicitly before using it as parameter
         const { count: blockApartments, error: blockApartmentsError } = await supabase
           .from('apartments')
           .select('*', { count: 'exact', head: true })
