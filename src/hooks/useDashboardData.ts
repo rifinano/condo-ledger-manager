@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -87,14 +86,11 @@ export const useDashboardData = () => {
         const blockResidents = residents ? residents.filter(r => r.block_number === block.name) : [];
         
         // Fix: Convert block.id to string explicitly before using it as parameter
-        const { count: blockApartments, error: blockApartmentsError } = await supabase
+        const { data: apartments } = await supabase
           .from('apartments')
-          .select('*', { count: 'exact', head: true })
-          .eq('block_id', block.id.toString());
-        
-        if (blockApartmentsError) {
-          console.error(`Error fetching apartments for block ${block.name}:`, blockApartmentsError);
-        }
+          .select('id, number, floor')
+          .eq('block_id', block.id.toString())
+          .order('number');
         
         const blockResidentIds = blockResidents.map(r => r.id);
         const blockPayments = payments ? payments.filter(p => blockResidentIds.includes(p.resident_id)) : [];
@@ -104,7 +100,7 @@ export const useDashboardData = () => {
         
         return {
           blockName: block.name,
-          totalApartments: blockApartments || 0,
+          totalApartments: apartments ? apartments.length : 0,
           paidCount: blockPaidPayments,
           pendingCount: blockPendingPayments
         };
