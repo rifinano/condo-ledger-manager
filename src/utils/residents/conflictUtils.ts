@@ -1,23 +1,45 @@
 
 import { supabase } from '@/integrations/supabase/client';
+import { useNetworkErrorHandler } from '@/hooks/useNetworkErrorHandler';
 
 /**
  * Function to check if a location is already occupied by a resident
  */
 export const getExistingResidentDetails = async (blockNumber: string, apartmentNumber: string): Promise<string> => {
-  try {
-    const { data } = await supabase
-      .from('residents')
-      .select('full_name')
-      .eq('block_number', blockNumber)
-      .eq('apartment_number', apartmentNumber)
-      .maybeSingle();
-    
-    return data?.full_name || "another resident";
-  } catch (error) {
-    console.error("Error fetching existing resident:", error);
-    return "another resident";
+  let retryCount = 0;
+  const maxRetries = 3;
+  
+  while (retryCount < maxRetries) {
+    try {
+      const { data, error } = await supabase
+        .from('residents')
+        .select('full_name')
+        .eq('block_number', blockNumber)
+        .eq('apartment_number', apartmentNumber)
+        .maybeSingle();
+      
+      if (error) {
+        throw error;
+      }
+      
+      return data?.full_name || "another resident";
+    } catch (error) {
+      retryCount++;
+      console.error(`Error fetching existing resident (attempt ${retryCount}/${maxRetries}):`, error);
+      
+      // If we've reached max retries, return a fallback value
+      if (retryCount >= maxRetries) {
+        console.warn("Max retries reached when fetching resident details");
+        return "another resident (connection error)";
+      }
+      
+      // Wait with exponential backoff before retrying
+      await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, retryCount - 1)));
+    }
   }
+  
+  // This is a fallback in case the loop exits unexpectedly
+  return "another resident";
 };
 
 /**

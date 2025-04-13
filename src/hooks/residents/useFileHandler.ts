@@ -4,6 +4,7 @@ import { parseResidentsCsv } from '@/utils/residents/csvUtils';
 import { useToast } from '@/hooks/use-toast';
 import { useImportValidation } from './useImportValidation';
 import { useImportConflictDetection } from './useImportConflictDetection';
+import { useNetworkErrorHandler } from '@/hooks/useNetworkErrorHandler';
 
 interface UseFileHandlerProps {
   isApartmentOccupied: (blockNumber: string, apartmentNumber: string) => boolean;
@@ -28,7 +29,8 @@ export const useFileHandler = ({
   const [isProcessing, setIsProcessing] = useState(false);
   const { toast } = useToast();
   const { batchValidateRows, handleValidationErrors } = useImportValidation();
-  const { detectAllConflicts } = useImportConflictDetection();
+  const { detectAllConflicts, isCheckingConflicts } = useImportConflictDetection();
+  const { handleNetworkError } = useNetworkErrorHandler();
 
   /**
    * Process the CSV file content
@@ -41,7 +43,7 @@ export const useFileHandler = ({
     setIsImporting(true);
     
     try {
-      // Parse the CSV content
+      // Parse the CSV content with error handling
       const { values, errors } = parseResidentsCsv(content);
       
       if (errors.length > 0) {
@@ -59,27 +61,37 @@ export const useFileHandler = ({
         return;
       }
       
-      // Detect conflicts
-      const { importErrors, occupiedLocations } = await detectAllConflicts(validRows, isApartmentOccupied);
-      
-      // Update errors first to show conflicts
-      setImportErrors(importErrors);
-      
-      // Process the import if there are rows left to process
-      if (validRows.length > 0) {
-        const successCount = await processImportedResidents(validRows, occupiedLocations);
-        setImportSuccess(successCount);
-      } else {
+      // Detect conflicts with robust error handling
+      try {
+        const { importErrors, occupiedLocations } = await detectAllConflicts(validRows, isApartmentOccupied);
+        
+        // Update errors first to show conflicts
+        setImportErrors(importErrors);
+        
+        // Process the import if there are rows left to process
+        if (validRows.length > 0) {
+          try {
+            const successCount = await processImportedResidents(validRows, occupiedLocations);
+            setImportSuccess(successCount);
+          } catch (processError) {
+            console.error("Error processing residents:", processError);
+            handleNetworkError(processError, "Failed to process some residents");
+            // We still want to show any partial successes that occurred
+            setImportSuccess(0);
+          }
+        } else {
+          setImportSuccess(0);
+        }
+      } catch (conflictError) {
+        console.error("Fatal error detecting conflicts:", conflictError);
+        handleNetworkError(conflictError, "Failed to check for conflicts");
+        setImportErrors(["Failed to check for conflicts due to a connection error. Please try again."]);
         setImportSuccess(0);
       }
     } catch (error) {
       console.error("Error processing import:", error);
+      handleNetworkError(error, "An error occurred while processing the import file");
       setImportErrors([`Error processing file: ${error instanceof Error ? error.message : String(error)}`]);
-      toast({
-        title: "Import failed",
-        description: "An error occurred while processing the import file",
-        variant: "destructive"
-      });
     } finally {
       setIsImporting(false);
       setIsProcessing(false);
@@ -87,25 +99,75 @@ export const useFileHandler = ({
   };
 
   /**
-   * Handle file input change event
+   * Handle file input change event with error handling
    */
   const handleFileChange = (event: Event) => {
-    const target = event.target as HTMLInputElement;
-    if (!target.files || target.files.length === 0) return;
-    
-    const file = target.files[0];
-    const reader = new FileReader();
-    
-    reader.onload = async (e) => {
-      const content = e.target?.result as string;
-      await processFileContent(content);
-    };
-    
-    reader.readAsText(file);
+    try {
+      const target = event.target as HTMLInputElement;
+      if (!target.files || target.files.length === 0) {
+        toast({
+          title: "Import Error",
+          description: "No file selected",
+          variant: "destructive"
+        });
+        return;
+      }
+      
+      const file = target.files[0];
+      
+      // Validate file size
+      if (file.size > 5 * 1024 * 1024) { // 5MB limit
+        toast({
+          title: "Import Error",
+          description: "File size exceeds 5MB limit",
+          variant: "destructive"
+        });
+        return;
+      }
+      
+      // Validate file type
+      if (!file.name.toLowerCase().endsWith('.csv')) {
+        toast({
+          title: "Import Error",
+          description: "Only CSV files are supported",
+          variant: "destructive"
+        });
+        return;
+      }
+      
+      const reader = new FileReader();
+      
+      reader.onload = async (e) => {
+        try {
+          const content = e.target?.result as string;
+          if (!content) {
+            throw new Error("Failed to read file content");
+          }
+          await processFileContent(content);
+        } catch (error) {
+          console.error("Error reading file:", error);
+          handleNetworkError(error, "Failed to read file");
+        }
+      };
+      
+      reader.onerror = (error) => {
+        console.error("FileReader error:", error);
+        toast({
+          title: "Import Error",
+          description: "Failed to read the file. Please try again.",
+          variant: "destructive"
+        });
+      };
+      
+      reader.readAsText(file);
+    } catch (error) {
+      console.error("Error handling file:", error);
+      handleNetworkError(error, "An unexpected error occurred while processing the file");
+    }
   };
 
   return {
     handleFileChange,
-    isProcessing
+    isProcessing: isProcessing || isCheckingConflicts
   };
 };
