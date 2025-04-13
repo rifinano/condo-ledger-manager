@@ -1,4 +1,3 @@
-
 import { ResidentFormData } from '@/services/residents/types';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -59,7 +58,7 @@ export const doesApartmentExist = async (blockName: string, apartmentNumber: str
     const { data: apartment, error: apartmentError } = await supabase
       .from('apartments')
       .select('id')
-      .eq('block_id', block.id)
+      .eq('block_id', block.id.toString())
       .eq('number', apartmentNumber)
       .maybeSingle();
     
@@ -163,4 +162,37 @@ export const prepareResidentData = (
     move_in_month: moveInMonth,
     move_in_year: moveInYear || currentYear
   };
+};
+
+// NEW FUNCTION: Get all valid apartments in a block
+export const getBlockApartments = async (blockName: string): Promise<string[]> => {
+  try {
+    // First get the block ID
+    const { data: block, error: blockError } = await supabase
+      .from('blocks')
+      .select('id')
+      .eq('name', blockName)
+      .maybeSingle();
+    
+    if (blockError || !block) {
+      console.error("Error finding block:", blockError);
+      return [];
+    }
+    
+    // Then get all apartments in this block
+    const { data: apartments, error: apartmentsError } = await supabase
+      .from('apartments')
+      .select('number')
+      .eq('block_id', block.id.toString());
+    
+    if (apartmentsError || !apartments) {
+      console.error("Error fetching apartments:", apartmentsError);
+      return [];
+    }
+    
+    return apartments.map(apt => apt.number);
+  } catch (error) {
+    console.error("Error getting block apartments:", error);
+    return [];
+  }
 };
