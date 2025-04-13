@@ -81,7 +81,9 @@ export const useFileHandler = ({
         const { importErrors, occupiedLocations } = await detectAllConflicts(validRows, isApartmentOccupied);
         
         // Update errors first to show conflicts
-        setImportErrors(prevErrors => [...prevErrors, ...importErrors]);
+        // FIX: Convert the function that updates state to use direct array assignment
+        const combinedErrors = [...validationErrors, ...importErrors];
+        setImportErrors(combinedErrors);
         
         // Process the import if there are rows left to process
         if (validRows.length > 0) {
@@ -108,7 +110,9 @@ export const useFileHandler = ({
       } catch (conflictError) {
         console.error("Fatal error detecting conflicts:", conflictError);
         handleNetworkError(conflictError, "Failed to check for conflicts");
-        setImportErrors(prevErrors => [...prevErrors, "Failed to check for conflicts due to a connection error. Please try again."]);
+        // FIX: Convert the function that updates state to use direct array assignment
+        const errorMessage = "Failed to check for conflicts due to a connection error. Please try again.";
+        setImportErrors([...validationErrors, errorMessage]);
         setImportSuccess(0);
       }
     } catch (error) {
