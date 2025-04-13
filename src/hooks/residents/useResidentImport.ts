@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { ResidentFormData } from '@/services/residents/types';
 import { useToast } from '@/hooks/use-toast';
 import { useImportFile } from '@/hooks/residents/useImportFile';
-import { prepareResidentData } from '@/utils/residents/importUtils';
+import { prepareResidentData, doesBlockExist, doesApartmentExist } from '@/utils/residents/importUtils';
 
 interface UseResidentImportProps {
   months: { value: string; label: string }[];
@@ -49,11 +49,23 @@ export const useResidentImport = ({
           processingErrors.push(`Missing required data for: ${fullName || 'Unknown'} at Block ${blockNumber || 'Unknown'}, Apartment ${apartmentNumber || 'Unknown'}`);
           continue;
         }
-        
+
+        // Skip if this location is already marked as occupied
         const locationKey = `${blockNumber}-${apartmentNumber}`;
-        
         if (locationKey in occupiedLocations) {
           processingErrors.push(`Failed to add resident: ${fullName} at Block ${blockNumber}, Apartment ${apartmentNumber} - Location already occupied by ${occupiedLocations[locationKey]}`);
+          continue;
+        }
+        
+        // Verify that the block exists
+        if (!(await doesBlockExist(blockNumber))) {
+          processingErrors.push(`Failed to add resident: ${fullName} - Block "${blockNumber}" does not exist`);
+          continue;
+        }
+        
+        // Verify that the apartment exists in the block
+        if (!(await doesApartmentExist(blockNumber, apartmentNumber))) {
+          processingErrors.push(`Failed to add resident: ${fullName} - Apartment ${apartmentNumber} does not exist in Block ${blockNumber}`);
           continue;
         }
         

@@ -19,6 +19,62 @@ export const getExistingResidentDetails = async (blockNumber: string, apartmentN
   }
 };
 
+// Function to check if a block exists in the database
+export const doesBlockExist = async (blockName: string): Promise<boolean> => {
+  try {
+    const { data, error } = await supabase
+      .from('blocks')
+      .select('id')
+      .eq('name', blockName)
+      .maybeSingle();
+    
+    if (error) {
+      console.error("Error checking block existence:", error);
+      return false;
+    }
+    
+    return !!data;
+  } catch (error) {
+    console.error("Error checking block existence:", error);
+    return false;
+  }
+};
+
+// Function to check if an apartment exists in a block
+export const doesApartmentExist = async (blockName: string, apartmentNumber: string): Promise<boolean> => {
+  try {
+    // First get the block ID
+    const { data: block, error: blockError } = await supabase
+      .from('blocks')
+      .select('id')
+      .eq('name', blockName)
+      .maybeSingle();
+    
+    if (blockError || !block) {
+      console.error("Error finding block:", blockError);
+      return false;
+    }
+    
+    // Then check if apartment exists in this block
+    const { data: apartment, error: apartmentError } = await supabase
+      .from('apartments')
+      .select('id')
+      .eq('block_id', block.id)
+      .eq('number', apartmentNumber)
+      .maybeSingle();
+    
+    if (apartmentError) {
+      console.error("Error checking apartment existence:", apartmentError);
+      return false;
+    }
+    
+    return !!apartment;
+  } catch (error) {
+    console.error("Error checking apartment existence:", error);
+    return false;
+  }
+};
+
 // Function to parse month names, numbers, or abbreviations into standard format
 export const parseMonth = (moveInMonthName: string | undefined, months: { value: string; label: string }[]): string => {
   if (!moveInMonthName) {
@@ -26,13 +82,16 @@ export const parseMonth = (moveInMonthName: string | undefined, months: { value:
     return currentMonth < 10 ? `0${currentMonth}` : `${currentMonth}`;
   }
   
+  // Try to match by label first (full month name)
   const monthByLabel = months.find(m => 
     m.label.toLowerCase() === moveInMonthName.toLowerCase())?.value;
   if (monthByLabel) return monthByLabel;
   
+  // Then try to match by value (already formatted)
   const monthByValue = months.find(m => m.value === moveInMonthName)?.value;
   if (monthByValue) return monthByValue;
   
+  // Then try to match by common abbreviations
   const monthAbbreviations: Record<string, string> = {
     'jan': '01', 'feb': '02', 'mar': '03', 'apr': '04', 
     'may': '05', 'jun': '06', 'jul': '07', 'aug': '08', 
@@ -44,6 +103,7 @@ export const parseMonth = (moveInMonthName: string | undefined, months: { value:
     return monthAbbreviations[abbr];
   }
   
+  // Try to parse as a number
   if (!isNaN(parseInt(moveInMonthName))) {
     const monthNum = parseInt(moveInMonthName);
     if (monthNum >= 1 && monthNum <= 12) {
@@ -51,6 +111,7 @@ export const parseMonth = (moveInMonthName: string | undefined, months: { value:
     }
   }
   
+  // Default to current month if no match
   const currentMonth = new Date().getMonth() + 1;
   return currentMonth < 10 ? `0${currentMonth}` : `${currentMonth}`;
 };

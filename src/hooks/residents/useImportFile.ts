@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { parseResidentsCsv } from '@/utils/residents/csvUtils';
 import { detectImportConflicts, getExistingResidentDetails } from '@/utils/residents/importUtils';
+import { useToast } from '@/hooks/use-toast';
 
 interface UseImportFileProps {
   isApartmentOccupied: (blockNumber: string, apartmentNumber: string) => boolean;
@@ -21,6 +22,7 @@ export const useImportFile = ({
   processImportedResidents
 }: UseImportFileProps) => {
   const [isProcessing, setIsProcessing] = useState(false);
+  const { toast } = useToast();
 
   const handleImportClick = () => {
     const fileInput = document.createElement("input");
@@ -28,6 +30,28 @@ export const useImportFile = ({
     fileInput.accept = ".csv";
     fileInput.onchange = handleFileChange;
     fileInput.click();
+  };
+
+  const validateCsvRow = (row: string[]): string | null => {
+    if (row.length < 4) {
+      return `Invalid row format: ${row.join(', ')}. Not enough columns.`;
+    }
+    
+    const [fullName, , blockNumber, apartmentNumber] = row;
+    
+    if (!fullName?.trim()) {
+      return `Missing resident name in row: ${row.join(', ')}`;
+    }
+    
+    if (!blockNumber?.trim()) {
+      return `Missing block number for resident ${fullName}`;
+    }
+    
+    if (!apartmentNumber?.trim()) {
+      return `Missing apartment number for resident ${fullName} in block ${blockNumber}`;
+    }
+    
+    return null;
   };
 
   const handleFileChange = (event: Event) => {
@@ -50,6 +74,27 @@ export const useImportFile = ({
         
         if (errors.length > 0) {
           setImportErrors(errors);
+          setIsImporting(false);
+          setIsProcessing(false);
+          return;
+        }
+        
+        // Pre-validate all rows and collect validation errors
+        const validationErrors: string[] = [];
+        for (const row of values) {
+          const validationError = validateCsvRow(row);
+          if (validationError) {
+            validationErrors.push(validationError);
+          }
+        }
+        
+        if (validationErrors.length > 0) {
+          setImportErrors(validationErrors);
+          toast({
+            title: "Import validation failed",
+            description: `${validationErrors.length} rows contain invalid data`,
+            variant: "destructive"
+          });
           setIsImporting(false);
           setIsProcessing(false);
           return;
@@ -89,6 +134,11 @@ export const useImportFile = ({
       } catch (error) {
         console.error("Error processing import:", error);
         setImportErrors([`Error processing file: ${error instanceof Error ? error.message : String(error)}`]);
+        toast({
+          title: "Import failed",
+          description: "An error occurred while processing the import file",
+          variant: "destructive"
+        });
       } finally {
         setIsImporting(false);
         setIsProcessing(false);
