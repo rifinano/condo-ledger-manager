@@ -153,7 +153,7 @@ export const useResidentImport = ({
       const newApartments = apartmentNumbers.map(number => ({
         block_id: block.id.toString(),
         number,
-        floor: 1, // Default floor
+        floor: Math.ceil(parseInt(number) / 4), // Calculate floor based on apartment number
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       }));
@@ -179,8 +179,22 @@ export const useResidentImport = ({
         ))
       );
 
-      // Refresh data
-      refreshData();
+      // Refresh data and trigger a retry of the import
+      await refreshData();
+      await fetchResidents();
+
+      // If there are any residents waiting to be imported to the newly created apartments, 
+      // suggest to the user to try the import again
+      if (importErrors.some(error => 
+        error.includes(`Apartment`) && 
+        error.includes(`does not exist in Block ${blockName}`) &&
+        apartmentNumbers.some(apt => error.includes(`Apartment ${apt}`))
+      )) {
+        toast({
+          title: "Ready to Import",
+          description: `Apartments have been created. Please try importing your CSV file again.`,
+        });
+      }
 
     } catch (error) {
       console.error("Error creating apartments:", error);
@@ -192,7 +206,7 @@ export const useResidentImport = ({
     } finally {
       setIsCreatingApartments(false);
     }
-  }, [isCreatingApartments, refreshData, toast]);
+  }, [isCreatingApartments, refreshData, fetchResidents, toast, importErrors]);
 
   return {
     isImporting,

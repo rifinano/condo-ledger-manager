@@ -110,7 +110,7 @@ const ResidentsImport = ({
                       <Button 
                         variant="outline" 
                         size="sm"
-                        className="ml-2 text-xs bg-white"
+                        className="ml-2 text-xs bg-white hover:bg-blue-50"
                         onClick={() => onCreateMissingApartments(blockName, apartments)}
                       >
                         <Plus className="h-3 w-3 mr-1" /> Create Missing Apartments
@@ -121,7 +121,7 @@ const ResidentsImport = ({
               ))}
             </ul>
             <p className="mt-2 text-sm">
-              Please create these apartments in the Properties section first or modify your import file.
+              Click the "Create Missing Apartments" button to automatically create these apartments, or modify your import file.
             </p>
           </AlertDescription>
         </Alert>
