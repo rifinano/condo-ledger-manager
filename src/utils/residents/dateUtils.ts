@@ -5,18 +5,20 @@ import { ResidentFormData } from '@/services/residents/types';
  * Function to parse month names, numbers, or abbreviations into standard format
  */
 export const parseMonth = (moveInMonthName: string | undefined, months: { value: string; label: string }[]): string => {
-  if (!moveInMonthName) {
+  if (!moveInMonthName || moveInMonthName.trim() === '') {
     const currentMonth = new Date().getMonth() + 1;
     return currentMonth < 10 ? `0${currentMonth}` : `${currentMonth}`;
   }
   
+  const trimmedMonth = moveInMonthName.trim();
+  
   // Try to match by label first (full month name)
   const monthByLabel = months.find(m => 
-    m.label.toLowerCase() === moveInMonthName.toLowerCase())?.value;
+    m.label.toLowerCase() === trimmedMonth.toLowerCase())?.value;
   if (monthByLabel) return monthByLabel;
   
   // Then try to match by value (already formatted)
-  const monthByValue = months.find(m => m.value === moveInMonthName)?.value;
+  const monthByValue = months.find(m => m.value === trimmedMonth)?.value;
   if (monthByValue) return monthByValue;
   
   // Then try to match by common abbreviations
@@ -26,17 +28,15 @@ export const parseMonth = (moveInMonthName: string | undefined, months: { value:
     'sep': '09', 'oct': '10', 'nov': '11', 'dec': '12'
   };
   
-  const abbr = moveInMonthName.toLowerCase().substring(0, 3);
+  const abbr = trimmedMonth.toLowerCase().substring(0, 3);
   if (abbr in monthAbbreviations) {
     return monthAbbreviations[abbr];
   }
   
   // Try to parse as a number
-  if (!isNaN(parseInt(moveInMonthName))) {
-    const monthNum = parseInt(moveInMonthName);
-    if (monthNum >= 1 && monthNum <= 12) {
-      return monthNum < 10 ? `0${monthNum}` : `${monthNum}`;
-    }
+  const parsedNum = parseInt(trimmedMonth);
+  if (!isNaN(parsedNum) && parsedNum >= 1 && parsedNum <= 12) {
+    return parsedNum < 10 ? `0${parsedNum}` : `${parsedNum}`;
   }
   
   // Default to current month if no match
@@ -57,11 +57,11 @@ export const prepareResidentData = (
   const currentYear = new Date().getFullYear().toString();
   
   return {
-    full_name: fullName,
-    phone_number: phoneNumber || '',
-    block_number: blockNumber,
-    apartment_number: apartmentNumber,
+    full_name: fullName?.trim() || '',
+    phone_number: phoneNumber?.trim() || '',
+    block_number: blockNumber?.trim() || '',
+    apartment_number: apartmentNumber?.trim() || '',
     move_in_month: moveInMonth,
-    move_in_year: moveInYear || currentYear
+    move_in_year: (moveInYear?.trim() && !isNaN(parseInt(moveInYear.trim()))) ? moveInYear.trim() : currentYear
   };
 };

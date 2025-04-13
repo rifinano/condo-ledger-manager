@@ -53,12 +53,27 @@ export const useFileHandler = ({
         return;
       }
       
+      // Check if we have any rows to process
+      if (values.length === 0) {
+        setImportErrors(["No valid data found in the file"]);
+        setIsImporting(false);
+        setIsProcessing(false);
+        return;
+      }
+      
       // Validate the rows
       const { validRows, validationErrors } = batchValidateRows(values);
       
       // Handle validation errors if any
-      if (handleValidationErrors(validationErrors, setImportErrors, setIsImporting, setIsProcessing)) {
-        return;
+      if (validationErrors.length > 0) {
+        setImportErrors(validationErrors);
+        
+        // If we still have some valid rows, we can continue
+        if (validRows.length === 0) {
+          setIsImporting(false);
+          setIsProcessing(false);
+          return;
+        }
       }
       
       // Detect conflicts with robust error handling
@@ -66,13 +81,21 @@ export const useFileHandler = ({
         const { importErrors, occupiedLocations } = await detectAllConflicts(validRows, isApartmentOccupied);
         
         // Update errors first to show conflicts
-        setImportErrors(importErrors);
+        setImportErrors(prevErrors => [...prevErrors, ...importErrors]);
         
         // Process the import if there are rows left to process
         if (validRows.length > 0) {
           try {
             const successCount = await processImportedResidents(validRows, occupiedLocations);
             setImportSuccess(successCount);
+            
+            if (successCount > 0) {
+              toast({
+                title: "Import Successful",
+                description: `Successfully imported ${successCount} resident${successCount !== 1 ? 's' : ''}.`,
+                variant: "default"
+              });
+            }
           } catch (processError) {
             console.error("Error processing residents:", processError);
             handleNetworkError(processError, "Failed to process some residents");
@@ -85,7 +108,7 @@ export const useFileHandler = ({
       } catch (conflictError) {
         console.error("Fatal error detecting conflicts:", conflictError);
         handleNetworkError(conflictError, "Failed to check for conflicts");
-        setImportErrors(["Failed to check for conflicts due to a connection error. Please try again."]);
+        setImportErrors(prevErrors => [...prevErrors, "Failed to check for conflicts due to a connection error. Please try again."]);
         setImportSuccess(0);
       }
     } catch (error) {

@@ -66,11 +66,23 @@ export const useImportValidation = () => {
   ) => {
     if (validationErrors.length > 0) {
       setImportErrors(validationErrors);
-      toast({
-        title: "Import validation failed",
-        description: `${validationErrors.length} rows contain invalid data`,
-        variant: "destructive"
-      });
+      
+      if (validationErrors.length > 3) {
+        // Only show a summary if there are many errors
+        toast({
+          title: "Import validation failed",
+          description: `${validationErrors.length} rows contain invalid data`,
+          variant: "destructive"
+        });
+      } else {
+        // Show the specific error if there are only a few
+        toast({
+          title: "Import validation failed",
+          description: validationErrors[0],
+          variant: "destructive"
+        });
+      }
+      
       setIsImporting(false);
       setIsProcessing(false);
       return true;
